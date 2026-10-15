@@ -1,16 +1,21 @@
 import type { Product, Sale, SaleLine } from "./types";
 import type { RateSnapshot } from "./pricing-types";
+import Decimal from "decimal.js";
 export const round = (n: number) =>
-  Math.round((n + Number.EPSILON) * 100) / 100;
+  new Decimal(n).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 export function lineAmounts(line: SaleLine, product?: Product) {
   const area = product?.print ? (line.width * line.height) / 10000 : 1;
   const materialArea = product?.print
     ? ((line.width + 4) * (line.height + 4)) / 10000
     : 1;
   const net = round(
-    line.quantity * area * line.price * (1 - line.discount / 100),
+    new Decimal(line.quantity)
+      .mul(area)
+      .mul(line.price)
+      .mul(new Decimal(1).minus(new Decimal(line.discount).div(100)))
+      .toNumber(),
   );
-  const tax = round((net * line.vat) / 100);
+  const tax = round(new Decimal(net).mul(line.vat).div(100).toNumber());
   return {
     area,
     materialArea,
@@ -62,20 +67,24 @@ export const tryValue = (
   if (currency !== "USD") return value;
   if (!rate || !Number.isFinite(rate.value) || rate.value <= 0)
     throw new Error("USD işleminde kayıtlı kur snapshot’ı gerekli.");
-  return value * rate.value;
+  return new Decimal(value).mul(rate.value).toNumber();
 };
 export const money = (value: number, currency = "TRY") =>
-  new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(value);
+  !Number.isFinite(value)
+    ? "—"
+    : new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 2,
+      }).format(value);
 export const dateLabel = (date: string) =>
   new Date(date + "T12:00:00").toLocaleDateString("tr-TR");
 export const localISO = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-export const normalize = (s: string) =>
-  s.trim().replace(/\s+/g, " ").toLocaleLowerCase("tr-TR");
+export const normalize = (s: unknown) =>
+  typeof s === "string"
+    ? s.trim().replace(/\s+/g, " ").toLocaleLowerCase("tr-TR")
+    : "";
 export function dateRange(
   period: string,
   today: string,

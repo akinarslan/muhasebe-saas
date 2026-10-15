@@ -1,3 +1,4 @@
+import { createId, copyValue } from "./runtime";
 import type {
   CostSnapshot,
   Material,
@@ -9,6 +10,7 @@ import type {
   RateSnapshot,
 } from "./pricing-types";
 import { round } from "./finance";
+import Decimal from "decimal.js";
 export function initialPricingCatalog(): PricingCatalog {
   return {
     version: 2,
@@ -56,6 +58,13 @@ export function consumeMaterial(
 ): MaterialConsumption {
   const variant = material.variants.find((v) => v.id === use.variantId);
   if (!variant) throw new Error("Malzeme varyantı seçin.");
+  if (
+    material.archived ||
+    material.active === false ||
+    variant.archived ||
+    variant.needsConfirmation
+  )
+    throw new Error("Malzeme aktif değil veya ölçü onayı gerekiyor.");
   if (!variant.inStock) throw new Error("Stokta olmayan varyant kullanılamaz.");
   if (variant.usdCost === null)
     throw new Error(`${material.name} için USD alış maliyetini girin.`);
@@ -67,11 +76,24 @@ export function consumeMaterial(
     throw new Error("Malzeme adedi tam sayı olmalıdır.");
   for (const key of ["left", "right", "top", "bottom", "reusableM2"] as const)
     finite(use[key], "Pay / yeniden kullanılabilir alan");
-  const requiredWidthCm = use.widthCm + use.left + use.right;
-  const requiredLengthCm = use.heightCm + use.top + use.bottom;
-  const printM2 = ((use.widthCm * use.heightCm) / 10000) * use.quantity;
-  let consumedM2 =
-    ((requiredWidthCm * requiredLengthCm) / 10000) * use.quantity;
+  const requiredWidthCm = new Decimal(use.widthCm)
+    .plus(use.left)
+    .plus(use.right)
+    .toNumber();
+  const requiredLengthCm = new Decimal(use.heightCm)
+    .plus(use.top)
+    .plus(use.bottom)
+    .toNumber();
+  const printM2 = new Decimal(use.widthCm)
+    .mul(use.heightCm)
+    .div(10000)
+    .mul(use.quantity)
+    .toNumber();
+  let consumedM2 = new Decimal(requiredWidthCm)
+    .mul(requiredLengthCm)
+    .div(10000)
+    .mul(use.quantity)
+    .toNumber();
   let consumedUnits = use.quantity;
   let recoverableLimit = 0;
   if (material.roll) {
@@ -80,7 +102,11 @@ export function consumeMaterial(
       throw new Error(
         `${variant.widthCm} cm rulo uygun değil; en az ${requiredWidthCm} cm gerekiyor.`,
       );
-    consumedM2 = ((variant.widthCm * requiredLengthCm) / 10000) * use.quantity;
+    consumedM2 = new Decimal(variant.widthCm)
+      .mul(requiredLengthCm)
+      .div(10000)
+      .mul(use.quantity)
+      .toNumber();
     recoverableLimit =
       (((variant.widthCm - requiredWidthCm) * requiredLengthCm) / 10000) *
       use.quantity;
@@ -89,7 +115,10 @@ export function consumeMaterial(
   if (material.unit === "metretül") {
     if (!material.roll)
       throw new Error("Metretül maliyeti için rulo malzeme gerekir.");
-    consumedUnits = (requiredLengthCm / 100) * use.quantity;
+    consumedUnits = new Decimal(requiredLengthCm)
+      .div(100)
+      .mul(use.quantity)
+      .toNumber();
   }
   if (material.unit === "plaka") {
     if (material.roll) throw new Error("Plaka malzeme rulo olamaz.");
@@ -128,7 +157,7 @@ export function consumeMaterial(
     grossUnusedM2,
     reusableM2: use.reusableM2,
     wasteM2: Math.max(0, grossUnusedM2 - use.reusableM2),
-    costUsd: consumedUnits * variant.usdCost,
+    costUsd: new Decimal(consumedUnits).mul(variant.usdCost).toNumber(),
   };
 }
 export function calculatePricing(
@@ -148,25 +177,36 @@ export function calculatePricing(
     if (!m) throw new Error("Malzeme bulunamadı.");
     return consumeMaterial(u, m);
   });
-  const materialCostUsd = materials.reduce((s, m) => s + m.costUsd, 0);
+  const materialCostUsd = materials.reduce(
+    (s, m) => new Decimal(s).plus(m.costUsd).toNumber(),
+    0,
+  );
   const expenseCostUsd = input.expenses.reduce((s, e) => {
     finite(e.quantity, "Gider miktarı");
     finite(e.usdAmount, "Gider USD tutarı");
     if (!e.name.trim() || !e.unit.trim())
       throw new Error("Gider adı ve birimi gereklidir.");
-    return s + e.quantity * e.usdAmount;
+    return new Decimal(s)
+      .plus(new Decimal(e.quantity).mul(e.usdAmount))
+      .toNumber();
   }, 0);
-  const totalCostUsd = materialCostUsd + expenseCostUsd;
+  const totalCostUsd = new Decimal(materialCostUsd)
+    .plus(expenseCostUsd)
+    .toNumber();
   finite(totalCostUsd, "Hesaplanan USD maliyeti");
   const suggestedNetUsd =
     input.method === "margin"
-      ? totalCostUsd / (1 - input.targetPercent / 100)
-      : totalCostUsd * (1 + input.targetPercent / 100);
+      ? new Decimal(totalCostUsd)
+          .div(new Decimal(1).minus(new Decimal(input.targetPercent).div(100)))
+          .toNumber()
+      : new Decimal(totalCostUsd)
+          .mul(new Decimal(1).plus(new Decimal(input.targetPercent).div(100)))
+          .toNumber();
   if (input.manualNetUsd !== null)
     finite(input.manualNetUsd, "Manuel net satış");
   const chosenNetUsd = input.manualNetUsd ?? suggestedNetUsd;
-  const profitUsd = chosenNetUsd - totalCostUsd;
-  const netTry = round(chosenNetUsd * rate);
+  const profitUsd = new Decimal(chosenNetUsd).minus(totalCostUsd).toNumber();
+  const netTry = round(new Decimal(chosenNetUsd).mul(rate).toNumber());
   finite(netTry, "TL satış toplamı");
   const vatTry = round((netTry * input.vat) / 100);
   return {
@@ -194,7 +234,7 @@ export function pricingSnapshot(
   if (rate.source === "legacy-demo")
     throw new Error("Örnek kur yeni fiyatlandırmada kullanılamaz.");
   const result = calculatePricing(input, catalog, rate.value);
-  return structuredClone({
+  return copyValue({
     version: 2,
     createdAt: new Date().toISOString(),
     createdBy: userName,
@@ -219,14 +259,14 @@ export function updateMaterialCost(
   actor: { id: string; name: string },
 ): PricingCatalog {
   finite(cost, "USD alış maliyeti");
-  const next = structuredClone(catalog);
+  const next = copyValue(catalog);
   const v = next.materials
     .find((m) => m.id === materialId)
     ?.variants.find((v) => v.id === variantId);
   if (!v) throw new Error("Varyant bulunamadı.");
   if (v.usdCost !== cost) {
     v.history.push({
-      id: crypto.randomUUID(),
+      id: createId(),
       at: new Date().toISOString(),
       previous: v.usdCost,
       next: cost,

@@ -1,4 +1,6 @@
 "use client";
+import { createId, copyValue } from "@/lib/runtime";
+
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import {
   LayoutDashboard,
@@ -36,7 +38,8 @@ import { Customers, CustomerDetail } from "./customers";
 import { CustomerDrawer } from "./customer-drawer";
 import { Button } from "./ui/button";
 import { initialPricingCatalog } from "@/lib/pricing";
-import { migrateDemo, migrateDraft } from "@/lib/migrate";
+import { migrateDemo, migrateDraft, repairCustomers } from "@/lib/migrate";
+import { seedCatalog } from "@/lib/catalog-seed";
 import type {
   PricingCatalog,
   RateSnapshot,
@@ -111,11 +114,11 @@ function readInitial() {
     error = "Saklanan demo verisi okunamadı. Örnek veriler yüklendi.";
   }
   return {
-    data: migrateDemo(data),
+    data: migrateDemo(repairCustomers(data)),
     draft: migrateDraft(draft),
     dark,
     error,
-    catalog,
+    catalog: seedCatalog(catalog),
     quotes,
   };
 }
@@ -163,9 +166,9 @@ function LoadedWorkspace() {
     const next = [
       ...quotes,
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         name: `Maliyet teklifi #${quotes.length + 1}`,
-        snapshot: structuredClone(snapshot),
+        snapshot: copyValue(snapshot),
       },
     ];
     setQuotes(next);

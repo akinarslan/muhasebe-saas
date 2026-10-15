@@ -8,6 +8,8 @@ export interface PriceRevision {
   userName: string;
 }
 export interface MaterialVariant {
+  archived?: boolean;
+  needsConfirmation?: boolean;
   id: string;
   name: string;
   widthCm: number;
@@ -17,6 +19,25 @@ export interface MaterialVariant {
   history: PriceRevision[];
 }
 export interface Material {
+  sku?: string;
+  category?: string;
+  brand?: string;
+  supplierId?: string;
+  materialType?: string;
+  vat?: number;
+  updatedAt?: string;
+  description?: string;
+  active?: boolean;
+  archived?: boolean;
+  needsConfirmation?: boolean;
+  margins?: { left: number; right: number; top: number; bottom: number };
+  sourcePrice?: {
+    amount: number;
+    currency: "USD" | "EUR" | "TRY";
+    usdTry: number;
+    eurTry: number;
+    label: string;
+  };
   id: string;
   name: string;
   unit: CostUnit;
@@ -30,11 +51,14 @@ export interface ExpenseType {
   usdAmount: number;
 }
 export interface PricingCatalog {
+  seedVersion?: number;
+  suppliers?: { id: string; name: string }[];
   version: 2;
   materials: Material[];
   expenses: ExpenseType[];
 }
 export interface RateSnapshot {
+  eurValue?: number;
   value: number;
   source: "tcmb" | "manual" | "legacy-demo";
   publishedAt: string;

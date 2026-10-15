@@ -1,4 +1,39 @@
 import type { DemoData, Draft } from "./types";
+export function repairCustomers(data: DemoData): DemoData {
+  const seen = new Set<string>();
+  return {
+    ...data,
+    customers: data.customers.map((c, i) => {
+      const base = c && typeof c === "object" ? c : {};
+      const source = base as Partial<DemoData["customers"][number]>;
+      let id =
+        typeof source.id === "string" && source.id
+          ? source.id
+          : `legacy-customer-${i}`;
+      if (seen.has(id)) id += `-duplicate-${i}`;
+      seen.add(id);
+      return {
+        ...source,
+        id,
+        name:
+          typeof source.name === "string"
+            ? source.name
+            : `Eski kayıt ${i + 1} · kontrol gerekli`,
+        segment: ["Resmî kurum", "Reklamcı", "Mağaza-İşyeri"].includes(
+          String(source.segment),
+        )
+          ? source.segment!
+          : "Mağaza-İşyeri",
+        tenantId: source.tenantId ?? "tenant-demo",
+        legalEntityId: source.legalEntityId ?? "entity-demo",
+        city: source.city ?? "",
+        district: source.district ?? "",
+        phone: source.phone ?? "",
+        email: source.email ?? "",
+      };
+    }),
+  };
+}
 // One-time compatibility migration. No active pricing path may use legacy-demo rates.
 export function migrateDemo(data: DemoData): DemoData {
   return {

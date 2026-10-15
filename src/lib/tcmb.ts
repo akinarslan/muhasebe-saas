@@ -30,7 +30,25 @@ export function parseTcmb(
     publishedAt
   )
     throw new Error("TCMB tarihi geçersiz.");
-  return { value, source: "tcmb", publishedAt, fetchedAt };
+  const eur = xml.match(
+    /<Currency\b[^>]*(?:Kod|CurrencyCode)="EUR"[^>]*>([\s\S]*?)<\/Currency>/,
+  )?.[1];
+  const eurValue = eur
+    ? Number(
+        eur
+          .match(/<ForexSelling>\s*([\d.,]+)\s*<\/ForexSelling>/)?.[1]
+          ?.replace(",", "."),
+      ) / Number(eur.match(/<Unit>\s*(\d+)\s*<\/Unit>/)?.[1] ?? 1)
+    : undefined;
+  if (eurValue !== undefined && (!Number.isFinite(eurValue) || eurValue <= 0))
+    throw new Error("TCMB EUR kuru geçersiz.");
+  return {
+    value,
+    source: "tcmb",
+    publishedAt,
+    fetchedAt,
+    ...(eurValue ? { eurValue } : {}),
+  };
 }
 export async function fetchTcmb(
   fetcher: typeof fetch = fetch,

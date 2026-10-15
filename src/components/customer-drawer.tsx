@@ -1,4 +1,6 @@
 "use client";
+import { createId } from "@/lib/runtime";
+
 import * as Dialog from "@radix-ui/react-dialog";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -97,12 +99,20 @@ export function CustomerDrawer({
       });
       return;
     }
-    onSave({
-      ...v,
-      id: crypto.randomUUID(),
-      tenantId: tenant.id,
-      legalEntityId: entity.id,
-    });
+    try {
+      onSave({
+        ...v,
+        id: createId(),
+        tenantId: tenant.id,
+        legalEntityId: entity.id,
+      });
+    } catch {
+      setError("root", {
+        message:
+          "Müşteri kaydedilemedi. Bilgileriniz korunuyor; yeniden deneyin.",
+      });
+      return;
+    }
     reset();
   }
   return (

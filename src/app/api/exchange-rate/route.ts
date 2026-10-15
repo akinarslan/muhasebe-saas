@@ -23,6 +23,16 @@ export async function GET() {
       503,
     );
   }
+  if (
+    cached?.eurValue &&
+    Date.now() - new Date(cached.fetchedAt).getTime() < 300000
+  )
+    return json({
+      rate: cached,
+      stale: false,
+      manualEnabled: manualEnabled(),
+      cached: true,
+    });
   const result = await latestRate(cached);
   if (result.rate && !result.stale)
     try {

@@ -1,4 +1,8 @@
 "use client";
+import { numericValue } from "@/lib/numeric";
+import { NumericInput } from "./ui/numeric-input";
+import { createId } from "@/lib/runtime";
+
 import { useState } from "react";
 import { Plus, Layers, History, Save, Coins } from "lucide-react";
 import type { CostUnit, PricingCatalog } from "@/lib/pricing-types";
@@ -6,6 +10,7 @@ import { updateMaterialCost } from "@/lib/pricing";
 import { user } from "@/lib/mock";
 import { money } from "@/lib/finance";
 import { Button } from "./ui/button";
+import { MaterialEditor } from "./material-editor";
 const units: CostUnit[] = ["m²", "metretül", "adet", "plaka"];
 export function CatalogManager({
   catalog,
@@ -39,7 +44,7 @@ export function CatalogManager({
       setError("Metretül rulo olmalıdır; plaka rulo olamaz.");
       return;
     }
-    const id = crypto.randomUUID();
+    const id = createId();
     let next = {
       ...catalog,
       materials: [
@@ -90,7 +95,7 @@ export function CatalogManager({
       expenses: [
         ...catalog.expenses,
         {
-          id: crypto.randomUUID(),
+          id: createId(),
           name: expenseName.trim(),
           unit: expenseUnit.trim(),
           usdAmount: Number(expenseAmount),
@@ -122,11 +127,15 @@ export function CatalogManager({
       {catalog.materials.map((m) => (
         <section className="material-family" key={m.id}>
           <div className="label-row">
-            <h3>{m.name}</h3>
+            <h3>
+              {m.name}
+              {m.archived ? " · Arşiv" : m.active === false ? " · Pasif" : ""}
+            </h3>
             <span className="badge neutral">
               USD / {m.unit} · {m.roll ? "Rulo" : "Parça / plaka"}
             </span>
           </div>
+          <MaterialEditor material={m} catalog={catalog} onChange={onChange} />
           {m.variants.map((v) => (
             <div className="variant-card" key={v.id}>
               <div className="variant-heading">
@@ -179,11 +188,10 @@ export function CatalogManager({
               >
                 <label>
                   USD alış / {m.unit}
-                  <input
+                  <NumericInput
                     key={String(v.usdCost)}
                     aria-label={`${m.name} ${v.name} USD maliyeti`}
                     name="cost"
-                    type="number"
                     min="0"
                     step="0.000001"
                     required
@@ -221,7 +229,7 @@ export function CatalogManager({
           ))}
           <VariantForm
             onAdd={(v) => {
-              const id = crypto.randomUUID();
+              const id = createId();
               const next = {
                 ...catalog,
                 materials: catalog.materials.map((x) =>
@@ -281,9 +289,8 @@ export function CatalogManager({
           </label>
           <label>
             Başlangıç USD alış maliyeti
-            <input
+            <NumericInput
               required
-              type="number"
               min="0"
               step="0.000001"
               value={cost}
@@ -300,22 +307,20 @@ export function CatalogManager({
           </label>
           <label>
             Genişlik (cm)
-            <input
-              type="number"
+            <NumericInput
               min="1"
               required
               value={width}
-              onChange={(e) => setWidth(Number(e.target.value))}
+              onChange={(e) => setWidth(numericValue(e.target.value))}
             />
           </label>
           <label>
             Plaka boyu (cm)
-            <input
-              type="number"
+            <NumericInput
               min="1"
               required
               value={length}
-              onChange={(e) => setLength(Number(e.target.value))}
+              onChange={(e) => setLength(numericValue(e.target.value))}
             />
           </label>
         </div>
@@ -358,9 +363,8 @@ export function CatalogManager({
             </label>
             <label>
               USD / birim
-              <input
+              <NumericInput
                 name="amount"
-                type="number"
                 step="0.000001"
                 min="0"
                 required
@@ -396,9 +400,8 @@ export function CatalogManager({
             </label>
             <label>
               Varsayılan USD tutarı
-              <input
+              <NumericInput
                 required
-                type="number"
                 min="0"
                 step="0.000001"
                 value={expenseAmount}
@@ -466,21 +469,15 @@ function VariantForm({
           </label>
           <label>
             Varyant genişliği (cm)
-            <input name="width" type="number" min="1" required />
+            <NumericInput name="width" min="1" required />
           </label>
           <label>
             Varyant boyu (cm)
-            <input
-              name="length"
-              type="number"
-              min="1"
-              defaultValue="300"
-              required
-            />
+            <NumericInput name="length" min="1" defaultValue="300" required />
           </label>
           <label>
             Varyant USD maliyeti
-            <input name="cost" type="number" min="0" step="0.000001" required />
+            <NumericInput name="cost" min="0" step="0.000001" required />
           </label>
         </div>
         <Button type="submit" size="sm">

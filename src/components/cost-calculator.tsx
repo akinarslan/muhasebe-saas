@@ -1,4 +1,8 @@
 "use client";
+import { numericValue } from "@/lib/numeric";
+import { NumericInput } from "./ui/numeric-input";
+import { createId, copyValue } from "@/lib/runtime";
+
 import { useState } from "react";
 import {
   Layers,
@@ -46,7 +50,7 @@ export function CostCalculator({
 }) {
   const [input, setInput] = useState<PricingInput>(() =>
     initialInput
-      ? structuredClone(initialInput)
+      ? copyValue(initialInput)
       : {
           materials: [],
           expenses: [],
@@ -72,28 +76,48 @@ export function CostCalculator({
     calculationError = (e as Error).message;
   }
   function addMaterial() {
-    const m = catalog.materials[0];
+    const m =
+      catalog.materials.find(
+        (m) =>
+          !m.archived &&
+          m.active !== false &&
+          m.variants.some(
+            (v) =>
+              v.usdCost !== null &&
+              v.inStock &&
+              !v.archived &&
+              !v.needsConfirmation,
+          ),
+      ) ?? catalog.materials[0];
     if (!m) {
       setManage(true);
       return;
     }
     const suitable = m.variants
-      .filter((v) => v.inStock && (!m.roll || v.widthCm >= width + 4))
+      .filter(
+        (v) =>
+          v.inStock &&
+          !v.archived &&
+          !v.needsConfirmation &&
+          (!m.roll ||
+            v.widthCm >=
+              width + (m.margins?.left ?? 2) + (m.margins?.right ?? 2)),
+      )
       .sort((a, b) => a.widthCm - b.widthCm)[0];
     update({
       materials: [
         ...input.materials,
         {
-          id: crypto.randomUUID(),
+          id: createId(),
           materialId: m.id,
           variantId: suitable?.id ?? "",
           widthCm: width,
           heightCm: height,
           quantity,
-          left: 2,
-          right: 2,
-          top: 2,
-          bottom: 2,
+          left: m.margins?.left ?? 2,
+          right: m.margins?.right ?? 2,
+          top: m.margins?.top ?? 2,
+          bottom: m.margins?.bottom ?? 2,
           reusableM2: 0,
         },
       ],
@@ -307,14 +331,13 @@ export function CostCalculator({
                             "Alt pay (cm)",
                           ][index]
                         }
-                        <input
-                          type="number"
+                        <NumericInput
                           min={key === "quantity" ? 1 : 0}
                           step={key === "quantity" ? 1 : 0.1}
                           value={u[key]}
                           onChange={(e) =>
                             changeMaterial(u.id, {
-                              [key]: Number(e.target.value),
+                              [key]: numericValue(e.target.value),
                               reusableM2: 0,
                             })
                           }
@@ -383,14 +406,13 @@ export function CostCalculator({
                   )}
                   <label>
                     Yeniden kullanılabilir kalan alan (m²)
-                    <input
-                      type="number"
+                    <NumericInput
                       min="0"
                       step="0.0001"
                       value={u.reusableM2}
                       onChange={(e) =>
                         changeMaterial(u.id, {
-                          reusableM2: Number(e.target.value),
+                          reusableM2: numericValue(e.target.value),
                         })
                       }
                     />
@@ -418,7 +440,7 @@ export function CostCalculator({
                       expenses: [
                         ...input.expenses,
                         {
-                          id: crypto.randomUUID(),
+                          id: createId(),
                           typeId: t.id,
                           name: t.name,
                           unit: t.unit,
@@ -464,8 +486,7 @@ export function CostCalculator({
                 </label>
                 <label>
                   Miktar
-                  <input
-                    type="number"
+                  <NumericInput
                     min="0"
                     step="0.01"
                     value={e.quantity}
@@ -473,7 +494,7 @@ export function CostCalculator({
                       update({
                         expenses: input.expenses.map((x) =>
                           x.id === e.id
-                            ? { ...x, quantity: Number(ev.target.value) }
+                            ? { ...x, quantity: numericValue(ev.target.value) }
                             : x,
                         ),
                       })
@@ -482,8 +503,7 @@ export function CostCalculator({
                 </label>
                 <label>
                   USD / birim
-                  <input
-                    type="number"
+                  <NumericInput
                     min="0"
                     step="0.000001"
                     value={e.usdAmount}
@@ -491,7 +511,7 @@ export function CostCalculator({
                       update({
                         expenses: input.expenses.map((x) =>
                           x.id === e.id
-                            ? { ...x, usdAmount: Number(ev.target.value) }
+                            ? { ...x, usdAmount: numericValue(ev.target.value) }
                             : x,
                         ),
                       })
@@ -518,7 +538,7 @@ export function CostCalculator({
                   expenses: [
                     ...input.expenses,
                     {
-                      id: crypto.randomUUID(),
+                      id: createId(),
                       typeId: "custom",
                       name: "Yeni gider",
                       unit: "iş",
@@ -580,14 +600,13 @@ export function CostCalculator({
           </label>
           <label className="mt">
             Hedef kâr {input.method === "margin" ? "marjı" : "ekleme"} (%)
-            <input
-              type="number"
+            <NumericInput
               min="0"
               max={input.method === "margin" ? 99.99 : 10000}
               step="0.1"
               value={input.targetPercent}
               onChange={(e) =>
-                update({ targetPercent: Number(e.target.value) })
+                update({ targetPercent: numericValue(e.target.value) })
               }
             />
           </label>
@@ -602,8 +621,7 @@ export function CostCalculator({
           </div>
           <label>
             Manuel net satış fiyatı (TL)
-            <input
-              type="number"
+            <NumericInput
               min="0"
               step="0.01"
               disabled={!rate}
@@ -618,7 +636,7 @@ export function CostCalculator({
                   manualNetUsd:
                     e.target.value === ""
                       ? null
-                      : Number(e.target.value) / (rate?.value ?? 1),
+                      : numericValue(e.target.value) / (rate?.value ?? 1),
                 })
               }
             />
@@ -636,7 +654,7 @@ export function CostCalculator({
             KDV (%)
             <select
               value={input.vat}
-              onChange={(e) => update({ vat: Number(e.target.value) })}
+              onChange={(e) => update({ vat: numericValue(e.target.value) })}
             >
               {[0, 1, 10, 20].map((v) => (
                 <option key={v}>{v}</option>

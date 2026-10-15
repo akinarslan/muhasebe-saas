@@ -1,4 +1,8 @@
 "use client";
+import { numericValue } from "@/lib/numeric";
+import { NumericInput } from "./ui/numeric-input";
+import { createId, copyValue } from "@/lib/runtime";
+
 import { useState } from "react";
 import {
   Plus,
@@ -144,7 +148,7 @@ export function SaleForm({
       payments: draft.paid
         ? [
             {
-              id: crypto.randomUUID(),
+              id: createId(),
               saleId: id,
               method: draft.method,
               amount: draft.paid,
@@ -153,8 +157,8 @@ export function SaleForm({
           ]
         : [],
       notes: draft.notes,
-      rateSnapshot: structuredClone(rate),
-      lines: structuredClone(draft.lines),
+      rateSnapshot: copyValue(rate),
+      lines: copyValue(draft.lines),
     });
     setError("");
   }
@@ -388,13 +392,14 @@ export function SaleForm({
                   <div className="line-fields">
                     <label>
                       Miktar
-                      <input
-                        type="number"
+                      <NumericInput
                         min="0.01"
                         step="0.01"
                         value={l.quantity}
                         onChange={(e) =>
-                          changeLine(l.id, { quantity: Number(e.target.value) })
+                          changeLine(l.id, {
+                            quantity: numericValue(e.target.value),
+                          })
                         }
                       />
                     </label>
@@ -402,26 +407,24 @@ export function SaleForm({
                       <>
                         <label>
                           En (cm)
-                          <input
-                            type="number"
+                          <NumericInput
                             min="1"
                             value={l.width}
                             onChange={(e) =>
                               changeLine(l.id, {
-                                width: Number(e.target.value),
+                                width: numericValue(e.target.value),
                               })
                             }
                           />
                         </label>
                         <label>
                           Boy (cm)
-                          <input
-                            type="number"
+                          <NumericInput
                             min="1"
                             value={l.height}
                             onChange={(e) =>
                               changeLine(l.id, {
-                                height: Number(e.target.value),
+                                height: numericValue(e.target.value),
                               })
                             }
                           />
@@ -430,25 +433,27 @@ export function SaleForm({
                     )}
                     <label>
                       Birim fiyat ({p?.unit})
-                      <input
-                        type="number"
+                      <NumericInput
                         min="0"
                         step="0.01"
                         value={l.price}
                         onChange={(e) =>
-                          changeLine(l.id, { price: Number(e.target.value) })
+                          changeLine(l.id, {
+                            price: numericValue(e.target.value),
+                          })
                         }
                       />
                     </label>
                     <label>
                       İskonto (%)
-                      <input
-                        type="number"
+                      <NumericInput
                         min="0"
                         max="100"
                         value={l.discount}
                         onChange={(e) =>
-                          changeLine(l.id, { discount: Number(e.target.value) })
+                          changeLine(l.id, {
+                            discount: numericValue(e.target.value),
+                          })
                         }
                       />
                     </label>
@@ -457,7 +462,9 @@ export function SaleForm({
                       <select
                         value={l.vat}
                         onChange={(e) =>
-                          changeLine(l.id, { vat: Number(e.target.value) })
+                          changeLine(l.id, {
+                            vat: numericValue(e.target.value),
+                          })
                         }
                       >
                         {[0, 1, 10, 20].map((v) => (
@@ -561,12 +568,13 @@ export function SaleForm({
               </label>
               <label>
                 Peşin ödenen miktar
-                <input
-                  type="number"
+                <NumericInput
                   min="0"
                   step="0.01"
                   value={draft.paid}
-                  onChange={(e) => update({ paid: Number(e.target.value) })}
+                  onChange={(e) =>
+                    update({ paid: numericValue(e.target.value) })
+                  }
                 />
               </label>
             </div>
@@ -587,7 +595,7 @@ export function SaleForm({
                     plans: [
                       ...draft.plans,
                       {
-                        id: crypto.randomUUID(),
+                        id: createId(),
                         method: "Havale/EFT",
                         amount: Math.max(0, round(balance - planned)),
                         dueDate: draft.dueDate,
@@ -625,8 +633,7 @@ export function SaleForm({
                 </label>
                 <label>
                   Tutar
-                  <input
-                    type="number"
+                  <NumericInput
                     min="0.01"
                     step="0.01"
                     value={p.amount}
@@ -634,7 +641,7 @@ export function SaleForm({
                       update({
                         plans: draft.plans.map((x) =>
                           x.id === p.id
-                            ? { ...x, amount: Number(e.target.value) }
+                            ? { ...x, amount: numericValue(e.target.value) }
                             : x,
                         ),
                       })

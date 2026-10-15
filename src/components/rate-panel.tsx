@@ -4,6 +4,7 @@ import { RefreshCw, Landmark, ShieldCheck, AlertTriangle } from "lucide-react";
 import type { RateResponse, RateSnapshot } from "@/lib/pricing-types";
 import { dateLabel } from "@/lib/finance";
 import { Button } from "./ui/button";
+import { NumericInput } from "./ui/numeric-input";
 export function RatePanel({
   rate,
   onChange,
@@ -122,6 +123,7 @@ export function RatePanel({
       {rate && (
         <div className="rate-dates">
           <span>Yayın / işlem: {dateLabel(rate.publishedAt)}</span>
+          {rate.eurValue && <span>EUR/TRY: {rate.eurValue.toFixed(4)}</span>}
           <span>
             Son çekilme:{" "}
             {new Date(rate.fetchedAt).toLocaleString("tr-TR", {
@@ -162,8 +164,7 @@ export function RatePanel({
           </p>
           <label>
             Manuel USD/TRY
-            <input
-              type="number"
+            <NumericInput
               min="0.0001"
               step="0.0001"
               required

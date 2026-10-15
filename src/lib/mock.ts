@@ -1,3 +1,4 @@
+import { createId } from "./runtime";
 import type {
   Customer,
   DemoData,
@@ -69,7 +70,7 @@ export const methods = [
 ] as const;
 export function newLine(product = products[0]): SaleLine {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     productId: product.id,
     description: product.name,
     quantity: 1,
