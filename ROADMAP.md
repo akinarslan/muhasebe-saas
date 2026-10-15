@@ -134,3 +134,22 @@ Her modul icin goruntuleme, ekleme, duzenleme, fiyat/maliyet gorme, fiyat degist
 Master Admin kullanici davet eder, pasiflestirir, rol sablonu uygular ve ozellestirir. Diger kullanicilar kendine izin veya Master Admin rolu atayamaz.
 Yetki kontrolu yalniz UI gizleme degildir: sunucu API ve veri erisiminde default deny, tenant/legal entity siniri ve ozel izinler uygulanir. Hassas alanlar yetkisiz API yanitina dahil edilmez. Degisiklikler AuditEvent'e yazilir, oturumlar gerektiğinde iptal edilir, kritik degisiklik MFA ister.
 v0.7 kabul testleri: yetkisiz API erisimi reddi, izin iptali sonrasi erisim kaybi, USD maliyet ve banka bilgilerinin gizliligi, faaliyet/sirket ayrimi, izinsiz yetki artirma engeli ve master hesap kurtarma yolu.
+
+
+## YETKILENDIRME UYGULAMA PLANI — KESIN TEKNIK KABUL KRITERLERI
+Bu bolum v0.3-v0.7 arasinda Codex'in uygulayacagi zorunlu is paketidir; onceki genel rol aciklamalarini somutlastirir.
+
+**v0.3 temel teslimat:**
+1. Yonetilen bulut PostgreSQL uzerinde users, memberships, roles, permissions, role_permissions, user_permission_overrides, audit_events ve sessions semalari; migrasyonlar ve seed.
+2. Master Admin kurulum/bootstrap akisi: ilk sahip guvenli ortamda olusturulur; istemciden self-assign edilemez. Aktif tek Master Admin'in kaybolmasini engelleyen kurtarma proseduru.
+3. Kullanici daveti, devre disi birakma, oturum iptal etme; MFA ozellikle Master Admin icin. Oturum secure, httpOnly cookie ile yonetilir.
+4. Kullanici detayinda izin matrisi: her kaynak icin Gor/Ekle/Duzenle/Onayla/Iptal-TersKayit/DisaAktar, fiyat ve finans icin ozel aksiyonlar. Rol sablonu secilir, kisiye ozel allow/deny override yapilir, izinlerin etkili ozeti gosterilir.
+5. Backend merkezi authorize(user, action, resource, scope) politikasi. Istemciden gelen userId, role, tenantId otorite kabul edilmez; default deny. Yetkisiz API istekleri reddedilir, hassas alanlar response'dan cikarilir.
+6. Tum izin atama/geri alma, kritik maliyet duzenleme, manuel kur degisikligi ve finansal onaylar append-only audit event'e kaydolur.
+7. Negatif guvenlik testleri: kendine yetki verememe; dogrudan API cagrisiyla kisitli islem yapamama; URL degistirerek baska kayda erisememe; revoke sonrasi yetkinin kalkmasi.
+
+**v0.4-v0.6:** Yeni modullerin her endpoint ve server action'i izin kontrolunden gecer; stok duzeltme, fiyat goruntuleme/degistirme, cari hareket, tahsilat, banka, rapor ihraci ayri izinlere ayrilir. Gerektiginde tutar limiti/onay sureci.
+
+**v0.7 canli kullanim kapisi:** Master Admin'in sifirdan personel olusturup yetki verebilmesi; tum personelin gorevlerine gore erisimi; izin degisikliginin oturumda uygulanmasi; yetkili onay ve islem denetimi; Playwright senaryolari ve API negatif testlerinin gectigini kanitlayan rapor. Izin testi basarisizsa canliya cikma.
+
+**v0.8:** Her harici tenant kendi Master Admin'ini yonetir; baska tenantin kaydina/rolune/izinlerine erişemez; platform operatoru ile tenant yoneticisi ayridir.
