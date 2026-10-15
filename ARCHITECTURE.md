@@ -93,3 +93,9 @@ Browser (React) -> Server API/Services -> authn+authz middleware + transactional
 ### Faz siniri
 v0.7: sizin personeliniz gercek satis, stok, tahsilat, uretim ve rapor girer; kisi bazli yetkiler, guvenilir DB, gercek yedekleme ve kurtarma vardir.
 v0.8+: dis musteri tenant olusturma, planlar/abonelik, abonelik odeme ve destek; mevcut canli isletme surecinin geriye donuk bozulmamasi zorunludur.
+
+
+## BULUT VERI KATMANI — v0.3 BASLANGIC ZORUNLULUGU (2026-10-15)
+Canli verilerin otoritatif kaynagi yerel dosya veya localStorage degil, yonetilen bulut PostgreSQL'dir. v0.3'te gelistirme/staging/production ayrimi, guvenli sunucu oturumlari, role-based authorization, tls, at-rest encryption, least-privilege DB kullanicilari, secret management, baglanti havuzu ve otomatik yedeklemeyi kur. Kullanici fiyat/musteri/finans/uretim verileri sunucudan dogrulanip transaction'la saklanir. Frontend yalnizca UI cache/taslak barindirir.
+Yedekleme: Gunluk otomatik yedek, mumkunse point-in-time recovery, sifreli ayrik ikinci kopya, basari/failure alarmi, periyodik restore testi, versiyonlu sema migrasyonu ve raporlanmis RPO/RTO hedefi. Uygun kurtarma ve guncelleme politikasi olmadan prod veri girisine izin verme.
+Saklama: teknik yedek penceresi, 3 yillik is arşivi hedefi ve ticari belgelerin mevzuat kaynakli saklamasi farkli politikalardir. KVKK, ulke disina aktarim kosullari, saglayici ve veri bolgesi go-live oncesi degerlendirilir. Sahte yedek basarisi veya test edilmemis kurtarma iddiasi kullanilmaz.
