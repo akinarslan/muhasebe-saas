@@ -1,99 +1,92 @@
-# Pusula v0.2 — Fiyatlandırma ve UI/UX Teslim Raporu
+# PUSULA v0.2.2 — Birleşik teslim raporu
 
-Tarih: 15.10.2026 · Dizin: `C:\Users\tb\Desktop\muhasebe-saas`
+15.10.2026 · `C:\Users\tb\Desktop\muhasebe-saas` · [GitHub](https://github.com/akinarslan/muhasebe-saas)
 
-## Denetim ve düzeltilen varsayımlar
+## Sonuç ve Git senkronizasyonu
 
-v0.1'de `newLine()` katalog satış fiyatını otomatik kopyalıyor, kâr güncel katalog maliyetinden hesaplanıyor ve USD dönüşümünde sabit 42 kullanılıyordu. Bu varsayımlar yeni fiyatlandırma kararlarına göre kaldırıldı.
+Yerel klasörde Git deposu bulunmuyordu. Mevcut uygulama silinmeden ilk snapshot alındı; yalnız belgeleri içeren GitHub geçmişi indirildi ve README, ROADMAP, ARCHITECTURE okundu. Bağımsız geçmişler merge edildi; README çakışmasında yerel kullanım belgeleri korundu, uzak ilk README `docs/history/GITHUB_README_20261015.md` içinde saklandı. Mimari ve uzun vadeli faz sınırları korunup yeni tasarım belgeleriyle ilişkilendirildi.
 
-Aktif ürünlerin varsayılan satış fiyatı/maliyeti sıfırdır. Başlangıç malzeme genişliklerinin USD maliyetleri boştur. Eski ZY Reklam listesi içe aktarılmadı ve aktif fiyatlandırmayı etkilemez. Hayalî v0.1 satışları eski fiyat/kur/maliyetlerini yalnızca açıkça tarihsel demo olarak işaretli snapshot'larda korur. Eski satış taslakları, müşteri bilgileri, ürünleri ve açıklamaları taşınır; eski fiyatlar yeniden doğrulanmadan kaydedilemez.
+Geliştirme `work/pusula-v022` branch'inde yapıldı. `backup/local-v020` yerel başlangıç yedeğidir. Doğrulanan çalışma branch'i GitHub'a push edildi; `main`, `6cb8387` üzerinden `4fe623b` teslimine fast-forward güncellendi. Bu rapor ek bir dokümantasyon commit'iyle aynı iki remote ref'e gönderilir. Force-push, hard reset veya kullanıcı verisi temizliği yapılmadı. `.env.local`, `node_modules`, `.next`, `.data`, Playwright çalışma çıktıları ve kullanıcı verileri commit edilmedi. Paylaşılan PNG'ler ayrı test context'indeki hayalî demo verileridir.
 
-## Uygulanan fiyatlandırma
+| Sprint               | Commit    | İçerik                                                              |
+| -------------------- | --------- | ------------------------------------------------------------------- |
+| Başlangıç snapshot   | `f45fb76` | Değişiklik öncesi yerel v0.2 kodu                                   |
+| 1 — Güvenli birleşme | `7d9e474` | GitHub belge geçmişi + yerel uygulama                               |
+| 2 — v0.2.1           | `204c8dd` | Müşteri/ID/şema, numeric input, USD seed, Decimal, ilk E2E          |
+| 3 — Tasarım temeli   | `a84c290` | Motion, özgün pusula, giriş prototipi, beş tasarım belgesi          |
+| 4 — Premium UX       | `2def65a` | Dashboard, satış/malzeme, responsive, yeni ürün, veri koruma        |
+| 5 — Doğrulama        | `4fe623b` | Son test kaydı, ekran görüntüleri, mimari/yol haritası bağlantıları |
 
-- USD/birim malzeme maliyeti; m², metretül, adet, plaka; yeni malzeme ve varyant; stok uygunluğu.
-- Her fiyat değişikliğinde tarih, önceki/yeni değer, kullanıcı kimliği ve adı. Malzeme/gider kataloğu localStorage'da saklanır.
-- Ruloda gerçek tüketim: tam rulo eni × paylı boy × adet. 135 × 200 cm + dört kenarda 2 cm → 139 × 204 cm gerekir; 137 cm reddedilir, 152 cm ile 3,1008 m² tüketilir.
-- Diğer uygun/stokta rulolar kullanıcı tarafından seçilebilir. Varyant USD fiyatları birbirinden bağımsızdır. Metretül hesabı aynı iş için 2,04 metre kullanır.
-- Brüt kullanılmayan alan, kullanıcı tarafından ayrılan yeniden kullanılabilir alan ve net fire ayrı gösterilir. Yeniden kullanılabilir alan kenar kesimlerini içermez; maliyetten düşülmez.
-- Bir üründe birden fazla malzeme ve gider; serbest gider türü/birimi. Başlangıç türleri mürekkep, işçilik, elektrik, makine, kesim, laminasyon, montaj, nakliye ve diğer giderlerdir; listeyle sınırlı değildir.
-- Toplam USD maliyeti = malzeme + gider. Marj yöntemi `maliyet / (1 − marj)`; maliyet üzerine kâr yöntemi `maliyet × (1 + oran)` olarak ayrıdır. KDV ayrıca hesaplanır.
-- Manuel net TL fiyat girilebilir; gerçekleşecek kâr, marj ve maliyet üstü kâr yeniden hesaplanır. Satış satırında sonradan birim fiyat/iskonto değişse de gerçek kâr aynı sabitlenmiş maliyetten türetilir.
-- Satır hesaplayıcısından satışa fiyat aktarılır; iskonto sıfırlanır, KDV aktarılır. Ölçü/adet değişirse maliyet yeniden doğrulanmalıdır. Para birimi değişimi müşteri/ürün/açıklamayı korur, fiyatları yeniden hesaplama için sıfırlar.
-- Satış ve bağımsız maliyet teklifleri kur, tüketim, USD birim maliyeti, giderler, hedef/yöntem ve kullanıcı bilgilerini bağımsız snapshot olarak saklar. Yeni katalog veya kur güncellemesi geçmiş kayıtları değiştirmez.
+## Kritik hata araştırması
 
-## Kur hizmeti
+**Müşteri:** Değişiklik öncesindeki 46 jsdom testi geçiyordu; bu tek başına kullanıcının tarayıcısındaki açılış çökmesini yeniden üretmiyordu. Kodda doğrudan `crypto.randomUUID()` ve `structuredClone()` bağımlılıkları ile yalnız üst seviye array kontrolü yapan eski müşteri şeması okuması bulundu. Güvensiz LAN HTTP bağlamında randomUUID bulunmayabilir; eski kayıtta null ad, `.trim()`/`.slice()` yollarını bozabilir. Bunlar düzeltilmiş somut uyumluluk sorunlarıdır; başlangıçtaki yalnız açılış anı çökmesinin tek ve kesin sebebiymiş gibi sunulmaz.
 
-`GET /api/exchange-rate` Node.js sunucusunda TCMB XML'den USD `ForexSelling / Unit` alır. Alış/efektif satış kullanılmaz. Yayın tarihi ve son çekilme zamanı gösterilir; gösterge kurunun gerçek zamanlı piyasa kuru olmadığı belirtilir.
+Tarayıcı uyumlu ID/kopyalama yardımcıları, null/eski müşteri alanları ve yinelenen ID'ler için idempotent dönüşüm, null-güvenli isim karşılaştırması ve kayıt hata mesajı eklendi. Playwright, randomUUID ve structuredClone kaldırılmış gerçek browser context'inde drawer açma/kaydetme, otomatik müşteri seçimi, ölçü/taslak koruma ve yenilemeyi hata oluşmadan doğruladı. Yeni kaydın ID'si çakışmayan biçimde üretilir.
 
-Son başarılı TCMB kuru `.data/exchange-rates.json` dosyasına yazılır. Servis/parsing hatasında bu kur eski olabileceği uyarısıyla korunur. Önbellek yoksa kur uydurulmaz; 503 döner, fiyat/satış kaydı yapılamaz. Yazımlar tek süreçte sıralanır ve atomik rename kullanır.
+**Sayılar:** Eski kontrollü alanlar boş metni `Number('')` ile 0 yapıyor, kullanıcı yazarken state tekrar sıfır gösteriyordu. Ortak NumericInput ham düzenleme metnini korur; `1000`, `0.50`, `1,25`, temizleme ve negatif parsing testlidir. Boş/geçersiz değer hesaplamada NaN/validation olarak kalır; sahte 0 fiyat/kâr gösterilmez. Min/max uyarıları, Zod/domain doğrulaması ve normalize edilmiş form verisi birlikte kullanılır. Türkçe para formatı girişten ayrı gösterilir; binlik ayırıcıyla giriş önerilmez.
 
-Yetkili manuel `POST` için sunucuda `PUSULA_RATE_ADMIN_TOKEN` (en az 24 karakter) gerekir. Sabit zamanlı karşılaştırmayla anahtar doğrulanır; kur, yetkili adı, gerekçe ve zaman denetim kaydına yazılır. Anahtar saklanmaz. Manuel kayıt TCMB cache'ini değiştirmez. `.env.example` kurulum şablonu eklendi. Test sunucusunda gerçek yönetici anahtarı oluşturulmadı; varsayılan manuel endpoint kapalıdır. Yetkili/izinsiz/bozuk istek senaryoları otomatik testlerle doğrulandı.
+**Veri:** Bir defalık `pusula.backup.v020`, eski demo/taslak/katalog/teklif JSON metinlerini tarayıcı içinde saklar. Mevcut anahtarlar silinmez. Boş numeric alanlar JSON'da null olsa da draft dönüşümünde geçersiz olarak geri yüklenir; sessizce 0 yapılmaz. Kullanıcı USD fiyatı ve eski snapshot'lar seed/kur güncellemesiyle değişmez.
 
-Canlı HTTP kontrolünde yerel sunucu TCMB'den **15.10.2026 yayınlı 49,4204 USD/TRY döviz satış kuru** döndürdü; çekilme zamanı `2026-10-15T15:01:31.923Z` (18:01:31 İstanbul) ve `stale: false` idi. Bu bir doğrulama kaydıdır, gelecekteki güncel kur iddiası değildir. Kaynak yanıtı `tests/fixtures/tcmb-2026-10-15.xml` içinde korunur; uygulama fixture'ı aktif fiyat kaynağı olarak kullanmaz.
+## Malzeme, kur ve maliyet
 
-## UI/UX
+- Kullanıcının verdiği 11 başlangıç referansı idempotent eklendi. USD ana maliyet korunur. TRY/EUR yalnız tarihsel USD/TRY **49.4204**, EUR/TRY **55.4110** referansıyla bir kez normalize edilir; canlı kur etiketi taşımaz.
+- Vinil 140 cm ve Oracal 105/126/137/152/160/200 cm verilen örneklere dayanır. Ölçüsü belirsiz diğer malzemeler stokta/üretime hazır kabul edilmez; kullanıcı ölçü onayı gerekir. Mevcut kullanıcı fiyatları ezilmez.
+- Yeni malzeme/varyant, SKU, kategori, marka, tedarikçi tanımı, maliyet birimi, KDV, tarih, açıklama ve varsayılan paylar düzenlenebilir. Pasifleştirme/arşiv, genişliği kaldırma/arşivden alma ve fiyat tarihçesi bulunur. Birim değiştirilirse maliyet yeniden girilmelidir.
+- Satılabilir ürün/hizmet ekleme malzemeden ayrıdır ve satış taslağını korur. Bir satış kalemi birden fazla malzeme/gider kullanabilir.
+- Rulo yalnız ilgili malzemenin uygun/stokta varyantlarından seçilir; en dar uygun ilk seçimdir. Diğer uygun rulolar için toplam USD maliyeti karşılaştırması gösterilir; en darın en ucuz olduğu varsayılmaz.
+- 135 × 200 cm + dört kenarda 2 cm → 139 × 204 cm. 137 cm Oracal reddedilir; 152 cm tüketim **3.1008 m²**, baskı **2.70 m²**, brüt fark **0.4008 m²**, yaklaşık **%12.93**. Vinil 140 cm → **2.856 m² × 1.20 = 3.4272 USD**.
+- Baskı, kenar payı, tüketim, brüt fark, kullanılabilir artık ve maliyetlendirilen fire ayrıdır. Artık maliyetten otomatik düşülmez. Metretül uzunlukla, m² alanla, plaka tam levha tüketimiyle hesaplanır. Otomatik döndürme/nesting yapılmaz.
+- Malzeme/gider toplamları, kur dönüşümü, marj/markup ve parasal yuvarlama Decimal tabanlıdır. Gider adı/birimi serbesttir. KDV ayrıdır; manuel fiyat gerçek kâr/marjı yeniden hesaplar. Eksik malzeme fiyatı kesin öneri ve kaydı engeller.
+- TCMB sunucu route'u USD/EUR döviz satış, yayın tarihi, çekilme zamanı ve kaynağı döndürür; beş dakikalık cache, son başarılı kur fallback'i, eskilik uyarısı ve anahtar kontrollü manuel kur denetim kaydı vardır. TCMB gerçek zamanlı piyasa kuru değildir.
+- Son canlı yerel API kontrolü HTTP 200: USD **49.4204**, EUR **55.411**, yayın **15.10.2026**, çekilme `2026-10-15T16:33:02.624Z`, `stale: false`. Bu kontrol anının kaydıdır; gelecekteki güncel kur iddiası değildir.
+- Eski ZY Reklam satış listesi aktif fiyat kaynağı olarak kullanılmaz. Tarihsel v0.1 demo fiyat/kuru yalnız kendi legacy snapshot'larında korunur. Geçmiş satış ve teklifler güncel katalogdan yeniden maliyetlenmez.
 
-- Koyu lacivert, turkuaz vurgulu sidebar; finans, operasyon ve yönetim grupları açılır/kapanır; daraltma ve mobil menü korunur.
-- Altı renkte KPI: satış, kâr, alacak, borç, gecikmiş tahsilat, yaklaşan ödeme. Belirgin Lucide ikonları, gradient yüzeyler, büyük değerler, eşit uzunluktaki önceki dönem karşılaştırması, gerçek kayıtlardan mini trend ve detay panelleri.
-- Satış ürün kartlarında reklam/yazılım ikonları; maliyet hesaplayıcıda bağlantılı Malzemeler / Giderler / Fiyatlandırma panelleri; USD maliyet ve TL öneri görsel olarak ayrıdır.
-- Uygun/dar/stokta olmayan rulo seçenekleri renk, metin ve ikonlarla belirtilir. Tüketim, baskı ve kullanılmayan alan görselleştirilir.
-- Müşteri segmentleri kurum, tasarım ve mağaza ikonlarıyla renklendirilir. Müşteri detayları ve yeni müşteri drawer tipografisi/yerleşimi güçlendirildi; tarihi satışların kur ve maliyet detayları görünür.
-- Ortak renk, spacing, radius, shadow ve tipografi token'ları `src/app/v02.css` ve mevcut tema değişkenlerindedir. Geist, Tailwind, shadcn/ui Button ve Radix korunur. Masaüstü/tablet/mobil CSS kuralları, açık/koyu tema ve reduced-motion desteği vardır.
+## Premium deneyim
+
+`/login`: özgün katmanlı SVG pusula, metalik halka/ibre, yavaş ayrı katman hareketleri, sınırlı fare perspektifi, atmosferik lacivert alan ve açık demo giriş bildirimi. Gerçek şifre alınmaz, sahte güvenli oturum oluşturulmaz.
+
+Dashboard: kapatılabilir düşük opaklıklı pusula, sekiz renkli KPI, gerçek veri trendleri/dönem karşılaştırması, hızlı eylemler, grafikler ve detay panelleri. **Nakit durumu** yalnız demo nakit tahsilatını gösterir; gerçek kasa bakiyesi değildir. **Aktif işler** modül henüz çalışmadığı için açıkça 0/inaktif gösterilir; gerçek iş emri varmış gibi sunulmaz.
+
+Sidebar: 13 menü, koyu lacivert/turkuaz kimlik, gruplar, daraltma, mobil çekmece ve profil/giriş tasarımı bağlantısı. Satış geniş masaüstünde müşteri/kalemler/fiyat özeti alanlarına ayrılır; maliyet çalışma alanı ilişkili drawer'da malzeme/gider/fiyat panellerini sunar. Mobilde tek kolon ve yerel tablo scroll'u vardır. Müşteri segment ikonları, yeni müşteri drawer'ı ve mevcut arama/CSV/filtreler korunur.
+
+Motion tokenları, MotionConfig reducedMotion, kısa sayfa/drawer/hover/toast geçişleri ve skeleton eklendi. Kritik işlem animasyon bitişini beklemez. Pusula satış, müşteri, malzeme ve maliyette bulunmaz. Master Admin yalnız belgeli blueprint'tir; gerçek enforcement v0.3'te yapılır.
+
+Beş tasarım belgesi `docs/design/` altında amaç, görsel/etkileşim/motion/responsive/erişilebilirlik ve kabul kriterlerini içerir; ROADMAP/ARCHITECTURE ile bağlantılıdır.
 
 ## Doğrulama
 
-| Kontrol                                 | Sonuç                                                               |
-| --------------------------------------- | ------------------------------------------------------------------- |
-| `npm run build`                         | Başarılı; TypeScript strict, statik sayfalar ve dinamik kur route'u |
-| `npm run lint`                          | Başarılı; 0 hata, 0 uyarı                                           |
-| `npm test`                              | **7 dosya, 46 test başarılı**                                       |
-| Üretim ana sayfa HTTP kontrolü          | HTTP 200                                                            |
-| Üretim `/api/exchange-rate`             | HTTP 200; gerçek TCMB USD döviz satış ve yayın/çekilme tarihleri    |
-| Masaüstü/mobil görsel tarayıcı kontrolü | Yapılamadı; oturumun tarayıcı/uygulama envanteri boş                |
+| Kontrol        | Sonuç                                                            |
+| -------------- | ---------------------------------------------------------------- |
+| Başlangıç      | Build/lint başarılı, 46/46 test                                  |
+| Son build      | Başarılı, strict TypeScript                                      |
+| Son lint       | 0 hata, 0 uyarı                                                  |
+| Son Vitest     | **54/54**, 8 dosya; önceki 46 korunur                            |
+| Son Playwright | **12/12**, desktop Chrome ve Chromium mobil emülasyon; 43.1 s    |
+| Gerçek API     | HTTP 200, USD/EUR ve yayın/çekilme bilgileri                     |
+| Görsel kontrol | Masaüstü/mobil giriş ve dashboard PNG'leri üretildi ve incelendi |
 
-UI testleri jsdom'da gerçek form etkileşimleriyle çalışır. Eşzamanlı build yükünde 5 saniyelik test eşiği aşıldığı için Vitest iki işçi ve 15 saniyelik test sınırıyla yapılandırıldı; son tam test çalışması başarılıdır. Bu ayar ürün davranışını değiştirmez.
+İlk premium browser koşusunda 11/12 geçti. Mobil testin menü hydration zamanlaması ve kapalı menüde erişilebilir ad eksikliği düzeltildi. Son tam koşu değişmeyen uygulama koduyla 12/12 geçti; başarısız koşu başarı sayılmadı. Başka uygulamaya ait süreçler durdurulmadı; zaten açık olan bu projenin yerel geliştirme sunucusu yeniden kullanıldı.
 
-Önceki 12 testin kapsamı korundu. Yeni kararla çelişen sabit örnek kur testi, işlem snapshot'ı zorunluluğunu doğrulayacak şekilde değiştirildi. Müşteri/taslak entegrasyon testi yeni zorunlu fiyat sabitleme adımını da çalıştırır. Testler atlanmadı.
-
-### İstenen 15 senaryonun karşılığı
-
-| Senaryo                              | Doğrulama                                                                                          |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| 1. Yeni malzeme                      | UI: malzeme ve varyant ekleme                                                                      |
-| 2. Elle USD değişimi                 | UI + fiyat geçmişinde eski/yeni değer/kullanıcı                                                    |
-| 3. Malzeme maliyetiyle yeniden hesap | Motor testi                                                                                        |
-| 4. 137 cm reddi                      | Motor + disabled UI seçeneği                                                                       |
-| 5. 152 cm ve 3,1008 m²               | Motor + otomatik UI seçimi                                                                         |
-| 6. m² / metretül ayrımı              | 3,1008 m² ve 2,04 metretül karşılaştırması                                                         |
-| 7. Çoklu malzeme                     | Motor + UI                                                                                         |
-| 8. Yeni gider                        | Yeni kütüphane türü ve özel satır UI testleri                                                      |
-| 9. Gider maliyeti                    | Miktar × USD ve toplam maliyet testi                                                               |
-| 10. Hedef marj                       | Marj/markup motor testi ve UI hedef girişi                                                         |
-| 11. Manuel marj                      | Manuel fiyat, gerçek kâr ve KDV testi                                                              |
-| 12. Kur güncellemesi                 | Yeni hesap ve UI kur değişimi; TCMB yeni yayın testi                                               |
-| 13. Geçmişi koruma                   | Snapshot bağımsızlığı, katalog/kur değişimi, migration ve kalıcı satış testi                       |
-| 14. Eski fiyatların etkisizliği      | Aktif sıfır fiyat/boş malzeme maliyeti ve örnek kur reddi                                          |
-| 15. Mevcut işlevler                  | Müşteri doğrulama, mükerrer, il/ilçe, Escape, fazla ödeme, taslak yenileme ve satış kaydı testleri |
-
-Ek testler: adet/plaka, stok reddi, kullanılabilir artık sınırı, bozuk TCMB XML, ilk kur hatası, son başarılı kur fallback, izinsiz manuel kur, yapılandırılmamış manuel servis ve yazılamayan denetim kaydı.
+Kanıtlar: [doğrulama ayrıntıları](docs/validation/FINAL_VERIFICATION.md), [başlangıç](docs/validation/BASELINE.md), [ekran görüntüleri](docs/design/screenshots/).
 
 ## Bilinen sınırlar
 
-- Veriler prototiptir; tarayıcı verisi tam kullanıcı/tenant güvenliği sağlamaz. Manuel kur anahtarı yalnızca kendi endpoint'ini korur. Ticari yayına hazır backend/rol/veri yedeği olduğu iddia edilmez.
-- Malzeme maliyet tarihçesi demo kullanıcı adıyla tutulur; kur yöneticisi adı sunucu ortamından gelir. Tarayıcı kullanıcı oturum sistemi yoktur.
-- `.data/` tek sunucu/kalıcı disk varsayar. Çok instance'lı dağıtım, ortak veri deposu ve dağıtık kilit yoktur. localStorage'da sekmeler arası eşzamanlama ve sunucu yedeği yoktur.
-- Henüz uygulanmamış hesaplayıcı girdileri panel kapanınca korunmaz. Satış taslağına uygulanmış maliyet snapshot'ları ve kayıtlı teklifler kalıcıdır.
-- Stok miktarı düşümü/artık stoğu, gelişmiş yerleşim optimizasyonu, teklif gönderme/onay, gerçek ödeme ve resmî muhasebe yoktur. Bağımsız Alacaklar, Borçlar, Tedarikçiler, Üretim, Raporlar, Ayarlar Yakında durumundadır.
-- Dashboard bakiyesi seçili dönemde oluşmuş kayıtların bugünkü kalanıdır; geçmiş tarih itibarıyla muhasebe kesiti değildir. Kısmi tahsilat planını sonradan gerçekleştirme/düzeltme akışı bu sürümde yoktur.
-- Responsive CSS ve erişilebilir kontroller uygulanmıştır; gerçek masaüstü/tablet/mobil ekran görüntüsü, ekran okuyucu ve farklı tarayıcı kontrolleri bu oturumda doğrulanamamıştır. jsdom etkileşim testleri görsel kontrol yerine geçmez.
+- Gerçek kimlik/rol/Master Admin enforcement, bulut PostgreSQL, tenant güvenliği ve yedek/restore v0.3+ kapsamındadır. localStorage gerçek işletme verisi için güvenilir ana kaynak sayılmaz.
+- Stok miktarı/depo/alış hareketleri, iş emirleri, ileri nesting, operasyonel kasa/banka ve gerçek tahsilat v0.4–v0.6 kapsamındadır. Yeni tedarikçi tanımı bu modüllerin tamamı değildir.
+- Manuel kur endpoint'i yalnız sunucu anahtarıyla korunur; tam kullanıcı yetki sisteminin yerine geçmez. Varsayılan olarak anahtar yoksa kapalıdır.
+- `.data/` tek sunucu/kalıcı disk varsayar; dağıtık cache/DB değildir. Fiyat geçmişi demo kullanıcı kimliğiyle tutulur. Kullanıcı verilerini GitHub'a yedekleme yapılmaz.
+- Henüz sabitlenmemiş maliyet drawer girdileri kapanınca korunmaz; satışa uygulanmış snapshot, satış taslağı ve kaydedilmiş teklifler kalıcıdır.
+- Gerçek iOS/Safari cihazı, ekran okuyucu sertifikasyonu ve Lighthouse performans bütçesi ölçülmedi. Mobil Chromium emülasyonu, yatay taşma, klavye/Escape ve reduced-motion test edildi. Geliştirme PNG'lerinde Next.js geliştirme göstergesi görülebilir.
+- Açılış anındaki kullanıcı çökmesinin tam tarayıcı logu bulunmadığı için tek sebep iddiası yapılmaz; bulunan uyumluluk ve veri şeması riskleri düzeltildi ve gerçek browser kayıt/yenileme akışı doğrulandı.
 
-## Çalıştırma
+## Yerel kabul adımları
 
-```powershell
-npm ci
-npm run dev
-```
+1. `npm ci`, `npm run dev`; http://127.0.0.1:3000/login üzerinden demo giriş tasarımını açın.
+2. Dashboard faaliyet/tarih filtresini değiştirin; pusulayı kapatıp yenileyin; tercihin korunduğunu kontrol edin.
+3. Satışa folyo/ölçü/açıklama ekleyin; yeni müşteriyi drawer'dan kaydedin; seçimin ve taslağın yenilemede korunduğunu kontrol edin.
+4. Fiyat alanını silin; `1000`, `0.50`, `1,25` deneyin. Boş/geçersiz alanda fiyat kaydı yapılmadığını görün.
+5. Malzeme Yönetimi'nde kendi USD fiyatınızı değiştirin; kaynak tarihçesini görün; ölçü onayı gereken malzemeyi tamamlayın. Kur yenilemesinin USD fiyatını değiştirmediğini kontrol edin.
+6. Maliyet'te Vinil 140 cm ve Oracal 152 cm örneklerini çalıştırın; alternatif rulo, gider, marj/markup, manuel fiyat ve KDV'yi inceleyin. Teklifi sabitleyip katalog fiyatını değiştirin; eski snapshot sabit kalmalı.
+7. 390 px mobil görünüm, menü, Escape ve sistem reduced-motion tercihini deneyin.
 
-Adres: http://127.0.0.1:3000. Üretim: `npm run build`, sonra `npm start`.
-
-Önce **Stok ve Malzemeler** ekranından kendi USD alış maliyetlerinizi girin; sonra satış satırındaki hesaplayıcıyı veya **Teklif ve Maliyet** ekranını kullanın. Yetkili manuel kur kurulumu ve hesap kuralları `README.md` içindedir. Yerel HTTP kontrolü için açılan test sunucusu durduruldu.
+Komutlar: `npm test`, `npm run test:e2e`, `npm run lint`, `npm run build`. Manuel kur kurulumu `.env.example` ve README'dedir. v0.3 ve sonrası bu görevde erkenden uygulanmadı.

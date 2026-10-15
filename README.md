@@ -85,5 +85,3 @@ Doğrulama sonuçları ve sınırlar için `LAST_REPORT.md` dosyasına bakın.
 ## Ürün ve mimari belgeler
 
 [ROADMAP](ROADMAP.md) · [ARCHITECTURE](ARCHITECTURE.md) · [GitHub ilk README kaydı](docs/history/GITHUB_README_20261015.md)
-
-
