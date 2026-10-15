@@ -118,3 +118,12 @@ Bu bolum onceki faz aciklamalarindaki zamanlama celiskilerinin yerine gecer. **v
 
 ### Acik tasarim kararlari
 Kendi isletmesinin reklam/yazilim faaliyetleri iki farkli tuzel kisilige aitse vergi/fatura/cari defterleri ayri tutulur. Tenant kavrami hedef mimaride tanimli olabilir, ancak harici tenant self-servis ve faturalama v0.8'e kadar gerekli degildir.
+
+
+## ZORUNLU BULUT VERI GUVENLIGI KARARI — 2026-10-15
+**Bulut veri saklama v0.7'den sonra degil, v0.3 ile baslar.** v0.7'ye kadar gercek isletme verilerinin tamami guvenli bulut ortaminda kalici, erisim kontrollu, sifreli, yedekli ve geri yuklenebilir olmalidir.
+- **v0.3**: Yonetilen bulut PostgreSQL (prod/staging ayri), sunucu tarafli kullanici kimligi ve yetkiler, TLS, at-rest sifreleme, otomatik gunluk yedek ve point-in-time recovery (saglayici destekliyorsa), erisim anahtari/secret yonetimi, ayrik yedek hedefi ve ilk geri yukleme testi. localStorage yalnizca gecici kullanici taslaklari icindir; gercek fiyat, musteri, finans, stok orada ana kaynak olarak tutulamaz.
+- **v0.4–v0.6**: Alim, stok, satis, musteri, tedarik, cari, tahsilat, maliyet, is emirleri ve kullanici islemleri bulut PostgreSQL'e islenir; migrasyonlar geri donus planli, islemler audit loglu ve testli; otomatik yedek izleme ve geri yukleme tatbikatlari tekrarlanir.
+- **v0.7**: Kendi firmamiz icin canli kullanim oncesi veri tasima ve mutabakat; gercek personel yetkileri; RPO/RTO hedefleri; otomatik yedek basari alarmlari; baska hesaba/bolgeye sifreli ikincil yedek; noktasal kurtarma veya esdeger; belgeli/veri kaybi senaryosu testli restore; felaket kurtarma proseduru. Bu kapilar basarilmazsa canli kullanim onayi verilmez.
+- Bulut hizmetinde saglayici, barindirma bolgesi, KVKK/yurt disina aktarim, sifreleme anahtarinin kimin kontrolunde oldugu, yedek saklama sureleri, maliyet ve veri disari aktarilabilirligi go-live oncesi karara baglanir.
+- 3 yillik yedekleme istegi gunluk yedeklerin tamamini 3 yil saklamak demek degildir: gunluk/kisa sureli teknik kurtarma, aylik/yillik arsiv ve yasal kayit saklama planlari ayridir; gereken ticari kayit saklama sureleri ayrica uygulanir.
