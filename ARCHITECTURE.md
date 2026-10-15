@@ -107,3 +107,45 @@ Master Admin UI matrisi ile kullaniciya her izni ayri verir veya geri alir; rol 
 Kapsamlar tenantId, legalEntityId, activityId, department ve ownRecords; secili islemler icin limit/onay kosulu. Sunucu verified session'dan kullaniciyi belirler, istemcinin rol veya tenant id beyanina guvenmez.
 API/server actions ve hassas domain islemleri permission policy kontrolu yapar; yetkisiz alan API yanitlarindan cikarilir. Her degisiklik audit log'da. Master Admin rolu yalniz kontrollu master akisi ve MFA ile verilir. En az bir kurtarilabilir Master Admin hesabi ve session revocation desteklenir.
 v0.3 izin motoru, master izin paneli ve kimlik dogrulama; sonraki moduller izinlere baglanir; v0.7 oncesi negatif API ve browser E2E yetki testleri zorunlu.
+
+
+## AUTHORIZATION DESIGN CONTRACT — UYGULANACAK ALGORITMA VE VERI MODELI
+
+### Model ve iliskiler
+- User(id, identityProviderId, status, mfaState)
+- Tenant(id), LegalEntity(id, tenantId), Activity(id, legalEntityId)
+- Membership(id, userId, tenantId, status) ve membership kapsaminda RoleAssignment(membershipId, roleId)
+- Role(id, tenantId, name, isSystemTemplate)
+- Permission(key, description, resource, action)
+- RolePermission(roleId, permissionKey, effect=allow)
+- UserPermissionOverride(membershipId, permissionKey, effect=allow|deny, scopeType, scopeId, optionalLimit, expiresAt)
+- AuditEvent(id, actorUserId, tenantId, legalEntityId, action, targetType, targetId, before, after, reason, timestamp)
+- Session(id, userId, expiresAt, revokedAt), gerekli indeks/foreign key ve unique kisitlari.
+
+### Yetki cozme sirasi (deterministik)
+1. Dogrulanmis sunucu oturumundan user kimligini al. Aktif membership'i ve kaynak kaydinin server tarafindan teyit edilen tenant/legal entity baglamini belirle. Uyusmuyorsa RED.
+2. User ve membership aktif degilse RED.
+3. Permission anahtarini hedef eyleme esle. Explicit DENY override varsa RED.
+4. Gecerli scope ve limitler icinde explicit ALLOW override varsa ALLOW; aksi halde atanmis rollerin ALLOW izni varsa ALLOW; hicbiri yoksa RED.
+5. Yetki olmadan DB mutasyonu yapma; kritik islem icin yeniden dogrulama/onay gerekliligini uygula.
+6. Yetkiler UI'de buton/menunun durumunu yonetir ama API policy her istekte bagimsiz kontrol eder. Kaydin gizli alanlari DTO/serializer seviyesinde kaldirilir.
+7. Yetki ve master role degisikliklerinde audit kaydi, MFA ve oturum/yetki cache gecersizlestirmesi yap.
+
+Master Admin bir isletme icindeki izinleri yonetebilir; Master Admin unvani baska tenant yetkisi vermez. Master yetkisi siradan override izniyle olusturulamaz, yalniz guvenli bootstrap ve mevcut Master Admin'in yeniden dogrulanmis onay akisi ile atanabilir. Son aktif Master Admin'i kaldirmaya izin verme.
+
+### Yetki katalogu ornekleri
+customers.view/create/edit/export; suppliers.view/create/edit; sales.view/create/edit/approve/discount; products.view/create/edit; materials.view; materials.cost.view/edit; materials.variant.manage; expenses.view/edit; fx.manual_override; inventory.view/receive/adjust; production.view/create/update/approve; receivables.view/collect; payables.view/pay; cash.view/post; bank.view/post; checks.view/accept/settle; reports.view/export; users.invite/disable; permissions.manage; audit.view.
+
+### Scope ve finans
+Scope: own | activity | legal_entity | tenant; gerekirse department ve tutar tavanlari. Onay surecleri actor/approver ayrimina gore denetlenir. USD maliyet, banka bakiye ve vergi kimlik bilgileri gibi hassas alanlar icin field-level read izinleri uygulanir. Kritik finans hareketleri append-only/ters kayit kurali ile calisir.
+
+### Test matrisinin asgari kapsami
+- Satis gorevlisi teklif olusturabilir; USD malzeme fiyatini permission olmadan goremez/degistiremez.
+- Muhasebe tahsilat kaydeder ama permissions.manage yoksa kullanici haklarini degistiremez.
+- Uretim personeli banka veya alacaklar modulunun API'sine erisemez.
+- Izin iptali yeniden login gerektirmeden veya kontrollu session invalidation sonrasinda etkili olur.
+- Tenant/legal entity/activity scope asimi, IDOR, sahte userId/role/tenantId parametresi ve browser URL manipülasyonu reddedilir.
+- Master Admin MFA olmadan kritik yetki artiramaz; son Master Admin iptal edilemez.
+- AuditEvent izin, kur, fiyat ve finans onay degisikliklerini icerir ve normal kullanici tarafindan degistirilemez.
+
+Bu tasarim gercek kullanima gecmeden uygulanir. localStorage yetkiler icin guvenilir kaynak degildir.
