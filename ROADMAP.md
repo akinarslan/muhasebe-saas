@@ -1,4 +1,8 @@
 # PUSULA — URUN YOL HARITASI
+
+## 15.10.2026 — v0.2.1 / v0.2.2 uygulama notu
+
+Yerel uygulama ve GitHub geçmişi force-push olmadan birleştirildi. Stabilizasyon (sayı girişi, müşteri uyumluluğu, ID fallback, USD seed, Decimal ve Playwright) premium tasarımdan önce ayrı commit'te doğrulandı. v0.2.2 SVG/CSS/Motion pusula, demo giriş, dashboard ve işlem ekranlarını kapsar. [Tasarım belgeleri](docs/design/DESIGN_SYSTEM.md) ve [son doğrulama](LAST_REPORT.md) uygulama durumunu açıklar. Uzun vadeli sıra korunur: v0.3 bulut PostgreSQL/kimlik/Master Admin, v0.4 stok/tedarik, v0.5 üretim, v0.6 operasyonel finans, v0.7 iç kullanım, v0.8 SaaS. Bu sürüm gerçek tenant yetkilendirmesi sağlamaz.
 Surum: Plan v1.0 | Tarih: 2026-10-15 | Durum: Urun hedefleri ve gelistirme plani
 
 ## Vizyon

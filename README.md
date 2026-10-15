@@ -1,8 +1,16 @@
-﻿# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2
+﻿# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2.2
 
 Türkçe, Next.js App Router tabanlı yerel prototip. Müşteri/satış/malzeme verileri tarayıcıda; TCMB kur hizmeti sunucudadır. Veritabanı, tam kullanıcı kimlik doğrulaması, gerçek ödeme ve resmî muhasebe entegrasyonu içermez.
 
 ## Kurulum
+
+v0.2.2 giriş tasarımını görmek için `/login` adresini açın. Gerçek kimlik doğrulama yoktur; demo bağlantısı çalışma alanına gider. Dashboard pusulası tercihle kapatılır; işlem ekranlarında büyük pusula bulunmaz.
+
+Ham metin sayısal giriş, Decimal aritmetiği, LAN HTTP için ID fallback ve bir defalık `pusula.backup.v020` ham yerel yedeği eklendi. `1000`, `0.50`, `1,25` desteklenir; boş/geçersiz fiyatlar sıfır kabul edilmez. Binlik ayırıcı kullanmadan giriş yapın; gösterimde Türkçe para formatı kullanılır.
+
+11 kullanıcı malzeme referansı mevcut USD fiyatlarını ezmeden eklenir. TRY/EUR fiyatları yalnız ilk kez **tarihsel** USD/TRY 49.4204 ve EUR/TRY 55.4110 üzerinden normalize edilir. USD maliyeti sonraki TCMB güncellemelerinde sabittir. Ölçüsü bilinmeyen malzeme onay bekler. Malzeme/tedarikçi ve yeni satılabilir ürün tanımları demodur; stok/alış hareketleri geliştirilmez.
+
+E2E: `npm run test:e2e`. Kurulu Chrome kullanılır; testler ayrı browser context'inde mevcut kullanıcının localStorage'ını değiştirmeden çalışır. Port 3000'de aynı projeye ait sunucu varsa yeniden kullanılır. Ekran görüntüleri `docs/design/screenshots/`; tasarım belgeleri `docs/design/` altındadır.
 
 Node.js 20.9+ (önerilen: 24 LTS) ve npm gerekir.
 
@@ -28,7 +36,7 @@ Ortam npm'i çevrimdışı çalışmaya zorluyorsa `npm install --offline=false`
 - Satışlar: tek sayfa satış formu; ürün ekleme/çıkarma, miktar, ölçüler, iskonto, KDV, TRY/USD, peşin ödeme ve çok yöntemli vadeli tahsilat planı. Kaydetme dashboard ve cari bakiyeyi günceller.
 - Müşteriler ve Cari: 32 hayalî müşteri; segment, il, ilçe ve bakiye filtreleri; TanStack sıralama, sekiz satırlı sayfalama, kolon görünürlüğü ve filtrelenmiş/sıralı CSV aktarımı.
 - Yeni müşteri: 480 px Radix dialog paneli; form doğrulama, ad/VKN mükerrer kontrolü; satış ekranında yeni müşteri otomatik seçilir. Escape, odak yönetimi ve mobil tam ekran desteklenir.
-- Stok ve Malzemeler: kullanıcı tarafından girilen USD/birim maliyetleri, yeni malzeme/varyant, stok uygunluğu ve tarih/eski değer/kullanıcı bilgisi içeren fiyat geçmişi.
+- Malzeme Yönetimi: kullanıcı tarafından girilen USD/birim maliyetleri, yeni malzeme/varyant, stok uygunluğu ve tarih/eski değer/kullanıcı bilgisi içeren fiyat geçmişi.
 - Teklif ve Maliyet: gerçek tüketim, çoklu malzeme/gider, marj veya maliyet üstü kâr, manuel net TL fiyat ve değişmeyen snapshot ile teklif arşivi. Satış satırının hesaplayıcısı aynı motoru kullanır.
 - Kalan modüller açıkça Yakında olarak işaretlidir. Firma ve profil alanları demo bilgisi sunar; global arama müşteri detayına gider. Koyu/açık tema ve daraltılabilir/mobil menü çalışır.
 
@@ -77,4 +85,5 @@ Doğrulama sonuçları ve sınırlar için `LAST_REPORT.md` dosyasına bakın.
 ## Ürün ve mimari belgeler
 
 [ROADMAP](ROADMAP.md) · [ARCHITECTURE](ARCHITECTURE.md) · [GitHub ilk README kaydı](docs/history/GITHUB_README_20261015.md)
+
 

@@ -1,4 +1,8 @@
 # PUSULA — HEDEF MIMARI
+
+## v0.2.2 gerçek uygulama sınırı
+
+Kod Next.js modüler frontend prototipi ve TCMB sunucu route'udur. `src/lib/pricing.ts` Decimal hesap motoru, `catalog-seed.ts` fiyatı ezmeyen seed, `runtime.ts` tarayıcı uyumluluğu, `migrate.ts` eski demo/taslak dönüşümü içerir. NumericInput ham metni korur; boş/geçersiz giriş kesin fiyat üretmez. Snapshot/demo repository localStorage'da; `.data/` yalnız kur cache/audit içindir. Bunlar v0.3 PostgreSQL/kimlik/izin/yedek altyapısının yerine geçmez. [Tasarım sistemi](docs/design/DESIGN_SYSTEM.md), [motion](docs/design/MOTION_SYSTEM.md) ve [Master Admin blueprint](docs/design/SCREEN_BLUEPRINTS.md) bu sınırı korur. Pusula yalnız `/login` ve dashboard'da; reduced-motion ve kullanıcı tercihiyle kullanılır.
 Surum: Plan v1.0 | 2026-10-15
 > Bu belge hedef mimariyi anlatir. Yerel v0.2'nin gercek kod durumu Codex tarafindan incelenip raporlanmalidir.
 
