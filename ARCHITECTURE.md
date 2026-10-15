@@ -73,3 +73,23 @@ Finance Desk + Commerce Analytics + Client Desk'ten ilham alan ozgun tasarim: pr
 ## Deployment/operasyon
 Development -> staging -> production ayrimi, CI (typecheck/lint/unit/E2E/build), migration/rollback, performans metrikleri, gozlemlenebilirlik ve hata izleme; production'da otomatik gunluk sifreli yedek ve restore tatbikati.
 SaaS planlari: Baslangic (CRM+cari+basit fiyat), Profesyonel (stok/uretim/maliyet/rapor), Kurumsal (coklu legal entity, yetkiler, API). Sinirlar once feature-entitlement katmaninda tanimlanir, abonelik/ucretlendirme v0.8+.
+
+
+## CANLI KULLANIM ONCELIGI VE YETKI MIMARISI (Revizyon 2026-10-15)
+**v0.7 Pusula'nin ZY Reklam ve kendi yazilim faaliyetlerinde gercek kullanima girecegi ilk zorunlu teslimat kapisidir.** Altyapi ve guvenlik v0.3'te baslar; v0.8 dis SaaS tenant/abonelik katmanidir. Önceki faz listesi bu kurala gore yorumlanir.
+
+### v0.3'ten itibaren zorunlu mimari
+Browser (React) -> Server API/Services -> authn+authz middleware + transactional domain operations -> PostgreSQL. localStorage yalnizca kaydedilmemis taslak ve UI tercihi icindir. Gercek musteriler, tedarikciler, USD fiyatlari, finansal kayitlar ve izinler sunucuda kalici tutulur.
+
+- Users (kimlik), Memberships (company/legal entity scope), Roles, Permissions, RolePermission, optional UserPermissionOverride; default-deny, least privilege.
+- Sunucu tarafli session / httpOnly secure cookies, MFA yonetici, davet/kullanici dondurma/cikis/oturum iptali, sifre reset.
+- Her endpoint/resource icin izin: customers.read/write, sales.create/approve, costs.read/override, materials.price.edit, fx.manual.override, ar.read/write, ap.read/write, cash.post, inventory.adjust, users.manage, reports.export, audit.read.
+- Frontend'de gizli menus sadece UX; gercek koruma sunucu ve veri katmaninda. Tenant/legal entity scope her sorguya tasinir; baska firma verisi gorulmez; RLS ileride SaaS'ta ek savunma katmani.
+- Finansal duzeltme silme yerine ters kayit; hassas degisikliklerde yapan/onaylayan farkli olabilir. Yetki ve degisiklikler append-only AuditEvent'e yazilir.
+- Doviz/fiyat kurali: user-entered USD authoritative; TCMB USDTRY en son yayinlanan referans gunu/tarihiyle TL goruntuleme; fiyati sessizce guncelleme. Quote, sale, inventory usage icin USD fiyat, birim, miktar, tuketim, gider, marj ve FX snapshot.
+- Company/LegalEntity sirket belge ve finans defteri ayrimini saglar; Activity reklam/yazilim raporlama boyutudur. v0.7 tek isletme kurulumu olsa bile iki faaliyet, gerekiyorsa ayri legal entity desteklenir.
+- Production readiness: managed Postgres, migration/rollback, en az bir ayri yedek hedefi, sifreleme, restore tatbikati, audit, yetki-negatif testleri, go-live E2E ve operasyon kilavuzu.
+
+### Faz siniri
+v0.7: sizin personeliniz gercek satis, stok, tahsilat, uretim ve rapor girer; kisi bazli yetkiler, guvenilir DB, gercek yedekleme ve kurtarma vardir.
+v0.8+: dis musteri tenant olusturma, planlar/abonelik, abonelik odeme ve destek; mevcut canli isletme surecinin geriye donuk bozulmamasi zorunludur.
