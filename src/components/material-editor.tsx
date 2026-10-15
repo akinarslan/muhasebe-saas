@@ -29,6 +29,13 @@ export function MaterialEditor({
           e.preventDefault();
           const f = new FormData(e.currentTarget);
           patch({
+            unit: String(f.get("unit")) as Material["unit"],
+            ...(String(f.get("unit")) !== m.unit
+              ? {
+                  variants: m.variants.map((v) => ({ ...v, usdCost: null })),
+                  needsConfirmation: true,
+                }
+              : {}),
             name: String(f.get("name")),
             sku: String(f.get("sku")),
             category: String(f.get("category")),
@@ -46,6 +53,17 @@ export function MaterialEditor({
         }}
       >
         <div className="field-grid">
+          <label>
+            Maliyet birimi / düzenle
+            <select name="unit" defaultValue={m.unit}>
+              {["m²", "metretül", "adet", "plaka"].map((u) => (
+                <option key={u}>{u}</option>
+              ))}
+            </select>
+            <small className="help">
+              Birim değişirse yeni USD maliyetlerini yeniden girin.
+            </small>
+          </label>
           {(["name", "sku", "category", "brand", "description"] as const).map(
             (k, i) => (
               <label key={k}>

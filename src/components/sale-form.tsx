@@ -38,7 +38,7 @@ import {
   normalize,
 } from "@/lib/finance";
 import { draftSchema } from "@/lib/validation";
-import type { Customer, Draft, Sale, SaleLine } from "@/lib/types";
+import type { Customer, Draft, Sale, SaleLine, Product } from "@/lib/types";
 import { Button } from "./ui/button";
 export function SaleForm({
   draft,
@@ -49,6 +49,8 @@ export function SaleForm({
   catalog = initialPricingCatalog(),
   onCatalogChange = () => {},
   rate = null,
+  productCatalog = products,
+  onNewProduct = () => {},
 }: {
   draft: Draft;
   setDraft: (d: Draft) => void;
@@ -58,6 +60,8 @@ export function SaleForm({
   catalog?: PricingCatalog;
   onCatalogChange?: (c: PricingCatalog) => void;
   rate?: RateSnapshot | null;
+  productCatalog?: Product[];
+  onNewProduct?: (p: Product) => void;
 }) {
   const [calculating, setCalculating] = useState("");
   const [search, setSearch] = useState("");
@@ -66,7 +70,7 @@ export function SaleForm({
   const update = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
   const totals = saleAmounts(
     { lines: draft.lines, currency: draft.currency, payments: [] },
-    products,
+    productCatalog,
   );
   const balance = round(Math.max(0, totals.total - draft.paid));
   const planned = round(draft.plans.reduce((s, p) => s + p.amount, 0));
@@ -105,7 +109,7 @@ export function SaleForm({
     if (
       draft.lines.some(
         (l) =>
-          products.find((p) => p.id === l.productId)?.activity !==
+          productCatalog.find((p) => p.id === l.productId)?.activity !==
           draft.activity,
       )
     ) {
@@ -327,7 +331,7 @@ export function SaleForm({
               />
             </div>
             <div className="product-catalog">
-              {products
+              {productCatalog
                 .filter(
                   (p) =>
                     p.activity === draft.activity &&
@@ -350,6 +354,45 @@ export function SaleForm({
                   </button>
                 ))}
             </div>
+            <details className="new-product">
+              <summary>+ Yeni satılabilir ürün / hizmet</summary>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  const name = String(f.get("productName") ?? "").trim();
+                  if (!name) return;
+                  onNewProduct({
+                    id: createId(),
+                    name,
+                    activity: draft.activity,
+                    unit: String(f.get("unit") ?? "adet"),
+                    print: f.get("print") === "on",
+                    price: 0,
+                    cost: 0,
+                  });
+                  e.currentTarget.reset();
+                }}
+              >
+                <div className="field-grid">
+                  <label>
+                    Yeni ürün adı
+                    <input name="productName" required />
+                  </label>
+                  <label>
+                    Satış birimi
+                    <input name="unit" defaultValue="adet" required />
+                  </label>
+                  <label className="inline-check">
+                    <input name="print" type="checkbox" />
+                    m² ile satılan baskı ürünü
+                  </label>
+                </div>
+                <Button type="submit" variant="outline">
+                  Ürünü kataloğa ekle
+                </Button>
+              </form>
+            </details>
             {!draft.lines.length && (
               <div className="empty">
                 <Package size={30} />
@@ -358,7 +401,7 @@ export function SaleForm({
               </div>
             )}
             {draft.lines.map((l, index) => {
-              const p = products.find((p) => p.id === l.productId);
+              const p = productCatalog.find((p) => p.id === l.productId);
               const a = lineAmounts(l, p);
               return (
                 <div className="sale-line" key={l.id}>
@@ -763,8 +806,9 @@ export function SaleForm({
                     quantity={line.quantity}
                     vat={line.vat}
                     onApply={(snapshot) => {
-                      const area = products.find((p) => p.id === line.productId)
-                        ?.print
+                      const area = productCatalog.find(
+                        (p) => p.id === line.productId,
+                      )?.print
                         ? (line.width * line.height) / 10000
                         : 1;
                       const net =

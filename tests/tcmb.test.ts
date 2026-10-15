@@ -4,6 +4,13 @@ import { parseTcmb, latestRate, fetchTcmb } from "../src/lib/tcmb";
 const xml =
   '<Tarih_Date Tarih="15.10.2026"><Currency Kod="USD" CurrencyCode="USD"><Unit>1</Unit><ForexBuying>48.01</ForexBuying><ForexSelling>49.4204</ForexSelling><BanknoteSelling>50.99</BanknoteSelling></Currency></Tarih_Date>';
 describe("TCMB sunucu kur hizmeti", () => {
+  it("USD ve EUR döviz satış kurlarını birlikte çözer", () => {
+    const response = xml.replace(
+      "</Tarih_Date>",
+      '<Currency Kod="EUR"><Unit>1</Unit><ForexSelling>55.4110</ForexSelling></Currency></Tarih_Date>',
+    );
+    expect(parseTcmb(response).eurValue).toBe(55.411);
+  });
   it("USD döviz satışını alır; efektif satış veya alış kuruyla karıştırmaz", () => {
     expect(parseTcmb(xml, "2026-10-15T14:00:00Z")).toEqual({
       value: 49.4204,

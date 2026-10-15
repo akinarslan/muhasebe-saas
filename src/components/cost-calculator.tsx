@@ -219,7 +219,10 @@ export function CostCalculator({
                           const v = mat.variants
                             .filter(
                               (v) =>
-                                v.inStock && (!mat.roll || v.widthCm >= needed),
+                                v.inStock &&
+                                !v.archived &&
+                                !v.needsConfirmation &&
+                                (!mat.roll || v.widthCm >= needed),
                             )
                             .sort((a, b) => a.widthCm - b.widthCm)[0];
                           changeMaterial(u.id, {
@@ -230,7 +233,11 @@ export function CostCalculator({
                         }}
                       >
                         {catalog.materials.map((m) => (
-                          <option key={m.id} value={m.id}>
+                          <option
+                            key={m.id}
+                            value={m.id}
+                            disabled={m.archived || m.active === false}
+                          >
                             {m.name} · USD/{m.unit}
                           </option>
                         ))}
@@ -253,7 +260,10 @@ export function CostCalculator({
                             key={v.id}
                             value={v.id}
                             disabled={
-                              !v.inStock || (m.roll && v.widthCm < needed)
+                              !v.inStock ||
+                              v.archived ||
+                              v.needsConfirmation ||
+                              (m.roll && v.widthCm < needed)
                             }
                           >
                             {v.name} ·{" "}
@@ -276,7 +286,11 @@ export function CostCalculator({
                       aria-label={`${i + 1}. malzeme rulo alternatifleri`}
                     >
                       {m.variants.map((v) => {
-                        const valid = v.inStock && v.widthCm >= needed;
+                        const valid =
+                          v.inStock &&
+                          !v.archived &&
+                          !v.needsConfirmation &&
+                          v.widthCm >= needed;
                         return (
                           <button
                             key={v.id}
@@ -297,6 +311,21 @@ export function CostCalculator({
                                   ? "Uygun"
                                   : "Dar"}
                             </small>
+                            {valid && v.usdCost !== null && (
+                              <small>
+                                {money(
+                                  (m.unit === "metretül"
+                                    ? (u.heightCm + u.top + u.bottom) / 100
+                                    : (v.widthCm *
+                                        (u.heightCm + u.top + u.bottom)) /
+                                      10000) *
+                                    u.quantity *
+                                    v.usdCost,
+                                  "USD",
+                                )}{" "}
+                                toplam
+                              </small>
+                            )}
                             {valid ? (
                               <CheckCircle2 size={13} />
                             ) : (
@@ -382,6 +411,28 @@ export function CostCalculator({
                           <div>
                             <small>Brüt kullanılmayan</small>
                             <b>{consumption.grossUnusedM2.toFixed(4)} m²</b>
+                            <small>
+                              %
+                              {(
+                                (consumption.grossUnusedM2 /
+                                  consumption.consumedM2) *
+                                100
+                              ).toFixed(2)}{" "}
+                              alan farkı
+                            </small>
+                          </div>
+                          <div>
+                            <small>Kenar payı alanı</small>
+                            <b>
+                              {(
+                                (((u.widthCm + u.left + u.right) *
+                                  (u.heightCm + u.top + u.bottom) -
+                                  u.widthCm * u.heightCm) /
+                                  10000) *
+                                u.quantity
+                              ).toFixed(4)}{" "}
+                              m²
+                            </b>
                           </div>
                           <div>
                             <small>Yeniden kullanılabilir</small>
@@ -566,15 +617,15 @@ export function CostCalculator({
           </div>
           <div className="summary-row">
             <span>Malzeme USD</span>
-            <b>{money(result?.materialCostUsd ?? 0, "USD")}</b>
+            <b>{result ? money(result.materialCostUsd, "USD") : "—"}</b>
           </div>
           <div className="summary-row">
             <span>Üretim gideri USD</span>
-            <b>{money(result?.expenseCostUsd ?? 0, "USD")}</b>
+            <b>{result ? money(result.expenseCostUsd, "USD") : "—"}</b>
           </div>
           <div className="usd-cost">
             <small>TOPLAM USD MALİYETİ</small>
-            <strong>{money(result?.totalCostUsd ?? 0, "USD")}</strong>
+            <strong>{result ? money(result.totalCostUsd, "USD") : "—"}</strong>
           </div>
           <div className="summary-row">
             <span>
@@ -584,7 +635,7 @@ export function CostCalculator({
           </div>
           <div className="summary-row">
             <span>Toplam TL maliyeti</span>
-            <b>{rate ? money(result?.costTry ?? 0) : "—"}</b>
+            <b>{rate && result ? money(result.costTry) : "—"}</b>
           </div>
           <label>
             Fiyatlandırma yöntemi
@@ -613,11 +664,11 @@ export function CostCalculator({
           <div className="recommended-price">
             <span>ÖNERİLEN SATIŞ · KDV HARİÇ</span>
             <strong>
-              {rate
-                ? money((result?.suggestedNetUsd ?? 0) * rate.value)
+              {rate && result
+                ? money(result.suggestedNetUsd * rate.value)
                 : "Kur gerekli"}
             </strong>
-            <small>{money(result?.suggestedNetUsd ?? 0, "USD")}</small>
+            <small>{result ? money(result.suggestedNetUsd, "USD") : "—"}</small>
           </div>
           <label>
             Manuel net satış fiyatı (TL)
@@ -642,12 +693,14 @@ export function CostCalculator({
             />
           </label>
           <div className="actual-margin">
-            <span>Gerçek kâr: {money(result?.profitUsd ?? 0, "USD")}</span>
+            <span>
+              Gerçek kâr: {result ? money(result.profitUsd, "USD") : "—"}
+            </span>
             <b className={(result?.actualMargin ?? 0) < 0 ? "error" : ""}>
-              Marj %{(result?.actualMargin ?? 0).toFixed(2)}
+              Marj %{result ? result.actualMargin.toFixed(2) : "—"}
             </b>
             <small>
-              Maliyet üstü kâr %{(result?.actualMarkup ?? 0).toFixed(2)}
+              Maliyet üstü kâr %{result ? result.actualMarkup.toFixed(2) : "—"}
             </small>
           </div>
           <label>
@@ -663,11 +716,11 @@ export function CostCalculator({
           </label>
           <div className="summary-row">
             <span>KDV</span>
-            <b>{rate ? money(result?.vatTry ?? 0) : "—"}</b>
+            <b>{rate && result ? money(result.vatTry) : "—"}</b>
           </div>
           <div className="summary-total">
             <span>KDV dahil genel toplam</span>
-            <strong>{rate ? money(result?.totalTry ?? 0) : "—"}</strong>
+            <strong>{rate && result ? money(result.totalTry) : "—"}</strong>
           </div>
           {(calculationError || error) && (
             <p className="error" role="alert">

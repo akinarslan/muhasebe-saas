@@ -43,6 +43,7 @@ export interface Product {
   print: boolean;
 }
 export interface SaleLine {
+  print?: boolean;
   costSnapshot?: CostSnapshot;
   legacyCostTry?: number;
   priceOrigin?: "manual" | "calculator" | "legacy";
@@ -122,6 +123,7 @@ export interface Draft {
   notes: string;
 }
 export interface DemoData {
+  customProducts?: Product[];
   version: 1;
   customers: Customer[];
   sales: Sale[];

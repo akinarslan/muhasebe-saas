@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./v02.css";
-import './premium.css';
-import {MotionProvider} from '@/components/motion-provider';
+import "./premium.css";
+import { MotionProvider } from "@/components/motion-provider";
 export const metadata: Metadata = {
   title: "Pusula — İşletmenizin finansal rotası",
   description: "Muhasebe ve işletme yönetimi · Frontend demo prototipi",
@@ -14,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <body><MotionProvider>{children}</MotionProvider></body>
+      <body>
+        <MotionProvider>{children}</MotionProvider>
+      </body>
     </html>
   );
 }

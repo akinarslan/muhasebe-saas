@@ -14,7 +14,28 @@ const refs: [string, string, number, "USD" | "EUR" | "TRY"][] = [
   ["oracal-mat", "Oracal arkası gri mat", 80.85, "TRY"],
 ];
 export function seedCatalog(catalog: PricingCatalog): PricingCatalog {
-  const materials = [...catalog.materials];
+  const materials:Material[] = catalog.materials
+    .filter((m) => m && typeof m === "object")
+    .map((m, i) => ({
+      ...m,
+      id: m.id || `legacy-material-${i}`,
+      name:
+        typeof m.name === "string"
+          ? m.name
+          : `Eski malzeme ${i + 1} · kontrol gerekli`,
+      variants: (Array.isArray(m.variants) ? m.variants : [])
+        .filter((v) => v && typeof v === "object")
+        .map((v, j) => ({
+          ...v,
+          id: v.id || `legacy-variant-${i}-${j}`,
+          history: Array.isArray(v.history) ? v.history : [],
+          usdCost: typeof v.usdCost === "number" ? v.usdCost : null,
+          needsConfirmation:
+            v.needsConfirmation ||
+            !Number.isFinite(v.widthCm) ||
+            v.widthCm <= 0,
+        })),
+    }));
   for (const [key, name, amount, currency] of refs) {
     if (
       materials.some(

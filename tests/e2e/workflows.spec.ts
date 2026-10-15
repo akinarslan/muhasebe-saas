@@ -24,7 +24,11 @@ test.beforeEach(async ({ page }) => {
 });
 async function nav(page: import("@playwright/test").Page, name: RegExp) {
   const mobile = page.getByRole("button", { name: "Menüyü aç" });
-  if (await mobile.isVisible()) await mobile.click();
+  if ((page.viewportSize()?.width ?? 1280) < 540) {
+    await expect(mobile).toBeVisible();
+    await mobile.click();
+    await expect(page.locator(".sidebar")).toHaveClass(/mobile-open/);
+  }
   await page
     .getByRole("navigation", { name: "Ana gezinme" })
     .getByRole("button", { name })
@@ -103,6 +107,12 @@ test("vinil maliyet bağlantısı ve arşiv snapshot", async ({ page }) => {
 });
 test("responsive ekran ve reduced motion", async ({ page }, info) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator('[data-compass="dashboard"]')).toHaveCount(1);
+  expect(
+    await page
+      .locator(".compass-outer")
+      .evaluate((e) => getComputedStyle(e).animationName),
+  ).toBe("none");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -114,4 +124,38 @@ test("responsive ekran ve reduced motion", async ({ page }, info) => {
   });
   await nav(page, /^Müşteriler ve Cari/);
   await expect(page.locator("[data-compass]")).toHaveCount(0);
+});
+test("giriş prototipi, pusula ve tercih", async ({ page }, info) => {
+  await page.goto("/login");
+  await expect(page.locator('[data-compass="login"]')).toHaveCount(1);
+  await expect(page.getByText(/giriş tasarım prototipidir/)).toBeVisible();
+  await page.screenshot({
+    path: `test-results/${info.project.name}-login.png`,
+    fullPage: true,
+  });
+  await page.getByRole("link", { name: "Demo çalışma alanını aç" }).click();
+  await page.getByRole("button", { name: "Pusula hareketini kapat" }).click();
+  await expect(page.locator("[data-compass]")).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Pusula görünümünü aç" }),
+  ).toBeVisible();
+});
+test("sidebar, klavye ve yeni ürün taslağı", async ({ page }) => {
+  await nav(page, /^Satışlar/);
+  await page.getByText("+ Yeni satılabilir ürün / hizmet").click();
+  await page.getByLabel("Yeni ürün adı").fill("E2E özel hizmet");
+  await page.getByRole("button", { name: "Ürünü kataloğa ekle" }).click();
+  await page
+    .getByRole("button", { name: "E2E özel hizmet", exact: true })
+    .click();
+  await expect(page.getByLabel("Ürün açıklaması")).toHaveValue(
+    "E2E özel hizmet",
+  );
+  await page.getByRole("button", { name: "Yeni müşteri", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await expect(page.getByLabel("Ürün açıklaması")).toHaveValue(
+    "E2E özel hizmet",
+  );
 });

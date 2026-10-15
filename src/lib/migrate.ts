@@ -84,10 +84,19 @@ function legacyCost(
   );
 }
 export function migrateDraft(draft: Draft): Draft {
+  const number = (v: unknown) => (typeof v === "number" ? v : Number.NaN);
   return {
     ...draft,
+    paid: number(draft.paid),
+    plans: draft.plans.map((p) => ({ ...p, amount: number(p.amount) })),
     lines: draft.lines.map((l) => ({
       ...l,
+      quantity: number(l.quantity),
+      width: number(l.width),
+      height: number(l.height),
+      price: number(l.price),
+      discount: number(l.discount),
+      vat: number(l.vat),
       priceOrigin: l.priceOrigin ?? "legacy",
     })),
   };

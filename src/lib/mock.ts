@@ -72,6 +72,7 @@ export function newLine(product = products[0]): SaleLine {
   return {
     id: createId(),
     productId: product.id,
+    print: product.print,
     description: product.name,
     quantity: 1,
     width: 100,

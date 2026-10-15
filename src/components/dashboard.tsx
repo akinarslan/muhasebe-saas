@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { CompassScene } from "./compass-scene";
+import { motion } from "motion/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   AreaChart,
@@ -44,11 +46,22 @@ export function Dashboard({
   data,
   onSale,
   onCustomer,
+  onCost = () => {},
+  onNewCustomer = () => {},
 }: {
   data: DemoData;
   onSale: () => void;
   onCustomer: (id: string) => void;
+  onCost?: () => void;
+  onNewCustomer?: () => void;
 }) {
+  const [compass, setCompass] = useState(() => {
+    try {
+      return localStorage.getItem("pusula.compass") !== "off";
+    } catch {
+      return true;
+    }
+  });
   const [metric, setMetric] = useState("");
   const [activity, setActivity] = useState("Tüm faaliyetler");
   const [period, setPeriod] = useState("Bu ay");
@@ -182,6 +195,46 @@ export function Dashboard({
       tone: "cyan",
       key: "upcoming" as const,
     },
+    {
+      title: "Nakit durumu",
+      value: sales.reduce(
+        (n, s) =>
+          n +
+          tryValue(
+            s.payments
+              .filter((p) => p.method === "Nakit")
+              .reduce((a, p) => a + p.amount, 0),
+            s.currency,
+            s.rateSnapshot,
+          ),
+        0,
+      ),
+      caption: "Demo nakit tahsilatı · kasa entegrasyonu yok",
+      icon: Wallet,
+      previous: previousSales.reduce(
+        (n, s) =>
+          n +
+          tryValue(
+            s.payments
+              .filter((p) => p.method === "Nakit")
+              .reduce((a, p) => a + p.amount, 0),
+            s.currency,
+            s.rateSnapshot,
+          ),
+        0,
+      ),
+      tone: "teal",
+      key: "cash" as const,
+    },
+    {
+      title: "Aktif işler",
+      value: 0,
+      caption: "İş emri modülü henüz aktif değil",
+      icon: ReceiptText,
+      previous: 0,
+      tone: "purple",
+      key: "jobs" as const,
+    },
   ];
   const monthKeys =
     period === "Özel tarih aralığı" && valid
@@ -268,7 +321,25 @@ export function Dashboard({
     );
   }
   return (
-    <>
+    <div className="dashboard-experience">
+      {compass && <CompassScene background />}
+      <div className="dashboard-masthead">
+        <span>
+          <span className="live-dot" /> PUSULA KONTROL MERKEZİ
+        </span>
+        <button
+          className="text-button"
+          aria-pressed={compass}
+          onClick={() => {
+            setCompass(!compass);
+            try {
+              localStorage.setItem("pusula.compass", compass ? "off" : "on");
+            } catch {}
+          }}
+        >
+          {compass ? "Pusula hareketini kapat" : "Pusula görünümünü aç"}
+        </button>
+      </div>
       <div className="page-heading">
         <div>
           <div className="eyebrow">İŞLETMENİZİN FİNANSAL ROTASI</div>
@@ -280,6 +351,32 @@ export function Dashboard({
         <Button onClick={onSale}>
           <span>+</span> Yeni satış
         </Button>
+      </div>
+      <div className="quick-actions">
+        <button onClick={onSale}>
+          <ReceiptText size={18} />
+          <span>
+            <b>Yeni satış</b>
+            <small>İlk adımdan tahsilata</small>
+          </span>
+          <ArrowUpRight size={16} />
+        </button>
+        <button onClick={onNewCustomer}>
+          <ArrowDownLeft size={18} />
+          <span>
+            <b>Müşteri ekle</b>
+            <small>İlişkilerinize yeni bir yön</small>
+          </span>
+          <ArrowUpRight size={16} />
+        </button>
+        <button onClick={onCost}>
+          <Wallet size={18} />
+          <span>
+            <b>Maliyet hesapla</b>
+            <small>Üretimden gerçek kâra</small>
+          </span>
+          <ArrowUpRight size={16} />
+        </button>
       </div>
       <div className="filter-bar">
         <div className="segmented">
@@ -337,14 +434,14 @@ export function Dashboard({
       <div className="stats-grid">
         {stats.map(
           ({ title, value, caption, icon: Icon, previous, tone, key }) => (
-            <section key={title} className={`stat-card tone-${tone}`}>
+            <motion.section key={title} className={`stat-card tone-${tone}`}>
               <div className="stat-top">
                 <span>{title}</span>
                 <span className="stat-icon">
                   <Icon size={23} />
                 </span>
               </div>
-              <strong>{money(value)}</strong>
+              <strong>{key === "jobs" ? value : money(value)}</strong>
               <div className="stat-caption">{caption}</div>
               <div className="stat-bottom">
                 <span>
@@ -377,6 +474,20 @@ export function Dashboard({
                             ? soonPayments(debts)
                             : debts.reduce((n, p) => n + p.amount - p.paid, 0);
                         }
+                        if (key === "jobs") return 0;
+                        if (key === "cash")
+                          return items.reduce(
+                            (n, s) =>
+                              n +
+                              tryValue(
+                                s.payments
+                                  .filter((p) => p.method === "Nakit")
+                                  .reduce((a, p) => a + p.amount, 0),
+                                s.currency,
+                                s.rateSnapshot,
+                              ),
+                            0,
+                          );
                         return sum(
                           key === "total" || key === "profit" ? key : "balance",
                           key === "overdue"
@@ -401,7 +512,7 @@ export function Dashboard({
               <button className="stat-detail" onClick={() => setMetric(title)}>
                 {title} detayları <ArrowUpRight size={13} />
               </button>
-            </section>
+            </motion.section>
           ),
         )}
       </div>
@@ -754,7 +865,12 @@ export function Dashboard({
               </Dialog.Close>
             </header>
             <div className="drawer-body">
-              {metric === "Toplam borç" || metric === "Yaklaşan ödemeler" ? (
+              {metric === "Aktif işler" ? (
+                <div className="empty">
+                  Henüz iş emri kaydı yok. Üretim modülü sonraki sürümde
+                  geliştirilecek.
+                </div>
+              ) : metric === "Toplam borç" || metric === "Yaklaşan ödemeler" ? (
                 <div className="detail-transactions">
                   {payables
                     .filter(
@@ -791,8 +907,10 @@ export function Dashboard({
                       {sales
                         .filter(
                           (s) =>
-                            metric !== "Gecikmiş tahsilatlar" ||
-                            s.dueDate < today,
+                            (metric !== "Gecikmiş tahsilatlar" ||
+                              s.dueDate < today) &&
+                            (metric !== "Nakit durumu" ||
+                              s.payments.some((p) => p.method === "Nakit")),
                         )
                         .map(transaction)}
                     </tbody>
@@ -809,6 +927,6 @@ export function Dashboard({
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-    </>
+    </div>
   );
 }

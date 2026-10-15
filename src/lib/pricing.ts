@@ -120,7 +120,10 @@ export function consumeMaterial(
       .mul(use.quantity)
       .toNumber();
   }
-  if (material.unit === "plaka") {
+  if (
+    material.unit === "plaka" ||
+    (!material.roll && material.materialType === "Plaka")
+  ) {
     if (material.roll) throw new Error("Plaka malzeme rulo olamaz.");
     const length = variant.lengthCm ?? 0;
     finite(variant.widthCm, "Plaka eni", 0.01);
@@ -129,8 +132,13 @@ export function consumeMaterial(
       Math.floor(variant.widthCm / requiredWidthCm) *
       Math.floor(length / requiredLengthCm);
     if (perSheet < 1) throw new Error("Ölçüler seçilen plakaya sığmıyor.");
-    consumedUnits = Math.ceil(use.quantity / perSheet);
-    consumedM2 = (consumedUnits * variant.widthCm * length) / 10000;
+    const sheets = Math.ceil(use.quantity / perSheet);
+    consumedM2 = new Decimal(sheets)
+      .mul(variant.widthCm)
+      .mul(length)
+      .div(10000)
+      .toNumber();
+    consumedUnits = material.unit === "plaka" ? sheets : consumedM2;
     recoverableLimit = Math.max(
       0,
       consumedM2 -
@@ -208,7 +216,7 @@ export function calculatePricing(
   const profitUsd = new Decimal(chosenNetUsd).minus(totalCostUsd).toNumber();
   const netTry = round(new Decimal(chosenNetUsd).mul(rate).toNumber());
   finite(netTry, "TL satış toplamı");
-  const vatTry = round((netTry * input.vat) / 100);
+  const vatTry = round(new Decimal(netTry).mul(input.vat).div(100).toNumber());
   return {
     materials,
     materialCostUsd,
@@ -216,13 +224,19 @@ export function calculatePricing(
     totalCostUsd,
     suggestedNetUsd,
     chosenNetUsd,
-    costTry: round(totalCostUsd * rate),
+    costTry: round(new Decimal(totalCostUsd).mul(rate).toNumber()),
     netTry,
     vatTry,
     totalTry: round(netTry + vatTry),
     profitUsd,
-    actualMargin: chosenNetUsd > 0 ? (profitUsd / chosenNetUsd) * 100 : 0,
-    actualMarkup: totalCostUsd > 0 ? (profitUsd / totalCostUsd) * 100 : 0,
+    actualMargin:
+      chosenNetUsd > 0
+        ? new Decimal(profitUsd).div(chosenNetUsd).mul(100).toNumber()
+        : 0,
+    actualMarkup:
+      totalCostUsd > 0
+        ? new Decimal(profitUsd).div(totalCostUsd).mul(100).toNumber()
+        : 0,
   };
 }
 export function pricingSnapshot(

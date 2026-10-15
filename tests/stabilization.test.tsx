@@ -18,6 +18,27 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("v0.2.1 regressions", () => {
+  it("eksik USD maliyeti ve onaysız ölçü kesin fiyat üretemez", () => {
+    const c = initialPricingCatalog();
+    expect(() =>
+      consumeMaterial(
+        {
+          id: "x",
+          materialId: "mat-folyo",
+          variantId: "folyo-152",
+          widthCm: 135,
+          heightCm: 200,
+          quantity: 1,
+          left: 2,
+          right: 2,
+          top: 2,
+          bottom: 2,
+          reusableM2: 0,
+        },
+        c.materials[0],
+      ),
+    ).toThrow("USD alış");
+  });
   it("ham metni korur; sıfır öne eklenmez ve boş sıfır değildir", async () => {
     function Demo() {
       const [v, setV] = useState(0);

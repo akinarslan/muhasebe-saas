@@ -4,10 +4,12 @@ import Decimal from "decimal.js";
 export const round = (n: number) =>
   new Decimal(n).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 export function lineAmounts(line: SaleLine, product?: Product) {
-  const area = product?.print ? (line.width * line.height) / 10000 : 1;
-  const materialArea = product?.print
-    ? ((line.width + 4) * (line.height + 4)) / 10000
-    : 1;
+  const area =
+    (line.print ?? product?.print) ? (line.width * line.height) / 10000 : 1;
+  const materialArea =
+    (line.print ?? product?.print)
+      ? ((line.width + 4) * (line.height + 4)) / 10000
+      : 1;
   const net = round(
     new Decimal(line.quantity)
       .mul(area)
@@ -23,7 +25,9 @@ export function lineAmounts(line: SaleLine, product?: Product) {
     tax,
     total: round(net + tax),
     cost: line.costSnapshot
-      ? line.costSnapshot.totalCostUsd * line.costSnapshot.rate.value
+      ? new Decimal(line.costSnapshot.totalCostUsd)
+          .mul(line.costSnapshot.rate.value)
+          .toNumber()
       : (line.legacyCostTry ?? 0),
   };
 }

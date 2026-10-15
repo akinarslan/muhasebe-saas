@@ -1,6 +1,9 @@
 "use client";
 import { createId, copyValue } from "@/lib/runtime";
 
+import Link from "next/link";
+import { motion } from "motion/react";
+import { WorkspaceSkeleton } from "./workspace-skeleton";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import {
   LayoutDashboard,
@@ -30,7 +33,7 @@ import {
   Compass,
   CheckCircle2,
 } from "lucide-react";
-import { createDemo, emptyDraft, entity, user } from "@/lib/mock";
+import { createDemo, emptyDraft, entity, user, products } from "@/lib/mock";
 import type { Customer, DemoData, Draft, Sale } from "@/lib/types";
 import { Dashboard } from "./dashboard";
 import { SaleForm } from "./sale-form";
@@ -55,9 +58,11 @@ const navigation = [
   { name: "Borçlar", icon: ArrowUpRight },
   { name: "Tedarikçiler", icon: Truck },
   { name: "Teklif ve Maliyet", icon: Calculator },
-  { name: "Stok ve Malzemeler", icon: Boxes },
+  { name: "Malzeme Yönetimi", icon: Boxes },
+  { name: "Stok", icon: Boxes },
   { name: "Üretim ve İş Emirleri", icon: Factory },
   { name: "Raporlar", icon: ChartNoAxesCombined },
+  { name: "Kullanıcılar ve Yetkiler", icon: ShieldCheck },
   { name: "Ayarlar", icon: Settings },
 ];
 const DATA_KEY = "pusula.demo.v1";
@@ -70,6 +75,26 @@ function readInitial() {
   let error = "";
   let catalog = initialPricingCatalog();
   let quotes: QuoteArchive[] = [];
+  try {
+    if (!localStorage.getItem("pusula.backup.v020")) {
+      const original = Object.fromEntries(
+        [
+          "pusula.demo.v1",
+          "pusula.draft.v1",
+          "pusula.pricing.v2",
+          "pusula.quotes.v2",
+        ].map((k) => [k, localStorage.getItem(k)]),
+      );
+      if (Object.values(original).some(Boolean))
+        localStorage.setItem(
+          "pusula.backup.v020",
+          JSON.stringify({ at: new Date().toISOString(), original }),
+        );
+    }
+  } catch {
+    error =
+      "Yerel yedek oluşturulamadı; tarayıcı depolama alanını kontrol edin.";
+  }
   try {
     const stored = localStorage.getItem(DATA_KEY);
     if (stored) {
@@ -128,14 +153,7 @@ export function Workspace() {
     () => true,
     () => false,
   );
-  return ready ? (
-    <LoadedWorkspace />
-  ) : (
-    <main className="loading" role="status">
-      <span className="brand-mark">p</span>
-      <p>Çalışma alanınız hazırlanıyor…</p>
-    </main>
-  );
+  return ready ? <LoadedWorkspace /> : <WorkspaceSkeleton />;
 }
 function LoadedWorkspace() {
   const [initial] = useState(readInitial);
@@ -177,7 +195,12 @@ function LoadedWorkspace() {
   }
   function persist(key: string, value: unknown) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      localStorage.setItem(
+        key,
+        JSON.stringify(value, (_k, v) =>
+          typeof v === "number" && !Number.isFinite(v) ? null : v,
+        ),
+      );
     } catch {
       setStorageError(
         "Tarayıcı kaydı yapılamadı. Değişiklikler yenilemede kaybolabilir.",
@@ -242,13 +265,7 @@ function LoadedWorkspace() {
     setToast("Demo satış kaydedildi. Finansal özetler güncellendi.");
     navigate("Genel Bakış");
   }
-  if (!data || !draft)
-    return (
-      <main className="loading" role="status">
-        <span className="brand-mark">p</span>
-        <p>Çalışma alanınız hazırlanıyor…</p>
-      </main>
-    );
+  if (!data || !draft) return <WorkspaceSkeleton />;
   const matches = search
     ? data.customers
         .filter((c) =>
@@ -316,12 +333,13 @@ function LoadedWorkspace() {
                 {(expandedGroups[group] || collapsed) &&
                   navigation
                     .slice(
-                      groupIndex === 0 ? 0 : groupIndex === 1 ? 5 : 9,
-                      groupIndex === 0 ? 5 : groupIndex === 1 ? 9 : 11,
+                      groupIndex === 0 ? 0 : groupIndex === 1 ? 5 : 10,
+                      groupIndex === 0 ? 5 : groupIndex === 1 ? 10 : 13,
                     )
                     .map(({ name, icon: Icon }) => (
                       <button
                         key={name}
+                        aria-label={name}
                         className={`nav-item ${page === name ? "active" : ""}`}
                         onClick={() => navigate(name)}
                         title={collapsed ? name : undefined}
@@ -342,12 +360,19 @@ function LoadedWorkspace() {
           )}
         </nav>
         <div className="sidebar-bottom">
+          <Link href="/login" className="sidebar-profile">
+            <span className="avatar user-avatar">DY</span>
+            <span>
+              <b>Deniz Yılmaz</b>
+              <small>Demo giriş tasarımı ↗</small>
+            </span>
+          </Link>
           <div className="demo-card">
             <span>
               <span className="live-dot" /> DEMO ÇALIŞMA ALANI
             </span>
             <p>Büyük işler, net hesaplar.</p>
-            <small>Üretimden kâra · v0.2</small>
+            <small>Üretimden kâra · v0.2.2</small>
           </div>
           <button
             className="collapse-button"
@@ -508,83 +533,102 @@ function LoadedWorkspace() {
               </button>
             </div>
           )}
-          {["Satışlar", "Teklif ve Maliyet", "Stok ve Malzemeler"].includes(
+          {["Satışlar", "Teklif ve Maliyet", "Malzeme Yönetimi"].includes(
             page,
           ) && <RatePanel rate={rate} onChange={setRate} />}
-          {page === "Genel Bakış" ? (
-            <Dashboard
-              data={data}
-              onSale={() => navigate("Satışlar")}
-              onCustomer={openDetail}
-            />
-          ) : page === "Satışlar" ? (
-            <SaleForm
-              draft={draft}
-              setDraft={setDraft}
-              customers={data.customers}
-              onNewCustomer={() => setDrawer(true)}
-              onSave={saveSale}
-              catalog={catalog}
-              onCatalogChange={setCatalog}
-              rate={rate}
-            />
-          ) : page === "Teklif ve Maliyet" || page === "Stok ve Malzemeler" ? (
-            <PricingWorkspace
-              key={page}
-              catalog={catalog}
-              onCatalogChange={setCatalog}
-              rate={rate}
-              quotes={quotes}
-              onSaveQuote={saveQuote}
-              initialTab={
-                page === "Stok ve Malzemeler" ? "materials" : "calculator"
-              }
-            />
-          ) : page === "Müşteriler ve Cari" ? (
-            <Customers
-              key={listSearch}
-              data={data}
-              onNew={() => setDrawer(true)}
-              onDetail={openDetail}
-              initialSearch={listSearch}
-            />
-          ) : (
-            <>
-              <div className="page-heading">
-                <div className="eyebrow">ÇALIŞMA ALANI</div>
-                <h1>
-                  {page}
-                  <span className="heading-dot">.</span>
-                </h1>
-              </div>
-              <section className="coming-soon panel">
-                <span className="coming-icon">
-                  {(() => {
-                    const Icon = navigation.find((n) => n.name === page)!.icon;
-                    return <Icon size={34} />;
-                  })()}
-                </span>
-                <span className="badge neutral">YAKINDA</span>
-                <h2>Yeni bir rota hazırlanıyor.</h2>
-                <p>
-                  {page} modülü sonraki sürümde çalışma alanınıza eklenecek.
-                  <br />
-                  Bu sürümde genel bakış, satış ve müşteri yönetimini
-                  keşfedebilirsiniz.
-                </p>
-                <Button onClick={() => navigate("Genel Bakış")}>
-                  Genel bakışa dön <ChevronRight size={16} />
-                </Button>
-              </section>
-            </>
-          )}
+          <motion.div
+            key={page}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+          >
+            {page === "Genel Bakış" ? (
+              <Dashboard
+                data={data}
+                onSale={() => navigate("Satışlar")}
+                onCustomer={openDetail}
+                onCost={() => navigate("Teklif ve Maliyet")}
+                onNewCustomer={() => setDrawer(true)}
+              />
+            ) : page === "Satışlar" ? (
+              <SaleForm
+                draft={draft}
+                setDraft={setDraft}
+                customers={data.customers}
+                onNewCustomer={() => setDrawer(true)}
+                onSave={saveSale}
+                catalog={catalog}
+                onCatalogChange={setCatalog}
+                rate={rate}
+                productCatalog={[...products, ...(data.customProducts ?? [])]}
+                onNewProduct={(p) => {
+                  setData({
+                    ...data,
+                    customProducts: [...(data.customProducts ?? []), p],
+                  });
+                  setToast("Yeni ürün kataloğa eklendi; taslak korundu.");
+                }}
+              />
+            ) : page === "Teklif ve Maliyet" || page === "Malzeme Yönetimi" ? (
+              <PricingWorkspace
+                key={page}
+                catalog={catalog}
+                onCatalogChange={setCatalog}
+                rate={rate}
+                quotes={quotes}
+                onSaveQuote={saveQuote}
+                initialTab={
+                  page === "Malzeme Yönetimi" ? "materials" : "calculator"
+                }
+              />
+            ) : page === "Müşteriler ve Cari" ? (
+              <Customers
+                key={listSearch}
+                data={data}
+                onNew={() => setDrawer(true)}
+                onDetail={openDetail}
+                initialSearch={listSearch}
+              />
+            ) : (
+              <>
+                <div className="page-heading">
+                  <div className="eyebrow">ÇALIŞMA ALANI</div>
+                  <h1>
+                    {page}
+                    <span className="heading-dot">.</span>
+                  </h1>
+                </div>
+                <section className="coming-soon panel">
+                  <span className="coming-icon">
+                    {(() => {
+                      const Icon = navigation.find(
+                        (n) => n.name === page,
+                      )!.icon;
+                      return <Icon size={34} />;
+                    })()}
+                  </span>
+                  <span className="badge neutral">YAKINDA</span>
+                  <h2>Yeni bir rota hazırlanıyor.</h2>
+                  <p>
+                    {page} modülü sonraki sürümde çalışma alanınıza eklenecek.
+                    <br />
+                    Bu sürümde genel bakış, satış ve müşteri yönetimini
+                    keşfedebilirsiniz.
+                  </p>
+                  <Button onClick={() => navigate("Genel Bakış")}>
+                    Genel bakışa dön <ChevronRight size={16} />
+                  </Button>
+                </section>
+              </>
+            )}
+          </motion.div>
           <footer className="app-footer">
             <span>
               <ShieldCheck size={13} /> Demo veriler · Gerçek para hareketi veya
               resmî muhasebe kaydı oluşturulmaz.
             </span>
             <span>
-              Pusula © {new Date().getFullYear()} <i /> v0.2
+              Pusula © {new Date().getFullYear()} <i /> v0.2.2
             </span>
           </footer>
         </main>
