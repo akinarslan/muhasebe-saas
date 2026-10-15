@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import "./v02.css";
+export const metadata: Metadata = {
+  title: "Pusula — İşletmenizin finansal rotası",
+  description: "Muhasebe ve işletme yönetimi · Frontend demo prototipi",
+};
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="tr" suppressHydrationWarning>
+      <body>{children}</body>
+    </html>
+  );
+}
