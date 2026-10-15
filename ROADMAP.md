@@ -82,3 +82,39 @@ Moduller: CRM, satis/teklif, USD tabanli malzeme ve is maliyeti, rulo/plaka opti
 
 ## Sürüm disiplini
 Her faz icin issue/PR, kabul kriteri, otomatik test, gerektiginde gercek browser testi, migrasyon ve rollback notu, LAST_REPORT.md. Onemsiz kozmetik talepler temel finans/guvenlik hatalarinin onune gecmez.
+
+
+## REVIZE SURUM KAPISI — ONCE KENDI FIRMAMIZDA CANLI KULLANIM (2026-10-15)
+Bu bolum onceki faz aciklamalarindaki zamanlama celiskilerinin yerine gecer. **v0.8 SaaS'a kadar beklenmez**: Pusula **v0.7 ile ZY Reklam ve kendi yazilim faaliyetlerimiz icin gercek, gunluk kullanima alinmis olmalidir**. v0.8 ve sonrasi, halihazirda calisan urunun harici firmalara satisina odaklanir.
+
+### Yeni kesin sira
+- v0.2.1: mevcut UI hatalari, musteri drawer cokmesi, malzeme fiyat baglantisi, oncu 0 input sorunu, kur/rulo hesaplama dogrulamasi.
+- v0.3: **Kimlik dogrulama ve rol/yetki temeli ile gercek kalici veri altyapisini one cek**. PostgreSQL, sunucu kontrollu CRUD, guvenli oturum, admin/muhasebe/satis/uretim rolleri, denetim logu; finansal hareket modeli. Demo localStorage gercek veri icin kullanilmaz.
+- v0.4: tedarikci, stok, alim, malzeme varyantlari/price version, gercek satin alma ve stok hareketleri; yetki testleri.
+- v0.5: uretim/is emri, maliyet receteleri, fire ve stok tuketimi; maliyet onay/duzenleme yetkileri.
+- v0.6: gunluk satis, teklif, alacak/borc, tahsilat/odeme, kasa/banka, cek/senet, cari ekstre; rapor ve yazdirma/disari aktarma; yetkili onaylari. v0.3 finans temeli uzerine tam is akislari.
+- **v0.7 — KENDI FIRMAMIZ ICIN CANLI KULLANIM / GO-LIVE**: test edilmis guvenli tek-isletme kurulum; reklam ve yazilim faaliyetleri icin gerekiyorsa ayri legal entity kayitlari; login/RBAC; uretim maliyeti, stok, cari, satis, tahsilat, finans raporlari; kur/tarih snapshot; sifreli bulut yedek, geri yukleme tatbikati, kullanici egitimi ve veri tasima. Demo verisi ayri; gercek veri kalici ve yedekli. Pilot gercek islemler basariyla tamamlanmali.
+- v0.8: mevcut canli urune dis firma self-service tenant onboarding, guclu tenant izolasyonu, paketler/abonelik, deneme, tahsilat ve paket limitleri; ic kullanimi aksatmadan.
+- v0.9: baska firmalarla pilot, entegrasyon, olcek/performance/siber guvenlik ve destek.
+- v1.0: ucretli ticari SaaS yayini.
+
+### Rol/yetkilendirme (v0.3'ten itibaren, v0.7 oncesi zorunlu)
+- **Sistem yoneticisi / isletme sahibi**: kullanici davet etme, rol/izin atama, firma ayarlari, finans raporlari, hassas fiyat/maliyet duzenleme ve denetim.
+- **Muhasebe**: cari, tahsilat/odeme, kasa/banka, cek/senet, rapor; kritik iptal ve duzeltmeler icin onay mekanizmasi.
+- **Satis**: musteri, teklif, siparis ve yetkili fiyatlandirma; diger kullanicilarin kritik maliyet/fiyat tanimlarini degistiremez.
+- **Uretim**: is emirleri, sarf malzeme, stok dusumu, is ilerleme; finansal tahsilat yetkisi yok.
+- **Depo/satin alma**: tedarikci, giris, stok hareketi, fiyat oneri/onayi; yetkiye gore sinirli.
+- Izinler yalnizca menu gizleme degil, **sunucu API ve veri katmaninda** enforcement; kullanici/member, legal entity ve faaliyet kapsamiyla yetki kontrolu. Yetki degisikligi, hassas fiyat degisikligi, iptal, manuel kur, disari aktarma audit'e yazilir. En az yetki, MFA (ozellikle yonetici), oturum sonlandirma, kullanici pasiflestirme, sifre sifirlama, servis anahtari guvenligi; negatif yetki testleri.
+
+### v0.7 gercek kullanim kabul kontrol listesi
+- Yonetici, muhasebe, satis, uretim farkli hesaplarla girip yalnizca yetkili islemleri yapabiliyor.
+- Yeni musteri/tedarikci/urun/malzeme/gider guncellemesi uygulamayi cokertmiyor; kalici kaydediliyor.
+- USD malzeme ana fiyatlari manual belirlenip saklaniyor; TCMB sadece kurla TL karsilik sunuyor; fiyat/kur gecmisi islemde degismiyor.
+- 135 cm + 2 cm yan pay Oracal 137 cm rulo reddedilip 152 cm seciliyor; maliyetler dogru stok varyantindan okunuyor.
+- Teklif -> satis/siparis -> uretim -> stok -> alacak -> kismi tahsilat -> cari ekstre -> rapor zinciri gercek veriyle uyumlu.
+- Tum para hareketlerinin degisikligi/kismi tahsilat/iptali tutar ve denetim acisindan tutarli; tekrar islemle cift kayit olusmaz.
+- Gercek firma verisiyle calisma, rol testleri, kabul testleri, tarayici E2E, yedekten geri donus denemesi, temel guvenlik testi ve operasyon kilavuzu tamam.
+- Hukuki e-belge/genel muhasebe zorunluluklari sinirlari belgeli; desteklenmeyen resmi muhasebe fonksiyonlari varmis gibi pazarlanmaz.
+
+### Acik tasarim kararlari
+Kendi isletmesinin reklam/yazilim faaliyetleri iki farkli tuzel kisilige aitse vergi/fatura/cari defterleri ayri tutulur. Tenant kavrami hedef mimaride tanimli olabilir, ancak harici tenant self-servis ve faturalama v0.8'e kadar gerekli degildir.
