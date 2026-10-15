@@ -1,4 +1,4 @@
-# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2
+﻿# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2
 
 Türkçe, Next.js App Router tabanlı yerel prototip. Müşteri/satış/malzeme verileri tarayıcıda; TCMB kur hizmeti sunucudadır. Veritabanı, tam kullanıcı kimlik doğrulaması, gerçek ödeme ve resmî muhasebe entegrasyonu içermez.
 
@@ -73,3 +73,8 @@ Dashboard filtresi satış tarihi ve borç kayıt tarihi üzerinden uygulanır. 
 - TCMB örnek yanıtı `tests/fixtures/tcmb-2026-10-15.xml` içinde kaynak doğrulaması için korunur; çalışma anında fiyat kaynağı olarak kullanılmaz.
 
 Doğrulama sonuçları ve sınırlar için `LAST_REPORT.md` dosyasına bakın.
+
+## Ürün ve mimari belgeler
+
+[ROADMAP](ROADMAP.md) · [ARCHITECTURE](ARCHITECTURE.md) · [GitHub ilk README kaydı](docs/history/GITHUB_README_20261015.md)
+
