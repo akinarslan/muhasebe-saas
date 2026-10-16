@@ -179,3 +179,14 @@ Bu bolum v0.3-v0.7 arasinda Codex'in uygulayacagi zorunlu is paketidir; onceki g
 **v0.7 canli kullanim kapisi:** Master Admin'in sifirdan personel olusturup yetki verebilmesi; tum personelin gorevlerine gore erisimi; izin degisikliginin oturumda uygulanmasi; yetkili onay ve islem denetimi; Playwright senaryolari ve API negatif testlerinin gectigini kanitlayan rapor. Izin testi basarisizsa canliya cikma.
 
 **v0.8:** Her harici tenant kendi Master Admin'ini yonetir; baska tenantin kaydina/rolune/izinlerine erişemez; platform operatoru ile tenant yoneticisi ayridir.
+
+
+## v0.2.3 — MUSTERI DEGISTIRME VE MUSTERI/CARI STABILIZASYONU (2026-10-16)
+Bu ara surum, v0.3 bulut/veritabani gecisinden once tamamlanacak kritik kullanim duzeltmesidir.
+
+1. **Satis ekraninda musteri degistirme onayi:** Mevcut satis formunda onceki musteriye ait satirlar, olculer, malzeme/gider hesaplari veya tahsilat plani varsa yeni musteri seciminde bilgi kaybi olasiligini aciklayan onay penceresi goster. Onay verilmeden hicbir veri silinmesin ve musteri degismesin. "Vazgec" onceki musteri ve tum taslagi aynen korusun. "Devam et ve temizle" mevcut isleme ait onceki musteriye bagli gecici satis bilgilerini temizleyip yeni musteriyi secsin. **Kaydedilmis gecmis satislar ve cari hareketler kesinlikle silinmesin.**
+2. Yeni musteri drawer'i araciligiyla satis icinde musteri ekleme de ayni veri-koruma/onay ilkesine uysun: yeni kayit basarili olunca yeni musteriyi secmek taslagi temizleyecekse onay iste; iptal edilirse satis taslagi korunsun. Kayitli yeni musterinin kendisi kaybolmasin.
+3. **Musteri ve Cari > Yeni Musteri cokmesi:** Ayni paylasilan, dogrulanmis musteri form/drawer mantigini farkli cagri baglamlarinda dogru kullan; runtime hatasinin kok nedenini bul, kapatma/olusturma/yenileme ve eski localStorage veri semalarini browser E2E ile test et.
+4. **Malzeme maliyet dogrulamasi:** Elle kaydedilen otoritatif USD birim fiyat secilen malzemeden hesaplayiciya otomatik gelsin; TCMB'nin son yayinlanan USD/TRY kuru sadece TL karsiligi etkilesin, USD ana maliyeti degistirmesin; eksik birim/fiyat uyarilsin. Ilgili rulo genisligi/fire hesaplari dogrulansin.
+5. **Tedarikci ve finans modulu durumu:** Mevcut tamamlanmamis Alacaklar, Borclar, Tedarikciler ekranlari gercek islemler yapiliyormus gibi sunulmasin. Tedarikci kartlari, hangi tedarikciden hangi malzeme/varyantin hangi tarihte, miktar ve USD birim fiyatla alindigi, alis gecmisi, odeme ve tedarikci borcu baglantisi v0.4/v0.6 planinda acik kabul kriterleri olarak kalsin.
+6. **Test/kabul:** Playwright satis taslagi doluyken musteri degistirme: Vazgec -> tamamı korunur; Devam et -> yalniz aktif form temizlenir; kayitli satislar kalir. Musteri/Cari drawer ac-kaydet uygulamayi cokertmez. UI'deki secili musteri ile gosterilen aktif satis taslagi tutarlidir. Build/lint/unit/E2E raporla; LAST_REPORT.md guncelle.
