@@ -17,6 +17,7 @@ enum CostUnit {
 model Tenant {
   id       String        @id @default(uuid()) @db.Uuid
   name     String        @db.VarChar(200)
+  memberships Membership[]
   entities LegalEntity[]
 }
 
@@ -111,6 +112,7 @@ model AuthUser {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   twoFactorEnabled Boolean @default(false)
+  memberships Membership[]
   twoFactor AuthTwoFactor?
   sessions AuthSession[]
   accounts AuthAccount[]
@@ -185,4 +187,112 @@ model AuthSecurityEvent {
   userId String
   action String
   createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+
+enum ScopeKind {
+  OWN
+  ACTIVITY
+  LEGAL_ENTITY
+  TENANT
+}
+enum PermissionEffect {
+  ALLOW
+  DENY
+}
+model Membership {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  userId String
+  status String @default("ACTIVE")
+  isMaster Boolean @default(false)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  tenant Tenant @relation(fields:[tenantId],references:[id],onDelete:Restrict)
+  user AuthUser @relation(fields:[userId],references:[id],onDelete:Restrict)
+  roles RoleAssignment[]
+  overrides UserPermissionOverride[]
+  @@unique([tenantId,userId])
+  @@unique([tenantId,id])
+  @@index([userId,status])
+}
+model Role {
+  id String @id
+  name String
+  permissions RolePermission[]
+  assignments RoleAssignment[]
+}
+model Permission {
+  id String @id
+  label String
+  module String
+  roles RolePermission[]
+  overrides UserPermissionOverride[]
+}
+model RolePermission {
+  roleId String
+  permissionId String
+  role Role @relation(fields:[roleId],references:[id],onDelete:Restrict)
+  permission Permission @relation(fields:[permissionId],references:[id],onDelete:Restrict)
+  @@id([roleId,permissionId])
+}
+model PermissionScope {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  kind ScopeKind
+  legalEntityId String? @db.Uuid
+  activityId String? @db.Uuid
+  department String?
+  amountLimit Decimal? @db.Decimal(18,6)
+  requiresApproval Boolean @default(false)
+  roles RoleAssignment[]
+  overrides UserPermissionOverride[]
+  @@unique([tenantId,id])
+}
+model RoleAssignment {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  membershipId String @db.Uuid
+  roleId String
+  scopeId String @db.Uuid
+  member Membership @relation(fields:[tenantId,membershipId],references:[tenantId,id],onDelete:Restrict)
+  role Role @relation(fields:[roleId],references:[id],onDelete:Restrict)
+  scope PermissionScope @relation(fields:[tenantId,scopeId],references:[tenantId,id],onDelete:Restrict)
+  @@unique([membershipId,roleId,scopeId])
+  @@index([tenantId,membershipId])
+}
+model UserPermissionOverride {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  membershipId String @db.Uuid
+  permissionId String
+  scopeId String @db.Uuid
+  effect PermissionEffect
+  member Membership @relation(fields:[tenantId,membershipId],references:[tenantId,id],onDelete:Restrict)
+  permission Permission @relation(fields:[permissionId],references:[id],onDelete:Restrict)
+  scope PermissionScope @relation(fields:[tenantId,scopeId],references:[tenantId,id],onDelete:Restrict)
+  @@unique([membershipId,permissionId,scopeId])
+  @@index([tenantId,membershipId])
+}
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  legalEntityId String? @db.Uuid
+  actorId String
+  targetId String
+  action String
+  summary Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([tenantId,targetId,createdAt])
+}
+
+model AuthInvitation {
+ id String @id @default(uuid())
+ tokenHash String @unique
+ userId String
+ membershipId String @db.Uuid
+ tenantId String @db.Uuid
+ expiresAt DateTime @db.Timestamptz(3)
+ acceptedAt DateTime? @db.Timestamptz(3)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ @@index([userId])
 }

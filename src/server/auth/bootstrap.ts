@@ -27,6 +27,11 @@ export async function bootstrap(input: unknown, test=false) {
     await admin.query('INSERT INTO "Tenant" (id,name) VALUES ($1,$2)',[tenantId,data.tenantName]);
     await admin.query('INSERT INTO "LegalEntity" (id,"tenantId",name) VALUES ($1,$2,$3)',[legalEntityId,tenantId,data.companyName]);
     await admin.query('INSERT INTO "AuthBootstrap" (id,"userId","tenantId","legalEntityId") VALUES ($1,$2,$3,$4)',["initial-master",createdId,tenantId,legalEntityId]);
+    const memberId=randomUUID(),scopeId=randomUUID();
+    await admin.query('INSERT INTO "Membership" (id,"tenantId","userId","isMaster") VALUES ($1,$2,$3,true)',[memberId,tenantId,createdId]);
+    await admin.query('INSERT INTO "PermissionScope" (id,"tenantId",kind) VALUES ($1,$2,$3)',[scopeId,tenantId,"TENANT"]);
+    await admin.query('INSERT INTO "RoleAssignment" (id,"tenantId","membershipId","roleId","scopeId") VALUES ($1,$2,$3,$4,$5)',[randomUUID(),tenantId,memberId,"MASTER",scopeId]);
+    await admin.query('INSERT INTO "AuditEvent" (id,"tenantId","actorId","targetId",action,summary) VALUES ($1,$2,$3,$4,$5,$6::jsonb)',[randomUUID(),tenantId,createdId,memberId,"MASTER_MEMBERSHIP_BOOTSTRAP",JSON.stringify({mfaRequired:true})]);
     await admin.query('INSERT INTO "AuthSecurityEvent" (id,"userId",action) VALUES ($1,$2,$3)',[randomUUID(),createdId,"MASTER_BOOTSTRAP_MFA_PENDING"]);
     await source.db.authSession.deleteMany({where:{userId:createdId}});
     await admin.query("COMMIT");

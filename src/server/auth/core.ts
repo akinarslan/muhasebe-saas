@@ -3,13 +3,14 @@ import { betterAuth, APIError } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { twoFactor } from "better-auth/plugins";
+import { localTestCarrier, type MailCarrier } from "./mail";
 import { createDatabase } from "@/server/db/client";
 
 const provisioning = new AsyncLocalStorage<boolean>();
 export function provisionIdentity<T>(operation: () => Promise<T>) {
   return provisioning.run(true, operation);
 }
-export function createAuth(connection: string, secret: string, test = false) {
+export function createAuth(connection: string, secret: string, test = false, mail: MailCarrier = localTestCarrier(secret)) {
   if (secret.length < 32) throw new Error("Auth configuration is unavailable.");
   const db = createDatabase(connection, test);
   const origin = process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000";
@@ -26,7 +27,8 @@ export function createAuth(connection: string, secret: string, test = false) {
     account: { modelName: "AuthAccount" },
     verification: { modelName: "AuthVerification" },
     emailAndPassword: { enabled: true, minPasswordLength: 12,
-      maxPasswordLength: 128, revokeSessionsOnPasswordReset: true },
+      maxPasswordLength: 128, revokeSessionsOnPasswordReset: true, resetPasswordTokenExpiresIn: 900,
+      sendResetPassword: async ({user,url}) => { await mail.send({to:user.email,kind:"RESET",url}); } },
     rateLimit: { enabled: true, storage: "database", modelName: "AuthRateLimit",
       window: 60, max: 30, customRules: {
         "/sign-in/email": { window: 60, max: 5 },
@@ -50,7 +52,7 @@ export function createAuth(connection: string, secret: string, test = false) {
       } } },
     },
   });
-  return { auth, db };
+  return { auth, db, mail };
 }
 let instance: ReturnType<typeof createAuth> | undefined;
 export function identity() {
@@ -63,6 +65,7 @@ export async function activeSession(headers: Headers, source = identity()) {
   return user?.status === "ACTIVE" ? result : null;
 }
 const publicPaths = new Set(["/sign-in/email", "/sign-out", "/get-session",
+  "/request-password-reset", "/reset-password",
   "/two-factor/enable", "/two-factor/verify-totp", "/two-factor/verify-backup-code", "/step-up"]);
 export async function authRequest(request: Request, source = identity()) {
   const path = new URL(request.url).pathname.replace(/^\/api\/auth/, "");
