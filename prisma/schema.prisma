@@ -99,3 +99,62 @@ model MaterialPriceHistory {
 
   @@index([tenantId, legalEntityId, variantId, recordedAt])
 }
+
+// Authentication storage is isolated from business runtime grants.
+model AuthUser {
+  id String @id
+  name String
+  email String @unique
+  emailVerified Boolean @default(false)
+  image String?
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  sessions AuthSession[]
+  accounts AuthAccount[]
+}
+model AuthSession {
+  id String @id
+  token String @unique
+  userId String
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  user AuthUser @relation(fields:[userId], references:[id], onDelete:Cascade)
+  @@index([userId])
+}
+model AuthAccount {
+  id String @id
+  accountId String
+  providerId String
+  userId String
+  accessToken String?
+  refreshToken String?
+  idToken String?
+  accessTokenExpiresAt DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope String?
+  password String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user AuthUser @relation(fields:[userId], references:[id], onDelete:Cascade)
+  @@index([userId])
+  @@unique([providerId,accountId])
+}
+model AuthVerification {
+  id String @id
+  identifier String
+  value String
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@index([identifier])
+}
+model AuthRateLimit {
+  id String @id
+  key String @unique
+  count Int
+  lastRequest BigInt
+}

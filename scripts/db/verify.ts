@@ -1,6 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import { Client } from "pg";
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { createDatabase, databaseHealth } from "../../src/server/db/client";
 import { CompanyRepository } from "../../src/server/db/repository";
@@ -56,7 +57,7 @@ async function run() {
     const migrations = await admin.query(
       'SELECT count(*)::int AS n FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL',
     );
-    assert.equal(migrations.rows[0].n, 2);
+    assert.equal(migrations.rows[0].n, readdirSync("prisma/migrations").filter(name => /^\d/.test(name)).length);
   });
   // Synthetic fixtures only; never import localStorage, production or user data.
   await admin.query('INSERT INTO "Tenant" (id,name) VALUES ($1,$2),($3,$4)', [

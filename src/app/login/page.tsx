@@ -3,10 +3,11 @@ import {
   Compass,
   ArrowUpRight,
   ShieldCheck,
-  Mail,
-  LockKeyhole,
+
+
 } from "lucide-react";
 import { CompassScene } from "@/components/compass-scene";
+import { AuthForm } from "@/components/auth-form";
 export default function Login() {
   return (
     <main className="login-page">
@@ -39,7 +40,7 @@ export default function Login() {
       </section>
       <section className="login-form-zone">
         <div className="login-form">
-          <span className="badge neutral">DENEYİM ÖNİZLEMESİ</span>
+          <span className="badge neutral">GÜVENLİ BULUT GİRİŞİ</span>
           <h2>
             Çalışma alanınıza
             <br />
@@ -49,33 +50,10 @@ export default function Login() {
           <div className="prototype-notice">
             <ShieldCheck size={18} />
             <span>
-              Bu bir giriş tasarım prototipidir. Gerçek oturum ve yetkiler
-              v0.3’te eklenecek; gerçek şifrenizi girmeyin.
+              Bulut oturumu sunucuda doğrulanır. Demo çalışma alanı ayrı ve yerel verilerle çalışır.
             </span>
           </div>
-          <label>
-            Kurumsal e-posta
-            <div className="login-field">
-              <Mail size={17} />
-              <input
-                type="email"
-                placeholder="adiniz@firmaniz.com"
-                autoComplete="off"
-                disabled
-              />
-            </div>
-          </label>
-          <label>
-            Şifre
-            <div className="login-field">
-              <LockKeyhole size={17} />
-              <input
-                type="password"
-                placeholder="Gerçek giriş v0.3'te"
-                disabled
-              />
-            </div>
-          </label>
+          <AuthForm />
           <Link className="btn btn-primary login-submit" href="/">
             Demo çalışma alanını aç <ArrowUpRight size={18} />
           </Link>
@@ -89,7 +67,7 @@ export default function Login() {
             <span>AKILLI İŞ AKIŞLARI</span>
           </div>
         </div>
-        <footer>© {new Date().getFullYear()} Pusula · Tasarım prototipi</footer>
+        <footer>© {new Date().getFullYear()} Pusula · Güvenli çalışma alanı</footer>
       </section>
     </main>
   );
