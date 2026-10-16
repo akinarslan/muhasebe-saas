@@ -2,6 +2,8 @@
 
 Türkçe, Next.js App Router tabanlı yerel prototip. Müşteri/satış/malzeme verileri tarayıcıda; TCMB kur hizmeti sunucudadır. Veritabanı, tam kullanıcı kimlik doğrulaması, gerçek ödeme ve resmî muhasebe entegrasyonu içermez.
 
+v0.3 Sprint A araştırması ve [Neon kurulum adımları](docs/architecture/NEON_CLOUD.md#şimdi-gereken-kurulum) hazırdır. Gerçek bağlantı bilgileri bekleniyor; henüz bulut/Master Admin sürümü değildir. [Sprint denetimi](research/PUSULA_V030_AUDIT.md), [son rapor](LAST_REPORT.md). Uygulama sürümü bu kapı geçilene kadar v0.2.3 kalır.
+
 ## Kurulum
 
 v0.2.2 giriş tasarımını görmek için `/login` adresini açın. Gerçek kimlik doğrulama yoktur; demo bağlantısı çalışma alanına gider. Dashboard pusulası tercihle kapatılır; işlem ekranlarında büyük pusula bulunmaz.
