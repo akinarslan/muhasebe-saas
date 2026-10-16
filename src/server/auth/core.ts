@@ -2,6 +2,7 @@
 import { betterAuth, APIError } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createHmac } from "node:crypto";
 import { twoFactor } from "better-auth/plugins";
 import { localTestCarrier, type MailCarrier } from "./mail";
 import { createDatabase } from "@/server/db/client";
@@ -52,7 +53,7 @@ export function createAuth(connection: string, secret: string, test = false, mai
       } } },
     },
   });
-  return { auth, db, mail };
+  return { auth, db, mail, bucketKey: (value:string)=>createHmac("sha256",secret).update(value).digest("hex") };
 }
 let instance: ReturnType<typeof createAuth> | undefined;
 export function identity() {
@@ -70,12 +71,22 @@ const publicPaths = new Set(["/sign-in/email", "/sign-out", "/get-session",
 export async function authRequest(request: Request, source = identity()) {
   const path = new URL(request.url).pathname.replace(/^\/api\/auth/, "");
   if (!publicPaths.has(path)) return Response.json({ error: "Unavailable" }, { status: 404 });
+  if (path === "/get-session") {
+    const session=await activeSession(request.headers,source);
+    return Response.json(session?{user:{id:session.user.id,name:session.user.name,email:session.user.email,twoFactorEnabled:session.user.twoFactorEnabled},expiresAt:session.session.expiresAt}:null,{headers:{"Cache-Control":"no-store"}});
+  }
   if (request.method === "POST") {
     if (request.headers.get("origin") !== (process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000"))
       return Response.json({ error: "Origin rejected" }, { status: 403 });
     const body = await request.clone().json().catch(() => null);
     if (!body || body.trustDevice === true || body.disableSession === true || (body.method && body.method !== "totp"))
       return Response.json({ error: "Invalid request" }, { status: 400 });
+    if (["/sign-in/email","/request-password-reset"].includes(path)) {
+      const subject=source.bucketKey(String(body.email??"").trim().toLowerCase());
+      const key=`account:${path}:${subject}:${Math.floor(Date.now()/900000)}`;
+      const bucket=await source.db.authRateLimit.upsert({where:{key},create:{id:key,key,count:1,lastRequest:BigInt(Date.now())},update:{count:{increment:1}}});
+      if(bucket.count>(path==="/sign-in/email"?10:3))return Response.json({error:"Try later"},{status:429});
+    }
   }
   if (path === "/step-up") {
     const session = await activeSession(request.headers, source);
@@ -105,5 +116,13 @@ export async function authRequest(request: Request, source = identity()) {
     }
   }
   response.headers.set("Cache-Control", "no-store");
+  if (response.ok && response.headers.get("content-type")?.includes("application/json")) {
+    const data=await response.clone().json();
+    if(data && typeof data==="object") {
+      delete data.token;
+      if(data.session && typeof data.session==="object")delete data.session.token;
+      return Response.json(data,{status:response.status,headers:response.headers});
+    }
+  }
   return response;
 }
