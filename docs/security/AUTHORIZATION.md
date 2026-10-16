@@ -2,6 +2,8 @@
 
 **Sprint A tasarımıdır; çalışan auth/Master Admin uygulaması henüz yoktur.** [Neon kararı](../architecture/NEON_CLOUD.md), [hedef mimari](../../ARCHITECTURE.md).
 
+Sprint B güncellemesi: tenant/şirket composite FK ve non-owner runtime FORCE RLS gerçek Neon test DB'sinde doğrulandı. CompanyRepository yalnız internal server DAL'dir; bu sonuç kullanıcı kimliği/özel izin matrisi enforcement'ı değildir. O katman Sprint C'de kurulacak; henüz HTTP CRUD endpoint'i açılmadı.
+
 ## Kimlik
 
 Managed Neon Auth MFA desteklemediğinden uygulamanın yönettiği Better Auth ve TOTP plugin seçildi. Auth verisi aynı PostgreSQL'de kendi tablolarında tutulacak; SDK'nın kurulu sürüm şeması CLI çıktısıyla migration'a alınacak. Elle özel şifre hashing/oturum sistemi yazılmaz. Cookie httpOnly, production secure, SameSite=Lax; trusted origins sabit allowlist; mutasyonlarda origin/CSRF doğrulaması. Public signup kapalı; davet hash'li, süreli, tek kullanımlık ve doğru e-postaya bağlı. Şifre sıfırlama cevabı hesap varlığını açığa vurmaz; verified mail taşıyıcısı olmadan akış tamamlandı sayılmaz. Şifre/session/TOTP secret/backup code localStorage'a veya loglara girmez.

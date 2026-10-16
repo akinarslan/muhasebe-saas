@@ -1,5 +1,23 @@
 # PUSULA v0.3 — Sprint A denetimi
 
+## Güncelleme — Sprint B, 16.10.2026
+
+**Sprint B gerçek bağlantı ile tamamlandı; aşağıdaki Sprint A başlangıç gözlemleri tarihsel kayıttır.** Git başlangıcı `e3290f8`, aynı `feat/pusula-v030-neon-cloud` dalı; çalışma ağacı temizdi. CLI8.7.2 global kuruldu. İlk npm sertifika sorunu Windows sistem CA ile, TLS kapatılmadan çözüldü. Kullanıcı Neon login'i tarayıcıda tamamladı. Verilen org/project doğrulandı: Free, Frankfurt, PostgreSQL18. Başlangıçta yalnız production vardı; mutation/SQL/test orada çalıştırılmadı.
+
+Schema-only development `br-rough-darkness-ba6ow9zo` oluşturuldu; create komutunun Free'de suspend override reddi sonrası override kaldırılıp varsayılan korundu. Yalnız Postgres ile init yapıldı. Neon config plan: noop, conflicts/warnings boş; Auth/functions/storage/data-api etkinleştirilmedi; deploy gerekmedi. Şablonun7 günlük TTL kuralı kaldırıldı. `.neon` ignore edildi.
+
+Yeni boş `pusula_development` ve `pusula_sprint_b_test` DB'leri; SQL ile non-owner, non-neon_superuser ve NOBYPASSRLS runtime rolleri; certificate-verified TLS; owner yalnız migration/setup. `.env.local` anahtarları birleştirilerek düzenlendi; DB parolaları konsola/Git'e basılmadı. CLI'nin ilk OAuth login debug çıktısı tek kullanımlık callback kodunu yazdı; kod tamamlanan girişte tüketildi, kalıcı token/parola gösterilmedi. Sonraki CLI çıktıları yakalanıp debug/secret çıktıları bastırıldı; credential dosyası Git dışında kullanıcı profilindedir.
+
+Prisma7.10.1/client/adapter-pg ve pg8.23.1 kuruldu; latest8RC seçilmedi. Şema ve iki migration; tenant/company composite FK, numeric USD, FORCE RLS + WITH CHECK ve immutable fiyat geçmişi trigger'ı. CompanyRepository server-only internal DAL; HTTP CRUD açılmadı. Scope'un gelecekte doğrulanmış membership'ten gelmesi Sprint C sorumluluğudur; client tenant beyanı henüz kabul eden bir API yoktur. `/api/health/database` yalnız durum200/503 sunar.
+
+Doğrulama: gerçek DB suite11/11; migration iki DB'de tekrar deploy ile idempotent; build/lint başarılı; Vitest71/71 (önceki63 +8 yeni). Browser sonucu son raporda. Negatif kontroller SQL üzerinde RLS, aynı tenant farklı şirket, yanlış tenant yazma, kapsam yokluğu, FK, DDL/migration kayıt yetkisi, fiyat geçmişi ve rollback içerir. Bağlantı hata testi yanlış parola ve bağımsız loopback TCP refusal kullanır; Neon veya production endpoint'i kapatılmadı. Sentetik kayıtlar yalnız izole test DB'sinde bırakıldı; gerçek localStorage verisi taşınmadı.
+
+İlk SQL üretimi sandbox child-process engeli nedeniyle çıkış vermedi, izinli koşuda üretildi; o sıradaki deploy eksik migration dosyası nedeniyle başarısız sayıldı. İlk build test helper'ının literal host tipinde hata buldu; string tip düzeltmesi sonrası tam build geçti. Başarısız koşular başarılı olarak raporlanmaz. npm audit: production dependency graph0; dev-only eslint/fast-glob/braces/micromatch zincirinde5 high bulgu. npm'nin önerdiği eslint-config-next14 major downgrade Next16 uyumunu bozacağından force uygulanmadı; Sprint C güvenlik kabulünde dev araç zinciri ayrıca çözülmeli.
+
+Auth/MFA/Master Admin/özel API izinleri (C), UI cloud CRUD ve idempotent onaylı import (D), bağımsız backup/restore (E), tam v0.3 kabulü (F) henüz tamamlanmadı. Güncel [mimari/komutlar](../docs/architecture/NEON_CLOUD.md), [teslim raporu](../LAST_REPORT.md).
+
+---
+
 16.10.2026 · Başlangıç ve origin/main `21fa89bb851f69673527a0bc3910ae15b0167746` · `feat/pusula-v030-neon-cloud`.
 
 ## Gerçek durum

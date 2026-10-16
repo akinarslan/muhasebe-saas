@@ -9,6 +9,8 @@ Surum: Plan v1.0 | 2026-10-15
 
 ## Temel strateji
 
+16.10.2026 Sprint B doğrulaması: Neon development dalında ayrı boş uygulama/test DB'leri, Prisma7.10.1, server-only repository, composite şirket/tenant FK, numeric USD ve gerçek non-owner FORCE RLS temeli kuruldu. `/api/health/database` gerçek bağlantı durumunu döndürür. UI/demo localStorage geçişi ve auth/Master Admin henüz uygulanmadı. [Güncel kurulum ve komutlar](docs/architecture/NEON_CLOUD.md); aşağıdaki Sprint A notu tarihsel başlangıç durumudur.
+
 16.10.2026 v0.3 Sprint A: [Neon Cloud kararı](docs/architecture/NEON_CLOUD.md), [authorization sözleşmesi](docs/security/AUTHORIZATION.md), [yedek/restore planı](docs/security/BACKUP_RECOVERY.md) ve [localStorage geçişi](docs/migration/LOCAL_TO_NEON.md) eklendi. Managed Neon Auth MFA yol haritasında olduğu için uygulamanın yönettiği Better Auth/TOTP seçildi. Bunlar tasarımdır; gerçek bağlantı/auth/PostgreSQL kalıcılığı henüz uygulanmadı. Mevcut çalışan demo korunur; [gerçek sprint durumu](research/PUSULA_V030_AUDIT.md) esas alınır.
 
 Baslangicta moduler monolit: Next.js App Router + React + TypeScript + Tailwind CSS + shadcn/ui/Radix + TanStack Table + React Hook Form/Zod + Recharts. Domain hizmetlerini UI'den ayir. Sunucu tasarimini ileride PostgreSQL/Prisma ve guvenli API katmanina gecise uygun tut. Mikroservise erken gecme.

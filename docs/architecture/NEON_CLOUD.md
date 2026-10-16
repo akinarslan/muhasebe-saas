@@ -1,6 +1,37 @@
-# Neon Cloud — v0.3 mimari kararı / Sprint A
+# Neon Cloud — v0.3 Sprint A + doğrulanan Sprint B
 
-16.10.2026. **Bu belge tasarım ve kurulum sözleşmesidir; bağlantı henüz kurulmadı.** Sprint B gerçek staging bağlantı testi tamamlanmadan kapanmaz. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
+16.10.2026. **Sprint B gerçek Neon bağlantısı, migration ve RLS kontrolleriyle doğrulandı.** Auth/Master Admin ve çalışan ekranların buluta taşınması henüz yapılmadı; v0.3 bütünü tamamlanmış değildir. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
+
+## Sprint B — gerçek kurulum
+
+- Organizasyon `org-wild-forest-12594477`: CLI üzerinden **Free** doğrulandı. Proje `icy-queen-44442204` / `pusula-development`, Frankfurt `aws-eu-central-1`, PostgreSQL18.
+- Başlangıçta yalnız default `production` (`br-autumn-union-baaldt81`) vardı. Production'a SQL/test/migration uygulanmadı. **Schema-only** `development` (`br-rough-darkness-ba6ow9zo`) oluşturuldu; üretim satırları kopyalanmadı. Compute0.25 CU; Free hesabın uyku ayarı değiştirilmedi. Varsayılan CLI şablonunun yeni dalları7 günde sona erdirme kuralı kaldırıldı.
+- Neon CLI8.7.2 kuruldu, kullanıcı tarayıcıda login tamamladı. `neon init` açık geliştirme dalına pinlenerek `--services postgres --no-agent-setup` ile çalıştı. MCP/plugin veya Neon Auth etkinleştirilmedi. `.neon` yerel context'i Git dışında kalır.
+- `neon config plan` yalnız **Postgres**, `noop`, conflict/warning yok sonucu verdi. Bu nedenle `neon deploy` ile gereksiz bir değişiklik uygulanmadı. `neon.ts` içinde auth:false; functions/storage/data-api/realtime bildirilmez.
+- Bu dalda iki yeni boş DB: **pusula_development** (uygulama temeli), **pusula_sprint_b_test** (yalnız hayalî entegrasyon fixture'ları). production/neondb üzerinde destructive test yok.
+- Prisma/client/adapter-pg **7.10.1**, pg8.23.1. `latest`8.0.0-rc.23 olduğundan RC kurulmadı. Prisma7.10 yapılandırması `prisma7.config.ts` ve komutlarda açık `--config` yoluyla kullanılır. `prisma/schema.prisma`, iki sürümlü SQL migration ve generated server client vardır.
+- Tenant, LegalEntity, Activity, Customer, Material, MaterialVariant ve append-only MaterialPriceHistory tabloları kuruldu. Company composite FK, numeric(18,6) USD/numeric(12,4) ölçü, FORCE RLS, WITH CHECK ve transaction-local tenant/company context gerçek non-owner rollerle test edildi. Auth/izin/satış/teklif tablolarının kalan geçişleri sonraki sprintlerdedir.
+- SQL ile `pusula_runtime` ve ayrı `pusula_test_runtime` oluşturuldu; NOSUPERUSER/NOCREATEDB/NOCREATEROLE/NOREPLICATION/NOBYPASSRLS, neon_superuser üyeliği yok. Runtime migration tablosunu okuyamaz, schema oluşturamaz; fiyat geçmişini değiştiremez. Migration owner URL runtime'a verilmez.
+- `src/server/db` server-only DAL ve tipli CompanyRepository içerir. Henüz HTTP CRUD/API izin katmanı değildir. Tek yeni HTTP route `/api/health/database`, yalnız `{status:ok|unavailable}` ve200/503 döndürür; host/SQL/secret sunmaz.
+
+### Güvenli komutlar ve yeniden kurulum
+
+`.env.local`: DATABASE_URL pooled runtime; DIRECT_DATABASE_URL direct migration owner; DATABASE_URL_UNPOOLED yalnız uyum alias'ı; TEST_DATABASE_URL pooled ayrı test rolü ve TEST_DIRECT_DATABASE_URL direct test owner. Diğer env satırları korunarak birleştirildi. TLS `verify-full`; parolalar yerelde rastgele üretildi, `.env.local`/`.neon`/generated client Git dışıdır. İlgisiz kullanıcı env ayarları ezilmez. Runtime URL'lerinin dar endpoint/DB/port/TLS/query-param allowlist'i production hedefini reddeder. Migration script'i ve Prisma config aynı guard'ı uygular.
+
+```powershell
+npm ci
+npm run db:generate
+# Yalnız onaylı development endpoint'i ve önceden oluşturulmuş boş DB'ler:
+npm run db:setup
+npm run db:migrate
+npm run db:migrate:test
+npm run db:grants
+npm run db:test
+```
+
+Setup tekrarında mevcut runtime rolünün yerel parolası kullanılır; bilinmeyen mevcut rolün parolası resetlenmez. Migration tekrarında yeni işlem oluşmaz; iki migration her DB'de tamamlanmış olarak doğrulandı. Gerçek DB suite'i11 kontrol; yanlış parola ve ayrı loopback TCP-refused senaryosunda güvenli unavailable sonucu verir. Neon endpoint'i kesilmedi. Sentetik fixture'lar yalnız test DB'de tutulur. Mevcut localStorage/demo verisi DB'ye otomatik aktarılmadı. [Son test sonuçları](../../LAST_REPORT.md).
+
+## Sprint A kararları — arka plan ve sonraki fazlar
 
 ## Sağlayıcı araştırması
 
@@ -43,11 +74,10 @@ UUID/composite ID eşleme ile legacy ID'ler kaybolmaz. USD, oran, miktar/ölçü
 
 ## Gerçek test kapıları
 
-Sprint B: migration boş disposable Neon test DB'de; yeniden deploy idempotent; bağlantı kesintisi/timeout; CRUD ve FK/Decimal; runtime rolü RLS çapraz tenant direct SQL testi, transaction sonrası scope sızıntısı testi. Health endpoint yalnız durum/opaque request ID verir; host, schema, SQL ve sırlar dönmez. Bağlantı ayrıntılı kontrolü yetkili operatöre aittir. **Bu testler henüz yapılmadı.** Sprint C API negatif izin/session testleri olmadan bulut UI açılmaz.
+Sprint B kapısı gerçek development/test DB'lerinde geçti: migration tekrarları, CRUD, FK/Decimal, non-owner RLS çapraz tenant/şirket sorguları, transaction sonrası scope sızıntısı, rollback, immutable fiyat geçmişi ve yanlış parola/TCP bağlantı hataları doğrulandı. Health endpoint yalnız durum verir; host, schema, SQL ve sırlar dönmez. Bu sonuç kimlik/rol testi değildir; Sprint C API negatif izin/session testleri olmadan bulut UI açılmaz.
 
 ## Şimdi gereken kurulum
 
-1. [Neon Console](https://console.neon.tech)'da **Free**, boş `pusula-development` projesi oluşturun. Ücretli yükseltme yapmayın. Bölgeyi işletmenin veri barındırma gereksinimine göre seçin; projedeki bölge/plan adını bildirin.
-2. Yalnız staging/development branch'i seçin. Connect bölümünden pooling ON ve OFF URL'lerini alın. URL'yi bölerek/parolayı değiştirerek elle türetmeyin.
-3. Proje kökündeki Git dışı `.env.local` dosyasına `DATABASE_URL` ve `DIRECT_DATABASE_URL` koyun. Mevcut dosya varsa üzerine yazmayın. Örnek anahtarlar `.env.example` içindedir; şifreli URL'leri sohbet/issue/commit'e yapıştırmayın.
-4. Burada yalnız “hazır”, plan ve bölgeyi bildirin. Neon hesap parolası veya API key paylaşmanız gerekmiyor. Bağlantı doğrulanınca migration/runtime rol ayrımı yapılacak. Auth secret yerelde üretilecek; ilk yönetici e-postası ve davet/reset mail taşıyıcısı Sprint C'de gerekli olacak.
+Bağlantı kurulumu tamamlandı; yeni proje açılması veya connection string'in sohbete gönderilmesi gerekmiyor. Mevcut `.neon` context'ini `development` üzerinde koruyun; her CLI çağrısında project/branch'i açık seçin. Production'a checkout/init/deploy/migration yapılmaz. Yeniden kurulum gerekiyorsa yukarıdaki allowlist ve rol ayrımını koruyan komutları kullanın; `.env.local` dosyasını silmeyin veya varsayılan owner URL ile runtime değerini ezmeyin.
+
+Sonraki Sprint C: Better Auth + TOTP, güvenli bootstrap, ilk yönetici e-postası, davet/reset için mail taşıyıcısı, session revoke ve default-deny kişi bazlı API izinleri. Bunlar için yeni bilgiler kendi aşamasında istenecek; bu Sprint B isteğinin kapsamı genişletilmedi.

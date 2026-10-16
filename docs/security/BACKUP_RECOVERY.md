@@ -1,6 +1,6 @@
 # v0.3 yedek ve kurtarma — tasarım / henüz çalışmıyor
 
-16.10.2026. Bağlı Neon projesi, bağımsız bucket, scheduler veya restore kanıtı **yoktur**. Bu prosedürün varlığı yedek alınmış olduğu anlamına gelmez.
+16.10.2026. Sprint B'de Neon development bağlantısı kuruldu; bağımsız bucket, scheduler veya restore kanıtı **yoktur**. Bu prosedürün varlığı yedek alınmış olduğu anlamına gelmez. Yedek/restore uygulaması Sprint E kapsamındadır.
 
 Neon instant restore kısa geri dönüş içindir; uzun arşiv değildir. [Neon yedek stratejisi](https://neon.com/docs/postgres/backup-restore/backups) PostgreSQL dump/restore ve bağımsız saklamayı destekler. [Güncel Free fiyat tablosunda](https://neon.com/pricing) restore 6 saat/1GB değişim ile sınırlı gösterilir; farklı genel kılavuzlardaki daha uzun süre Free için garanti sayılmaz. Gerçek projenin Console ayarı kurulumda doğrulanacak.
 
