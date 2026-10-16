@@ -1,60 +1,98 @@
-﻿# PUSULA v0.3 — Sprint B / Gerçek Neon PostgreSQL temeli
+﻿# PUSULA v0.3 — Sprint C / Auth, Master Admin ve özel yetkilendirme
 
-16.10.2026 · **Sprint B tamamlandı. v0.3 bütünü ve Sprint C auth/Master Admin henüz tamamlanmadı.**
+16.10.2026 · **C1–C5 kodu ve geliştirme testleri teslim edildi. Gerçek operatör hesabı/MFA ve SMTP kurulumu bekliyor; production kabulü ve v0.3 bütünü tamamlandı denmez.**
 
 ## Sonuç
 
-Neon'a **gerçek bağlantı kuruldu**. Kullanıcı CLI girişini tarayıcıda tamamladı. Organizasyon `org-wild-forest-12594477` Free; proje `icy-queen-44442204` / `pusula-development`; bölge Frankfurt (`aws-eu-central-1`), PostgreSQL18.
+Better Auth **1.7.10**, Prisma **7.10.1**, mevcut Next16/Node24 üzerinde gerçek Neon PostgreSQL'e bağlandı. Aynı Frankfurt development dalı (`br-rough-darkness-ba6ow9zo`) ve `pusula_development` / izole `pusula_sprint_b_test` DB'leri kullanıldı. Production branch/DB'ye migration, seed veya test uygulanmadı. Neon Auth ve ücretli hizmet açılmadı.
 
-Başlangıçta yalnız default `production` (`br-autumn-union-baaldt81`) vardı. Production'a SQL, test veya migration uygulanmadı. Schema-only **development** (`br-rough-darkness-ba6ow9zo`) oluşturuldu; üretim satırları kopyalanmadı. Bu dalda iki **yeni boş** DB açıldı: `pusula_development` ve yalnız hayalî fixture'lar için `pusula_sprint_b_test`.
+Doğrudan development auth bağlantısı ayrıca doğrulandı: **gerçek kullanıcı sayısı 0**, bootstrap henüz kapanmamış. Kullanıcı başlangıçta bootstrap hazır dedi; dosya bulunmadığı bildirilince dosyanın olmadığını belirtti. Gerçek kimlik bilgisi uydurulmadı veya sohbetten alınmadı. Git dışı boş `.env.bootstrap.local` şablonu, güvenli CLI ve [kurulum rehberi](docs/security/MASTER_ADMIN_SETUP.md) hazırdır. İlk gerçek yönetici için kullanıcı bu dosyayı yerelde doldurup `npm run auth:bootstrap` çalıştırmalı ve `/account/security` üzerinden TOTP kurmalıdır.
 
-Neon CLI8.7.2 kuruldu. İlk npm sertifika hatası sistem CA ile çözüldü; TLS kapatılmadı. Init yalnız development dalında `--services postgres --no-agent-setup` ile çalıştı. `neon.ts` auth:false; diğer servisler tanımlı değil. Config plan yalnız Postgres/noop, conflict/warning yok gösterdi; **neon deploy gerekmedi ve çalıştırılmadı**. Şablonun7 günlük auto-expiry kuralı kaldırıldı. Free'de suspend override reddedildiği için hesap varsayılanı korundu; compute0.25 CU. Ücretli plan/hizmet açılmadı.
+## İstenen 12 sorunun yanıtı
 
-## Prisma, kalıcılık ve kapsam
+| Soru                                      | Gerçek durum                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Better Auth gerçek Neon'a bağlandı mı? | Evet. Development auth bağlantısı ve izole test DB'sinde gerçek login/CRUD doğrulandı.                                                                 |
+| 2. Giriş çalışıyor mu?                    | Evet. Parola, httpOnly session, çıkış/revoke/expiry/pasif hesap reddi ve MFA ile tekrar giriş testli.                                                  |
+| 3. İlk Master nasıl oluşturulur?          | Yalnız operatör CLI + özel yerel dosya; kilitli tek kurulum işareti, idempotence ve audit. Gerçek hesap henüz oluşturulmadı.                           |
+| 4. MFA zorunlu mu?                        | Master için evet. Güncel session'da MFA kanıtı gerekir; kritik işlemler ayrıca beş dakikalık parola + TOTP step-up ister.                              |
+| 5. Davet çalışıyor mu?                    | Güvenli token/acceptance ve test taşıyıcısı çalışır. Gerçek e-posta teslimatı yok; SMTP/API bağlanmadı.                                                |
+| 6. Özel izinler kaydediliyor mu?          | Evet. RoleAssignment/PermissionScope/ALLOW-DENY override, sürüm kontrolü ve audit PostgreSQL'de; browser'da yeniden açma testli.                       |
+| 7. Yetkisiz API reddediliyor mu?          | Evet. 401/403, strict payload/origin, session/membership, MFA/step-up ve field projection kontrolleri var.                                             |
+| 8. Tenant/şirket izolasyonu?              | Sprint B FORCE RLS korunur; ek faaliyet/owner/action politikaları gerçek non-owner SQL ve HTTP testli.                                                 |
+| 9. Audit oluşuyor mu?                     | Evet. Kullanıcı/izin, davet, müşteri, USD fiyat, manuel kur ve MFA olayları; append-only, sır içermeyen özetler.                                       |
+| 10. Hâlâ demo olanlar?                    | `/` satış/müşteri/malzeme/taslak/snapshot iş ekranları localStorage demosudur. Otomatik veri import'u yapılmadı.                                       |
+| 11. Kaç test geçti?                       | Vitest81/81, eski DB11/11, auth/API41/41, demo browser22/22, auth browser2/2. Ayrıntı aşağıda.                                                         |
+| 12. Sprint D'ye ne kaldı?                 | Gerçek işletme ekranlarının repository/CRUD'a geçişi; satış/teklif/kur snapshot şemaları, onaylı/idempotent import ve tüm türetilmiş maliyet DTO'ları. |
 
-Prisma/client/adapter-pg **7.10.1**, pg8.23.1 kuruldu. Latest etiketi8RC olduğundan kararlı7 seçildi. `prisma7.config.ts`, şema, iki sürümlü migration ve server-only client/repository eklendi. Build ve predev client üretir; generated kod Git'e konmaz.
+## Kimlik ve Master güvenliği
 
-Tenant, LegalEntity, Activity, Customer, Material, MaterialVariant, MaterialPriceHistory tabloları her iki DB'de kuruldu. Numeric USD(18,6), ölçü(12,4), composite tenant/şirket FK, FORCE RLS + WITH CHECK, transaction-local scope ve immutable fiyat geçmişi trigger'ı vardır. Migration tekrar deploy ile idempotent; reset/db push/production destructive migration kullanılmadı.
+- Ayrı non-owner **pusula_auth** / **pusula_test_auth** rolleri yalnız auth tablolarına erişir. Business runtime kimlik tablolarını okuyamaz; auth rolü işletme tablolarını okuyamaz. Migration direct owner bağlantısı runtime client'ında kullanılmaz. URL/rol adı/TLS/dev hedef guard'ları yanlış owner veya production hedefini reddeder.
+- AuthUser, Session, Account, Verification, RateLimit, TwoFactor, Bootstrap, SecurityEvent, Invitation; Membership, Role, RoleAssignment, Permission, RolePermission, UserPermissionOverride, PermissionScope, AuditEvent ve tenant'a özel immutable manuel kur kayıtları eklendi. Toplam **9 sürümlü migration** iki DB'de uygulanmış durumdadır; önceki başarılı migration'lar değiştirilmedi.
+- Parola Better Auth hash'i; cookie httpOnly/SameSite=Lax, production Secure, sekiz saat session, cookie cache kapalı. Her korumalı istekte güncel session/user/membership/izin okunur. JSON'dan bearer session token'ı çıkarılır. DB kesintisi503; demo fallback yoktur.
+- Public signup yok; server signup da yalnız private provisioning context'inde çalışır. E-posta/IP rate limit, HMAC hesap kovası, origin ve step-up hız sınırı vardır. Parola reset15 dakika/tek kullanım/eski session revoke; davet24 saat/hash token/atomik tek kullanım. Sonuç mesajları hesap varlığını ifşa etmez.
+- TOTP QR yerelde çizilir. Secret ve recovery kodları Better Auth ile şifrelenir; recovery yalnız ilk üretimde görünür ve tek kullanımlıdır. Trusted-device, public MFA disable/recovery yeniden gösterme yolları kapalıdır. Kritik step-up TOTP ister; kayıp cihaz için tam operatör kurtarma akışı henüz otomatik değildir.
+- Kendi erişimini değiştirme ve aktörün kapsam/DENY sınırlarını aşan grant reddedilir. Son aktif Master transaction advisory lock + güncel count ile korunur; **iki eşzamanlı demotion** testinde yalnız biri tamamlanır. Tenant Master platform çapında bütün firmalara erişen süper kullanıcı değildir.
 
-Runtime SQL ile oluşturulan non-owner `pusula_runtime`; test DB'sinde ayrı `pusula_test_runtime`. Superuser/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS ve neon_superuser üyeliği yok. Runtime tablo oluşturamaz/migration kayıtlarını okuyamaz; fiyat geçmişi yalnız insert/select. Migration owner URL uygulama client'ında kullanılmaz.
+## Yetki, API ve arayüz
 
-**Mevcut UI modülleri hâlâ v0.2.3 localStorage demosudur.** Kullanıcı müşterileri/fiyatları/satışları otomatik taşınmadı. UI CRUD'ları henüz repository'ye bağlanmadı. Repository internal server DAL; HTTP veri CRUD veya kullanıcı RBAC açılmadı. Yeni `/api/health/database` yalnız200/503 ve durum döndürür; iki browser projesinde gerçek bağlantı200 doğrulandı.
+Karar sırası: eşleşen kapsamda **DENY > kullanıcı ALLOW > rol ALLOW > default deny**. OWN/ACTIVITY/LEGAL_ENTITY/TENANT desteklenir. Departman/tutar/onay alanları modelde geleceğe ayrılmıştır; bu sürümün formunda etkin değildir. Client userId/role/tenantId otorite değildir; membership başlığı yalnız oturum sahibinin üyeliklerinden seçebilir. Transaction-local scope kullanılır, pooled context sızmaz.
 
-## Ortam ve güvenlik
+`/login`, `/app`, `/account/security`, `/admin/users`, davet ve parola reset ekranları eklendi. Master kullanıcı listesi; arama, rol/durum/faaliyet/son giriş; altı sekmeli sağ drawer; üç durumlu izin matrisi, etkili izinler, değişiklik önizlemesi, audit ve session sonlandırma içerir. Lacivert/turkuaz kimlik, ortak tokenlar, Lucide, Radix/shadcn Button ve kısa/reduced-motion uyumlu geçişler korunur. Mobilde tablo kendi alanında yatay kayar.
 
-`.env.local` korunarak birleştirildi: pooled runtime DATABASE_URL, direct migration DIRECT_DATABASE_URL; ayrı TEST_DATABASE_URL/TEST_DIRECT_DATABASE_URL; CLI uyum alias'ı DATABASE_URL_UNPOOLED. Rastgele rol parolaları yalnız yerel env dosyasına yazıldı. TLS verify-full; uygulama/migration config explicit development endpoint/DB/port/query-param allowlist'i uygular. Production hedefi ve driver host override'ları reddedilir.
+`/api/cloud` sınırlı kullanıcı/davet, müşteri GET/POST, malzeme GET/USD PATCH, manuel kur ve context sözleşmelerini sunar; tüm satış/stok/finans API'leri erkenden açılmadı. USD yetkisi yoksa nested variant JSON'unda **usdCost bulunmaz**; history/snapshot/derived maliyet kaynağı eklenmez. USD değişikliğinde Decimal fiyat geçmişi ve güvenli audit aynı transaction'dadır.
 
-`.env.local`, `.neon`, generated client ve test çıktıları Git dışındadır. DB connection string/parolaları rapora/Git'e konmadı;27 staged dosya gerçek yerel URL/parola değerlerine karşı tarandı ve **PASS** alındı. CLI'nin ilk OAuth login debug çıktısı tamamlanan girişte tüketilmiş tek kullanımlık callback kodunu yazdı; kalıcı token/parola gösterilmedi. Sonraki CLI çıktıları yakalanıp debug/secret çıktısı bastırıldı. CLI oturumu kullanıcı profilindedir; repoya eklenmez.
+Eski `POST /api/exchange-rate` ortak anahtar yolu güvenlik nedeniyle **403 ile kapalıdır**. TCMB GET ve demo hesapları korunur, demo manuel seçenek kapalıdır. Gerçek manuel kur session + `exchange.manual` + step-up ile tenant tablosuna kaydedilir; global demo cache'i değiştirmez. Eski token testleri yeni kapanma sözleşmesine güncellendi; yetkili kur yeni Neon suite'inde doğrulanır.
 
 ## Doğrulama
 
-| Kontrol | Gerçek sonuç |
-| --- | --- |
-| Başlangıç | 63/63 Vitest, lint başarılı |
-| Prisma validate/generate | Başarılı,7.10.1 |
-| Migration | İki DB'de2 migration; tekrar deploy başarılı |
-| Gerçek PostgreSQL suite | **11/11** |
-| Son build | Başarılı, strict TypeScript,9.05 s |
-| Son lint |0 hata/uyarı |
-| Son Vitest | **71/71**,11 dosya,9.86 s |
-| Son Playwright | **22/22**, desktop Chrome + mobil Chromium,1.4 dakika |
-| npm audit --omit=dev |0 bulgu |
-| Tam npm audit | Dev-only ESLint/fast-glob/braces/micromatch zincirinde5 high; force downgrade uygulanmadı |
+| Kontrol                    | Sonuç                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| Son build                  | Başarılı; strict TypeScript, Next16.4.1                                              |
+| Son lint                   | 0 hata, 0 uyarı                                                                      |
+| Son Vitest                 | **81/81**,12 dosya;10 yeni policy testi                                              |
+| Mevcut gerçek DB suite     | **11/11**                                                                            |
+| Son sıralı `auth:test`     | **41/41**: C1 7, C2 7, C3 8, C4 11, C5 8                                             |
+| İlk TOTP enrollment kapısı | İlk C2 koşusunda9/9; tekrar MFA fixture'ı enrollment'ı yeniden yapmaz                |
+| Demo Playwright            | **22/22**, desktop/mobile,1.3 dakika                                                 |
+| Son auth Playwright        | **2/2**, desktop/mobile,1.4 dakika; iki uzun gerçek uçtan uca akış                   |
+| Browser JS hata kontrolü   | **0**; mobil document yatay taşma yok                                                |
+| Görsel kontrol             | İki auth kullanıcı ekranı üretildi, incelendi, hayalî fixture PNG'leri kaydedildi    |
+| Runtime npm audit          | **0**                                                                                |
+| Tam npm audit              | Dev-only braces/fast-glob/micromatch/Next ESLint zincirinde **5 high**               |
+| Staged secret taraması     | C5'te **57 dosya PASS**; gerçek yerel URL/parola/secret değerleriyle karşılaştırıldı |
 
-Gerçek DB kontrolleri: restricted non-owner bağlantı, CRUD/unique/version counter, filtre olmadan SQL RLS tenant/şirket izolasyonu, yetkisiz yazma, scope eksikliğinde default-deny, pooled context sızıntısı, composite FK, Decimal0.1+0.2=0.3 ve6 hane USD, atomik fiyat tarihçesi, immutable history, rollback, DDL/migration erişim reddi, yanlış parola ve TCP connection refused. Hata testinde Neon endpoint'i kapatılmadı; ayrı loopback portu kullanıldı. Fixture'lar yalnız izole test DB'sinde tutulur.
+Auth testleri: signup bypass, parola/cookie/session iptal/expiry, pasif hesap, rol ayrımı, bootstrap, gerçek TOTP/recovery/step-up, davet/reset tek kullanım ve expiry, hesap enumeration/rate-limit, self elevation, anında override revoke, last-master concurrency, çapraz tenant/şirket/faaliyet, sahte payload/başlık, maliyet alan projeksiyonu, yetkisiz fiyat/kur, Decimal/history/audit, cross-origin ve DB kesintisinde fail-closed.
 
-Önceki20 browser testi korundu;2 ek HTTP health testi gerçek Neon'a bağlandı. Önceki63 Vitest'e8 hedef/HTTP sözleşme testi eklendi. İlk SQL üretiminde sandbox child-process engeli ve buna bağlı eksik migration deploy hatası oldu; izinli SQL üretiminden sonra deploy tamamlandı. İlk build test helper'ındaki dar literal host tipini yakaladı; string düzeltmesi sonrası tam kontroller geçti. Başarısız denemeler başarı sayılmadı.
+Browser auth testleri her seferinde yeni hayalî kullanıcılarla **ayrı test tenant'larında** çalışır;3100 portu ve `.next-auth-e2e` çıktısı kullanılır. Auth trace/video kapalıdır; parola, QR veya recovery görüntüsü paylaşılmaz. Development verileri test DB'sine taşınmadı.
 
-## Sprint C için kalanlar
+Başarısız denemeler başarı sayılmadı: C3 kilidinin Prisma void dönüş tipi, metadata SQL UTF-8 BOM'u, QR Base32 test dönüşümü, soğuk metadata yenileme süresi, stale UI state ve mobil toast'ın düğmeyi örtmesi düzeltildi. Last-master fixture'ı diğer browser yöneticilerinden etkilenmeyecek şekilde izole edildi. Generated auth build çıktısının lint'e girmesi ignore kapsamıyla giderildi; kaynak lint kuralları kapatılmadı. [Tam kapı kaydı](docs/security/AUTH_TEST_MATRIX.md).
 
-Better Auth + TOTP korunuyor; Neon Auth açılmadı. Henüz login/logout/reset/davet/pasifleştirme/session revoke/Master Admin bootstrap/özel izin matrisi/API default-deny enforcement yok. İlk sahip kimliği, auth secret ve mail taşıyıcısı C aşamasında hazırlanacak. RLS tek başına kimlik doğrulama değildir; scope doğrulanmış membership'ten üretilmeli.
+Ham Prisma teşhis çıktısı otomatik inceleme tarafından sır riski nedeniyle reddedildi; yalnız sabit hata kodlarıyla güvenli teşhis ve çözüm tamamlandı. Başarılı migration reset edilmedi; production veya kullanıcı verisi silinmedi.
 
-D: çalışan ekranların sunucu CRUD'a geçişi, satış/teklif/kur snapshot şemaları, onaylı/idempotent localStorage import. E: bağımsız şifreli yedek/scheduler/restore testi. Bu aşamalar yapılmış gibi raporlanmadı. Dev toolchain'deki audit bulguları da güvenlik kabulü öncesinde çözülmeli; npm'nin önerdiği eslint-config-next14 major downgrade Next16 uyumu nedeniyle otomatik uygulanmadı.
+## Açık sınırlar / operasyonel kurulum
 
-## Git ve belgeler
+1. **Gerçek ilk Master hesabı ve kullanıcının TOTP kurulumu henüz yok.** Boş özel şablonu yerelde doldurun; [rehber](docs/security/MASTER_ADMIN_SETUP.md). Test hesapları gerçek operatör hesabı sayılmaz.
+2. **Gerçek SMTP/API teslimatı yok.** Development mesajları `.data/auth-mail/*.enc` içinde şifreli test iletileridir. Production'da yerel taşıyıcı kapalıdır. Mail retry/outbox operasyonu ve kayıp TOTP için denetimli operatör recovery ayrıca gerekir.
+3. Dev-only5 high advisory için npm registry'de braces'ın yamalı sürümü bulunmadı; Next14 ESLint major downgrade uygulanmadı. Bulgu gizlenmedi; production güvenlik kabulünde giderilmeli veya somut risk kararı verilmelidir.
+4. Next dev bazı korunan sayfa yönlendirmelerinde `destination stream errored`, adapter/pg ise `client.query` deprecation kaydı üretti. HTTP/redirect ve browser JS kontrolleri geçti; bu kayıtlar gizlenmedi. Gerçek production server/operasyon kabulü ayrıca yapılmalıdır.
+5. Bağımsız şifreli yedek/scheduler/restore Sprint E; gerçek cihaz/Safari ve tam erişilebilirlik sertifikasyonu yapılmadı. Dev PNG'sinde Next göstergesi vardır. Kullanıcı listesi ilk200 üyeyle, audit detayları son50 kayıtla sınırlıdır; kapsamlı pagination gelecekte genişletilmelidir.
+6. İşletme UI'si localStorage demosudur; sunucu verisi kesilince buraya sessiz fallback yapılmaz. Satış/teklif snapshot ve onaylı veri import'u Sprint D'ye bırakıldı. v0.4–v0.6 işlem modülleri uygulanmadı.
 
-Dal `feat/pusula-v030-neon-cloud`; başlangıç `e3290f8`; fetch sonrası uzak dal günceldi, kullanıcı değişikliği yoktu. Doğrulanan Sprint B uygulama commit'i **`6a77824e77d92f0282f30c43849874acd521d701`** GitHub feature dalına push edildi; push öncesi fetch/ancestry kontrolü geçti. Bu rapor ayrı dokümantasyon commit'iyle aynı dala gönderilir. Main `21fa89b` üzerinde korunur; bu kısmi v0.3 teslimi main'e birleştirilmedi. Force push/hard reset/veri temizliği yapılmadı. [Sprint A raporu](docs/history/PUSULA_V030_SPRINT_A_REPORT.md) arşivlendi.
+## Git teslimi
 
-[Mimari ve komutlar](docs/architecture/NEON_CLOUD.md) · [Denetim](research/PUSULA_V030_AUDIT.md) · [Auth sözleşmesi](docs/security/AUTHORIZATION.md) · [Yedek planı](docs/security/BACKUP_RECOVERY.md)
+Başlangıç `7a863bf`; dal **feat/pusula-v030-neon-cloud**. Uzak dal fetch/ancestry kontrolünden sonra C1–C5 commit'leri GitHub feature dalına push edildi. Uzak ref **84dd62c4c3c3e5d8d2d7dbc48beae1f609ecd2aa** ile yerel C5 commit'i eşit doğrulandı. Bu son rapor ayrı dokümantasyon commit'iyle aynı dala gönderilir. Main'e merge/force push/hard reset yapılmadı.
 
-Yerel kabul: `npm ci`, `npm run build`, `npm test`, `npm run lint`, `npm run db:migrate`, `npm run db:migrate:test`, `npm run db:grants`, `npm run db:test`, `npm run test:e2e`. Dev server açıkken `/api/health/database`200 ve yalnız status göstermeli; müşteri değiştirme onayı, USD maliyet ve eski taslak/snapshot akışları önceki gibi çalışmalı.
+| Aşama                      | Commit    |
+| -------------------------- | --------- |
+| C1 — Auth altyapısı        | `fa06f76` |
+| C2 — Bootstrap/MFA         | `d647a9e` |
+| C3 — Kullanıcı/izin/kapsam | `c52e9f8` |
+| C4 — API/RLS/DTO           | `6ace468` |
+| C5 — UI ve son doğrulama   | `84dd62c` |
+
+`.env.local`, `.env.bootstrap.local`, `.data`, `.neon`, generated client, build ve auth test çıktıları Git dışıdır. Sırlar GitHub'a yazılmadı. [Sprint B raporu](docs/history/PUSULA_V030_SPRINT_B_REPORT.md) korunmuştur.
+
+[Neon mimarisi](docs/architecture/NEON_CLOUD.md) · [Auth sözleşmesi](docs/security/AUTHORIZATION.md) · [Denetim](research/PUSULA_V030_AUDIT.md) · [Master kurulumu](docs/security/MASTER_ADMIN_SETUP.md) · [Test matrisi](docs/security/AUTH_TEST_MATRIX.md) · [Desktop](docs/design/screenshots/v030-auth-desktop-users.png) · [Mobil](docs/design/screenshots/v030-auth-mobile-users.png)
+
+Yerel komutlar: `npm run dev`, `npm run build`, `npm run lint`, `npm test`, `npm run db:test`, `npm run auth:test`, `npm run test:e2e`, `npm run test:e2e:auth`. Auth kurulumu: `npm run auth:setup`, `npm run auth:roles`, ardından yalnız operatör alanları doldurulduysa `npm run auth:bootstrap`.
