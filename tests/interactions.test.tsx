@@ -78,6 +78,7 @@ describe("Temel etkileşimler", () => {
         setDraft={() => {}}
         customers={d.customers}
         onNewCustomer={() => {}}
+        onCustomerChange={() => {}}
         onSave={save}
       />,
     );

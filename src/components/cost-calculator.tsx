@@ -399,6 +399,10 @@ export function CostCalculator({
                         </div>
                         <div className="consumption-stats">
                           <div>
+                            <small>USD birim alış maliyeti</small>
+                            <b>{consumption.unitCostUsd.toFixed(4)} USD / {m?.unit}</b>
+                          </div>
+                          <div>
                             <small>Gerçek tüketim</small>
                             <b>
                               {consumption.consumedUnits.toFixed(4)} {m?.unit}

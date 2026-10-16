@@ -35,7 +35,7 @@ Ortam npm'i çevrimdışı çalışmaya zorluyorsa `npm install --offline=false`
 - Genel Bakış: faaliyet ve tarih filtresiyle ortak kayıtlardan türetilen altı metrik, dört grafik, son satışlar ve bekleyen tahsilatlar.
 - Satışlar: tek sayfa satış formu; ürün ekleme/çıkarma, miktar, ölçüler, iskonto, KDV, TRY/USD, peşin ödeme ve çok yöntemli vadeli tahsilat planı. Kaydetme dashboard ve cari bakiyeyi günceller.
 - Müşteriler ve Cari: 32 hayalî müşteri; segment, il, ilçe ve bakiye filtreleri; TanStack sıralama, sekiz satırlı sayfalama, kolon görünürlüğü ve filtrelenmiş/sıralı CSV aktarımı.
-- Yeni müşteri: 480 px Radix dialog paneli; form doğrulama, ad/VKN mükerrer kontrolü; satış ekranında yeni müşteri otomatik seçilir. Escape, odak yönetimi ve mobil tam ekran desteklenir.
+- Yeni müşteri: 480 px Radix dialog paneli; form doğrulama, ad/VKN mükerrer kontrolü. Boş satışta yeni müşteri doğrudan seçilir; dolu taslakta seçim onay gerektirir. Vazgeç/Escape taslağı korur; onay yalnız aktif satış girdilerini temizler. Yeni müşteri kaydı ve tarihsel satışlar korunur. CRM kaydından sonra detay açılır. Odak yönetimi ve mobil tam ekran desteklenir.
 - Malzeme Yönetimi: kullanıcı tarafından girilen USD/birim maliyetleri, yeni malzeme/varyant, stok uygunluğu ve tarih/eski değer/kullanıcı bilgisi içeren fiyat geçmişi.
 - Teklif ve Maliyet: gerçek tüketim, çoklu malzeme/gider, marj veya maliyet üstü kâr, manuel net TL fiyat ve değişmeyen snapshot ile teklif arşivi. Satış satırının hesaplayıcısı aynı motoru kullanır.
 - Kalan modüller açıkça Yakında olarak işaretlidir. Firma ve profil alanları demo bilgisi sunar; global arama müşteri detayına gider. Koyu/açık tema ve daraltılabilir/mobil menü çalışır.

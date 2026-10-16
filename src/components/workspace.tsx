@@ -2,6 +2,8 @@
 import { createId, copyValue } from "@/lib/runtime";
 
 import Link from "next/link";
+import * as Dialog from "@radix-ui/react-dialog";
+import { customerTarget, hasCustomerDraftData, switchDraftCustomer, type CustomerTarget } from "@/lib/customer-switch";
 import { motion } from "motion/react";
 import { WorkspaceSkeleton } from "./workspace-skeleton";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
@@ -164,6 +166,8 @@ function LoadedWorkspace() {
   const [mobile, setMobile] = useState(false);
   const [dark, setDark] = useState(initial.dark);
   const [drawer, setDrawer] = useState(false);
+  const [pendingCustomer, setPendingCustomer] = useState<CustomerTarget | null>(null);
+  const [draftRevision, setDraftRevision] = useState(0);
   const [detail, setDetail] = useState("");
   const [toast, setToast] = useState("");
   const [search, setSearch] = useState("");
@@ -251,12 +255,21 @@ function LoadedWorkspace() {
   function saveCustomer(c: Customer) {
     if (!data || !draft) return;
     setData({ ...data, customers: [...data.customers, c] });
-    if (page === "Satışlar")
-      setDraft({ ...draft, customerId: c.id, segment: c.segment });
     setDrawer(false);
-    setToast(
-      `${c.name} eklendi${page === "Satışlar" ? " ve satış için seçildi" : ""}.`,
-    );
+    if (page === "Satışlar") requestCustomer(customerTarget(c, c.segment));
+    else if (page === "Müşteriler ve Cari") setDetail(c.id);
+    setToast(`${c.name} eklendi.`);
+  }
+  function applyCustomer(target: CustomerTarget) {
+    setDraft(switchDraftCustomer(draft, target));
+    setDraftRevision(v => v + 1);
+    setPendingCustomer(null);
+  }
+  function requestCustomer(target: CustomerTarget) {
+    if (target.customerId === draft.customerId && target.segment === draft.segment) return;
+    const current = data.customers.find(c => c.id === draft.customerId);
+    if (hasCustomerDraftData(draft, current?.term ?? 30)) setPendingCustomer(target);
+    else applyCustomer(target);
   }
   function saveSale(s: Sale) {
     if (!data) return;
@@ -372,7 +385,7 @@ function LoadedWorkspace() {
               <span className="live-dot" /> DEMO ÇALIŞMA ALANI
             </span>
             <p>Büyük işler, net hesaplar.</p>
-            <small>Üretimden kâra · v0.2.2</small>
+            <small>Üretimden kâra · v0.2.3</small>
           </div>
           <button
             className="collapse-button"
@@ -552,7 +565,9 @@ function LoadedWorkspace() {
               />
             ) : page === "Satışlar" ? (
               <SaleForm
+                key={draftRevision}
                 draft={draft}
+                onCustomerChange={requestCustomer}
                 setDraft={setDraft}
                 customers={data.customers}
                 onNewCustomer={() => setDrawer(true)}
@@ -628,7 +643,7 @@ function LoadedWorkspace() {
               resmî muhasebe kaydı oluşturulmaz.
             </span>
             <span>
-              Pusula © {new Date().getFullYear()} <i /> v0.2.2
+              Pusula © {new Date().getFullYear()} <i /> v0.2.3
             </span>
           </footer>
         </main>
@@ -639,6 +654,20 @@ function LoadedWorkspace() {
         customers={data.customers}
         onSave={saveCustomer}
       />
+      <Dialog.Root open={pendingCustomer !== null} onOpenChange={open => { if (!open) setPendingCustomer(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="drawer-overlay" />
+          <Dialog.Content className="customer-switch-dialog" onOpenAutoFocus={e => { e.preventDefault(); document.getElementById("cancel-customer-switch")?.focus(); }}>
+            <span className="badge warning"><Users size={16} /> Müşteri değişikliği</span>
+            <Dialog.Title>Müşteri değiştirilsin mi?</Dialog.Title>
+            <Dialog.Description>Bu satış için girdiğiniz ürünler, ölçüler, malzemeler, giderler ve tahsilat planı temizlenecektir. Kaydedilmiş geçmiş satışlar etkilenmeyecektir.</Dialog.Description>
+            <div className="customer-switch-actions">
+              <Button id="cancel-customer-switch" variant="outline" onClick={() => setPendingCustomer(null)}>Vazgeç</Button>
+              <Button onClick={() => { if (pendingCustomer) applyCustomer(pendingCustomer); }}>Devam et ve temizle</Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       {detail && (
         <CustomerDetail
           key={detail}

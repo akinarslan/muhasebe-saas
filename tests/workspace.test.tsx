@@ -27,7 +27,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Satış taslağı ve müşteri entegrasyonu", () => {
-  it("yeni müşteriyi seçerken ürün ve açıklamayı korur, yenilemede taslağı geri yükler", async () => {
+  it("yeni müşteri kaydında iptal taslağı korur, onay temizler; yeni satış kaydedilir", async () => {
     const user = userEvent.setup();
     const view = render(<Workspace />);
     await user.click(screen.getByRole("button", { name: /Satışlar/ }));
@@ -43,10 +43,12 @@ describe("Satış taslağı ve müşteri entegrasyonu", () => {
       "Deneme Vitrin",
     );
     await user.click(screen.getByRole("button", { name: "Müşteriyi kaydet" }));
+    await screen.findByText("Müşteri değiştirilsin mi?");
+    await user.click(screen.getByRole("button", { name: "Vazgeç" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     const stored = JSON.parse(localStorage.getItem("pusula.draft.v1")!);
     expect(stored.lines[0].description).toBe("Vitrin baskısı");
-    expect(stored.customerId).toBeTruthy();
+    expect(stored.customerId).toBe("");
     expect(
       JSON.parse(localStorage.getItem("pusula.demo.v1")!).customers.at(-1).name,
     ).toBe("Deneme Vitrin");
@@ -56,10 +58,11 @@ describe("Satış taslağı ve müşteri entegrasyonu", () => {
     expect(
       (screen.getByLabelText("Ürün açıklaması") as HTMLInputElement).value,
     ).toBe("Vitrin baskısı");
-    expect(
-      (screen.getByLabelText("Müşteri seçin") as HTMLSelectElement)
-        .selectedOptions[0].text,
-    ).toContain("Deneme Vitrin");
+    const newCustomer = JSON.parse(localStorage.getItem("pusula.demo.v1")!).customers.at(-1);
+    await user.selectOptions(screen.getByLabelText("Müşteri seçin"), newCustomer.id);
+    await user.click(screen.getByRole("button", { name: "Devam et ve temizle" }));
+    expect(JSON.parse(localStorage.getItem("pusula.draft.v1")!).lines).toEqual([]);
+    await user.click(screen.getByRole("button", { name: "Dijital baskı folyo" }));
     await user.click(
       screen.getByRole("button", { name: "Maliyet ve fiyat hesapla" }),
     );
@@ -75,7 +78,7 @@ describe("Satış taslağı ve müşteri entegrasyonu", () => {
     );
     const saved = JSON.parse(localStorage.getItem("pusula.demo.v1")!);
     expect(saved.sales).toHaveLength(85);
-    expect(saved.sales[0].customerId).toBe(stored.customerId);
+    expect(saved.sales[0].customerId).toBe(newCustomer.id);
     expect(saved.sales[0].rateSnapshot.source).toBe("tcmb");
     expect(saved.sales[0].lines[0].costSnapshot.chosenNetUsd).toBeCloseTo(
       600 / 49.5,

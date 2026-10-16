@@ -60,6 +60,8 @@ test("müşteri drawer, güvenli bağlam olmadan ID, taslak ve yenileme", async 
   await expect(d).toBeVisible();
   await d.getByLabel(/Şirket \/ kurum adı/).fill("E2E Atölye");
   await d.getByRole("button", { name: "Müşteriyi kaydet" }).click();
+  await expect(page.getByText("Müşteri değiştirilsin mi?")).toBeVisible();
+  await page.getByRole("button", { name: "Vazgeç", exact: true }).click();
   await expect(d).not.toBeVisible();
   await expect(page.getByLabel("Müşteri seçin")).toContainText("E2E Atölye");
   await page.reload();
@@ -71,6 +73,11 @@ test("müşteri drawer, güvenli bağlam olmadan ID, taslak ve yenileme", async 
     await page.getByRole("button", { name: "Demo çalışma alanını aç" }).click();
   await nav(page, /^Satışlar/);
   await expect(page.getByLabel("En (cm)", { exact: true })).toHaveValue("135");
+  const customerId = await page.evaluate(() => JSON.parse(localStorage.getItem("pusula.demo.v1")!).customers.at(-1).id);
+  await page.getByLabel("Müşteri seçin").selectOption(customerId);
+  await page.getByRole("button", { name: "Devam et ve temizle" }).click();
+  await expect(page.getByLabel("Müşteri seçin")).toHaveValue(customerId);
+  await expect(page.getByLabel("En (cm)", { exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 test("sayısal giriş boş, 1000 ve Türkçe ondalık", async ({ page }) => {

@@ -3,7 +3,7 @@
 Amaç: [ROADMAP](../../ROADMAP.md) stabilizasyon kapısından premium deneyime veri kaybetmeden geçmek. Domain sınırları [ARCHITECTURE](../../ARCHITECTURE.md) ile aynıdır.
 
 1. Giriş tasarım prototipi → açık demo bildirimi → demo çalışma alanı. Sahte kimlik doğrulama yoktur.
-2. Satış → müşteri/faaliyet → ürün → ölçü → müşteri drawer → kaydet → otomatik seç → taslak korunur → yenilemede geri gelir.
+2. Satış → müşteri/faaliyet → ürün → ölçü → müşteri drawer → kaydet → dolu taslakta müşteri değiştirme onayı. Vazgeç/Escape eski müşteri ve taslağı korur; yeni müşteri kaydı kalır. Devam et ve temizle yalnız aktif taslağı temizleyip yeni müşteriyi seçer. Boş taslakta doğrudan seçilir. Segment değişimi aynı onayı kullanır; tarihsel satışlar etkilenmez. CRM kaydı sonrası yeni müşteri detayı açılır.
 3. Malzeme → kullanıcı USD maliyeti → varyant/ölçü onayı → uygun rulo karşılaştırması → tüketim + gider → marj/markup → TCMB TL → KDV → snapshot → satış/teklif.
 4. Müşteriler → arama/segment/il/ilçe → detay → satış/cari/tahsilat/notlar. Eksik modüller Yakında olarak görünür.
 

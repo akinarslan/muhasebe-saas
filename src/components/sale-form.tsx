@@ -2,6 +2,7 @@
 import { numericValue } from "@/lib/numeric";
 import { NumericInput } from "./ui/numeric-input";
 import { createId, copyValue } from "@/lib/runtime";
+import { customerTarget, type CustomerTarget } from "@/lib/customer-switch";
 
 import { useState } from "react";
 import {
@@ -45,6 +46,7 @@ export function SaleForm({
   setDraft,
   customers,
   onNewCustomer,
+  onCustomerChange,
   onSave,
   catalog = initialPricingCatalog(),
   onCatalogChange = () => {},
@@ -56,6 +58,7 @@ export function SaleForm({
   setDraft: (d: Draft) => void;
   customers: Customer[];
   onNewCustomer: () => void;
+  onCustomerChange: (target: CustomerTarget) => void;
   onSave: (s: Sale) => void;
   catalog?: PricingCatalog;
   onCatalogChange?: (c: PricingCatalog) => void;
@@ -220,9 +223,10 @@ export function SaleForm({
                 <select
                   value={draft.segment}
                   onChange={(e) =>
-                    update({
+                    onCustomerChange({
                       segment: e.target.value as Draft["segment"],
                       customerId: "",
+                      term: 30,
                     })
                   }
                 >
@@ -254,12 +258,7 @@ export function SaleForm({
               value={draft.customerId}
               onChange={(e) => {
                 const c = customers.find((c) => c.id === e.target.value);
-                const due = new Date(draft.date + "T12:00:00");
-                due.setDate(due.getDate() + (c?.term ?? 30));
-                update({
-                  customerId: e.target.value,
-                  dueDate: `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, "0")}-${String(due.getDate()).padStart(2, "0")}`,
-                });
+                onCustomerChange(customerTarget(c, draft.segment));
               }}
             >
               <option value="">Müşteri seçin</option>

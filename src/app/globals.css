@@ -2445,3 +2445,25 @@ summary {
     animation: none !important;
   }
 }
+/* Customer change is an atomic, explicit draft operation. */
+.customer-switch-dialog {
+  position: fixed;
+  z-index: 110;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  background: var(--card);
+  color: var(--text, #15243b);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: 0 24px 80px #07152e40;
+  animation: customer-confirm-in var(--motion-modal) var(--ease-out);
+}
+@keyframes customer-confirm-in { from { opacity: 0; } to { opacity: 1; } }
+.customer-switch-dialog h2 { margin: 18px 0 12px; font-size: 24px; letter-spacing: -.6px; }
+.customer-switch-dialog p { line-height: 1.7; color: var(--muted, #66758a); }
+.customer-switch-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+@media (max-width: 540px) { .customer-switch-actions > button { width: 100%; } }

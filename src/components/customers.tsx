@@ -104,14 +104,14 @@ export function Customers({
       }),
     [data],
   );
-  const filtered = rows.filter(
+  const filtered = useMemo(() => rows.filter(
     (r) =>
       normalize(r.name).includes(normalize(search)) &&
       (!segment || r.segment === segment) &&
       (!city || r.city === city) &&
       (!district || r.district === district) &&
       (!balance || (balance === "open" ? r.balance > 0 : r.balance === 0)),
-  );
+  ), [rows, search, segment, city, district, balance]);
   const columns = useMemo<ColumnDef<Row>[]>(
     () => [
       {

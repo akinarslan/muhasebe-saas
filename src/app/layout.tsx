@@ -6,6 +6,7 @@ import { MotionProvider } from "@/components/motion-provider";
 export const metadata: Metadata = {
   title: "Pusula — İşletmenizin finansal rotası",
   description: "Muhasebe ve işletme yönetimi · Frontend demo prototipi",
+  icons: { icon: { url: "/favicon.svg", type: "image/svg+xml" } },
 };
 export default function RootLayout({
   children,
