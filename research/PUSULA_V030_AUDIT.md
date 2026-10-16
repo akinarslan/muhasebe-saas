@@ -16,6 +16,8 @@ Doğrulama: gerçek DB suite11/11; migration iki DB'de tekrar deploy ile idempot
 
 Auth/MFA/Master Admin/özel API izinleri (C), UI cloud CRUD ve idempotent onaylı import (D), bağımsız backup/restore (E), tam v0.3 kabulü (F) henüz tamamlanmadı. Güncel [mimari/komutlar](../docs/architecture/NEON_CLOUD.md), [teslim raporu](../LAST_REPORT.md).
 
+Son browser koşusu22/22 geçti (1.4 dakika); önceki20 akışa iki gerçek DB health HTTP kontrolü eklendi. Son kodla migration tekrarları ve DB suite11/11 yeniden geçti.27 staged dosyada yerel URL/parola değerlerine karşı tarama PASS; env/context/generated client dışlanması ayrıca doğrulandı. Uygulama commit'i `6a77824` feature dalına push edildi; main v0.2.3 olarak korundu.
+
 ---
 
 16.10.2026 · Başlangıç ve origin/main `21fa89bb851f69673527a0bc3910ae15b0167746` · `feat/pusula-v030-neon-cloud`.

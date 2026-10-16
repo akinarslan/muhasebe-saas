@@ -1,53 +1,60 @@
-﻿# PUSULA v0.3 — Sprint A / Neon kurulum kapısı
+﻿# PUSULA v0.3 — Sprint B / Gerçek Neon PostgreSQL temeli
 
-16.10.2026 · **v0.3 tamamlanmadı. Sprint A tamamlandı; Sprint B için staging bağlantısı bekleniyor.**
+16.10.2026 · **Sprint B tamamlandı. v0.3 bütünü ve Sprint C auth/Master Admin henüz tamamlanmadı.**
 
-## Git ve yapılan çalışma
+## Sonuç
 
-Dal: `feat/pusula-v030-neon-cloud`. Başlangıç/origin main `21fa89bb851f69673527a0bc3910ae15b0167746`; çalışma ağacı temizdi. Fetch yapıldı, main'de ek değişiklik yoktu; yeni dal güncel origin/main üzerinden açıldı. Sprint A commit'i **`b9c8701fbfa850811093816317fabf8d04380adb`** GitHub feature branch'ine push edildi. Bu sonuç raporu ek dokümantasyon commit'iyle aynı dala gönderilir. Main'e eksik v0.3 birleştirilmedi; force push/hard reset kullanılmadı.
+Neon'a **gerçek bağlantı kuruldu**. Kullanıcı CLI girişini tarayıcıda tamamladı. Organizasyon `org-wild-forest-12594477` Free; proje `icy-queen-44442204` / `pusula-development`; bölge Frankfurt (`aws-eu-central-1`), PostgreSQL18.
 
-Mevcut kod/mimari/tasarım belgeleri ve resmî Neon/Better Auth/PostgreSQL kaynakları incelendi. Neon, standart PostgreSQL + pooled uygulama/direct migration bağlantısıyla seçildi. Prisma ve standart PostgreSQL adapter'ı repository/service sınırında planlandı; paket kurulmadı. Managed Better Auth MFA desteği henüz yol haritasında olduğundan zorunlu Master Admin MFA için uygulamanın yönettiği Better Auth + TOTP seçildi. Bu bir mimari karardır, çalışan kimlik doğrulama değildir.
+Başlangıçta yalnız default `production` (`br-autumn-union-baaldt81`) vardı. Production'a SQL, test veya migration uygulanmadı. Schema-only **development** (`br-rough-darkness-ba6ow9zo`) oluşturuldu; üretim satırları kopyalanmadı. Bu dalda iki **yeni boş** DB açıldı: `pusula_development` ve yalnız hayalî fixture'lar için `pusula_sprint_b_test`.
 
-Uygulama kodu ve paket sürümü değiştirilmedi; v0.2.3 demo, müşteri değişim onayı, USD maliyet motoru, TCMB, premium pusula ve taslaklar korunur. `.env.example` dosyasına boş sunucu değişkenleri eklendi. Gerçek secret/URL veya tarayıcı kullanıcı verisi okunup commit edilmedi. [Önceki rapor](docs/history/PUSULA_V023_REPORT.md) arşivlendi.
+Neon CLI8.7.2 kuruldu. İlk npm sertifika hatası sistem CA ile çözüldü; TLS kapatılmadı. Init yalnız development dalında `--services postgres --no-agent-setup` ile çalıştı. `neon.ts` auth:false; diğer servisler tanımlı değil. Config plan yalnız Postgres/noop, conflict/warning yok gösterdi; **neon deploy gerekmedi ve çalıştırılmadı**. Şablonun7 günlük auto-expiry kuralı kaldırıldı. Free'de suspend override reddedildiği için hesap varsayılanı korundu; compute0.25 CU. Ücretli plan/hizmet açılmadı.
 
-## İstenen 11 durum cevabı
+## Prisma, kalıcılık ve kapsam
 
-| Soru | Gerçek durum |
+Prisma/client/adapter-pg **7.10.1**, pg8.23.1 kuruldu. Latest etiketi8RC olduğundan kararlı7 seçildi. `prisma7.config.ts`, şema, iki sürümlü migration ve server-only client/repository eklendi. Build ve predev client üretir; generated kod Git'e konmaz.
+
+Tenant, LegalEntity, Activity, Customer, Material, MaterialVariant, MaterialPriceHistory tabloları her iki DB'de kuruldu. Numeric USD(18,6), ölçü(12,4), composite tenant/şirket FK, FORCE RLS + WITH CHECK, transaction-local scope ve immutable fiyat geçmişi trigger'ı vardır. Migration tekrar deploy ile idempotent; reset/db push/production destructive migration kullanılmadı.
+
+Runtime SQL ile oluşturulan non-owner `pusula_runtime`; test DB'sinde ayrı `pusula_test_runtime`. Superuser/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS ve neon_superuser üyeliği yok. Runtime tablo oluşturamaz/migration kayıtlarını okuyamaz; fiyat geçmişi yalnız insert/select. Migration owner URL uygulama client'ında kullanılmaz.
+
+**Mevcut UI modülleri hâlâ v0.2.3 localStorage demosudur.** Kullanıcı müşterileri/fiyatları/satışları otomatik taşınmadı. UI CRUD'ları henüz repository'ye bağlanmadı. Repository internal server DAL; HTTP veri CRUD veya kullanıcı RBAC açılmadı. Yeni `/api/health/database` yalnız200/503 ve durum döndürür; iki browser projesinde gerçek bağlantı200 doğrulandı.
+
+## Ortam ve güvenlik
+
+`.env.local` korunarak birleştirildi: pooled runtime DATABASE_URL, direct migration DIRECT_DATABASE_URL; ayrı TEST_DATABASE_URL/TEST_DIRECT_DATABASE_URL; CLI uyum alias'ı DATABASE_URL_UNPOOLED. Rastgele rol parolaları yalnız yerel env dosyasına yazıldı. TLS verify-full; uygulama/migration config explicit development endpoint/DB/port/query-param allowlist'i uygular. Production hedefi ve driver host override'ları reddedilir.
+
+`.env.local`, `.neon`, generated client ve test çıktıları Git dışındadır. DB connection string/parolaları rapora/Git'e konmadı;27 staged dosya gerçek yerel URL/parola değerlerine karşı tarandı ve **PASS** alındı. CLI'nin ilk OAuth login debug çıktısı tamamlanan girişte tüketilmiş tek kullanımlık callback kodunu yazdı; kalıcı token/parola gösterilmedi. Sonraki CLI çıktıları yakalanıp debug/secret çıktısı bastırıldı. CLI oturumu kullanıcı profilindedir; repoya eklenmez.
+
+## Doğrulama
+
+| Kontrol | Gerçek sonuç |
 | --- | --- |
-| Neon bağlantısı gerçekten kuruldu mu? | **Hayır.** `.env.local` ve DATABASE_URL/DIRECT_DATABASE_URL yok. Bağlantı/migration çalıştırılmadı. |
-| Kullanılan Neon planı | Hesap/proje bilinmiyor. Hedef Free geliştirme; ücretli hizmet açılmadı. |
-| PostgreSQL'de tutulan kayıtlar | Henüz hiçbiri; cloud modül geçişi başlamadı. |
-| localStorage'da kalanlar | Demo müşteri/satış/borç/custom ürün, malzeme/varyant/USD fiyat geçmişi/gider/teklif; aktif taslak ve UI tercihleri. |
-| Master Admin çalışıyor mu? | Hayır. Bootstrap/MFA/rol/özel izin tasarımı belgelendi; runtime uygulanmadı. |
-| Özel izinler API'de uygulanıyor mu? | Hayır. Mevcut manuel kur token kontrolü gerçek kullanıcı RBAC yerine geçmez. |
-| Yedekleme gerçekten çalışıyor mu? | Hayır. Bağımsız şifreli hedef, scheduler ve alarm tasarımı hazır; kurulmadı. |
-| Restore testi yapıldı mı? | Hayır. İzole gerçek test DB ve backup hedefi olmadan başarı iddia edilmedi. |
-| Mevcut kullanıcı verileri korundu mu? | Evet; uygulama veri yazma yolları değiştirilmedi, kullanıcı tarayıcısı temizlenmedi, otomatik import yok. |
-| Hangi testler geçti? | Mevcut v0.2.3 build/lint +63 Vitest +20 Playwright. Bunlar cloud/auth/RLS kanıtı değildir. |
-| v0.4 için ne eksik? | Sprint B–F: gerçek Neon/migration/CRUD/RLS, auth/MFA/API izinleri, kalıcı modüller/onaylı import, bağımsız backup ve restore, güvenlik/E2E kabulü. |
+| Başlangıç | 63/63 Vitest, lint başarılı |
+| Prisma validate/generate | Başarılı,7.10.1 |
+| Migration | İki DB'de2 migration; tekrar deploy başarılı |
+| Gerçek PostgreSQL suite | **11/11** |
+| Son build | Başarılı, strict TypeScript,9.05 s |
+| Son lint |0 hata/uyarı |
+| Son Vitest | **71/71**,11 dosya,9.86 s |
+| Son Playwright | **22/22**, desktop Chrome + mobil Chromium,1.4 dakika |
+| npm audit --omit=dev |0 bulgu |
+| Tam npm audit | Dev-only ESLint/fast-glob/braces/micromatch zincirinde5 high; force downgrade uygulanmadı |
 
-## Başlangıç doğrulaması
+Gerçek DB kontrolleri: restricted non-owner bağlantı, CRUD/unique/version counter, filtre olmadan SQL RLS tenant/şirket izolasyonu, yetkisiz yazma, scope eksikliğinde default-deny, pooled context sızıntısı, composite FK, Decimal0.1+0.2=0.3 ve6 hane USD, atomik fiyat tarihçesi, immutable history, rollback, DDL/migration erişim reddi, yanlış parola ve TCP connection refused. Hata testinde Neon endpoint'i kapatılmadı; ayrı loopback portu kullanıldı. Fixture'lar yalnız izole test DB'sinde tutulur.
 
-| Kontrol | Sonuç |
-| --- | --- |
-| npm run build | Başarılı, strict TypeScript, 7.29 s |
-| npm run lint | Başarılı, 0 hata/uyarı |
-| npm test | **63/63**, 9 dosya, 9.72 s |
-| npm run test:e2e | **20/20**, desktop Chrome ve mobil Chromium, 1.3 dakika |
-| Git secret sınırı | `.env.local` git check-ignore ile dışlanıyor; gerçek env/secret tanımlı değildi |
+Önceki20 browser testi korundu;2 ek HTTP health testi gerçek Neon'a bağlandı. Önceki63 Vitest'e8 hedef/HTTP sözleşme testi eklendi. İlk SQL üretiminde sandbox child-process engeli ve buna bağlı eksik migration deploy hatası oldu; izinli SQL üretiminden sonra deploy tamamlandı. İlk build test helper'ındaki dar literal host tipini yakaladı; string düzeltmesi sonrası tam kontroller geçti. Başarısız denemeler başarı sayılmadı.
 
-Testler izole demo context'lerinde çalıştı. Motion reduced-motion ve Node FORCE_COLOR bildirimi uyarıdır; başarısız test gizlenmedi. Sprint A yalnız belge/boş env değişikliği olduğu için mevcut kodun doğrulaması tekrar genişletilmedi. Yeni veritabanı/güvenlik testleri ilgili sprintlerde gerçek test veritabanıyla eklenecek.
+## Sprint C için kalanlar
 
-## Oluşturulan belgeler
+Better Auth + TOTP korunuyor; Neon Auth açılmadı. Henüz login/logout/reset/davet/pasifleştirme/session revoke/Master Admin bootstrap/özel izin matrisi/API default-deny enforcement yok. İlk sahip kimliği, auth secret ve mail taşıyıcısı C aşamasında hazırlanacak. RLS tek başına kimlik doğrulama değildir; scope doğrulanmış membership'ten üretilmeli.
 
-- [Neon mimarisi, fiyat/limit araştırması ve kurulum](docs/architecture/NEON_CLOUD.md)
-- [Auth, kişisel izin matrisi, MFA ve RLS sözleşmesi](docs/security/AUTHORIZATION.md)
-- [Bağımsız şifreli yedek ve restore prosedürü](docs/security/BACKUP_RECOVERY.md)
-- [localStorage export/preview/onaylı idempotent geçiş](docs/migration/LOCAL_TO_NEON.md)
-- [Sprint A kod ve güvenlik denetimi](research/PUSULA_V030_AUDIT.md)
+D: çalışan ekranların sunucu CRUD'a geçişi, satış/teklif/kur snapshot şemaları, onaylı/idempotent localStorage import. E: bağımsız şifreli yedek/scheduler/restore testi. Bu aşamalar yapılmış gibi raporlanmadı. Dev toolchain'deki audit bulguları da güvenlik kabulü öncesinde çözülmeli; npm'nin önerdiği eslint-config-next14 major downgrade Next16 uyumu nedeniyle otomatik uygulanmadı.
 
-## Devam için gerekli tek kurulum
+## Git ve belgeler
 
-Talimatın bağlantı/hesap gerektiğinde ilgili aşamada durma kuralı uygulanıyor. [Neon Console](https://console.neon.tech) içinde boş **Free development/staging** projesi hazırlayın. Connect'ten pooling ON ve OFF URL'lerini alıp proje kökündeki Git dışı `.env.local` dosyasına `DATABASE_URL` ve `DIRECT_DATABASE_URL` olarak ekleyin. Mevcut dosyanız varsa üzerine yazmayın. URL/parolayı sohbete veya GitHub'a koymayın; burada yalnız **hazır**, projenin **planı ve bölgesi** yeterlidir. Hesap parolası veya Neon API key gerekmiyor.
+Dal `feat/pusula-v030-neon-cloud`; başlangıç `e3290f8`; fetch sonrası uzak dal günceldi, kullanıcı değişikliği yoktu. Doğrulanan Sprint B uygulama commit'i **`6a77824e77d92f0282f30c43849874acd521d701`** GitHub feature dalına push edildi; push öncesi fetch/ancestry kontrolü geçti. Bu rapor ayrı dokümantasyon commit'iyle aynı dala gönderilir. Main `21fa89b` üzerinde korunur; bu kısmi v0.3 teslimi main'e birleştirilmedi. Force push/hard reset/veri temizliği yapılmadı. [Sprint A raporu](docs/history/PUSULA_V030_SPRINT_A_REPORT.md) arşivlendi.
 
-Gerçek bağlantı doğrulandıktan sonra Sprint B şema/migration/repository ve non-owner runtime rolü/RLS testleriyle devam eder. Auth e-posta taşıyıcısı/ilk yönetici kimliği ve bağımsız backup hedefi kendi aşamalarında istenecek. Production verisi test amacıyla silinmeyecek; v0.4 stok/alımlar ve v0.6 cari/kasa işlevleri bu çalışmada erkenden açılmayacak.
+[Mimari ve komutlar](docs/architecture/NEON_CLOUD.md) · [Denetim](research/PUSULA_V030_AUDIT.md) · [Auth sözleşmesi](docs/security/AUTHORIZATION.md) · [Yedek planı](docs/security/BACKUP_RECOVERY.md)
+
+Yerel kabul: `npm ci`, `npm run build`, `npm test`, `npm run lint`, `npm run db:migrate`, `npm run db:migrate:test`, `npm run db:grants`, `npm run db:test`, `npm run test:e2e`. Dev server açıkken `/api/health/database`200 ve yalnız status göstermeli; müşteri değiştirme onayı, USD maliyet ve eski taslak/snapshot akışları önceki gibi çalışmalı.
