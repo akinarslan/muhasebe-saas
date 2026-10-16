@@ -1,92 +1,50 @@
-# PUSULA v0.2.2 — Birleşik teslim raporu
+﻿# PUSULA v0.2.3 — Satış, müşteri ve maliyet stabilizasyonu
 
-15.10.2026 · `C:\Users\tb\Desktop\muhasebe-saas` · [GitHub](https://github.com/akinarslan/muhasebe-saas)
+16.10.2026 · [GitHub](https://github.com/akinarslan/muhasebe-saas)
 
-## Sonuç ve Git senkronizasyonu
+## Teslim
 
-Yerel klasörde Git deposu bulunmuyordu. Mevcut uygulama silinmeden ilk snapshot alındı; yalnız belgeleri içeren GitHub geçmişi indirildi ve README, ROADMAP, ARCHITECTURE okundu. Bağımsız geçmişler merge edildi; README çakışmasında yerel kullanım belgeleri korundu, uzak ilk README `docs/history/GITHUB_README_20261015.md` içinde saklandı. Mimari ve uzun vadeli faz sınırları korunup yeni tasarım belgeleriyle ilişkilendirildi.
+Dal: `fix/pusula-v023-customer-sales`. Başlangıç `230030a`; fetch sonrası güncel main `dd96013`. Çalışma ağacı temizdi; yeni dal güncel main üzerinden oluşturuldu. Doğrulanan uygulama commit'i **`09ac7ebfb224da784d11c4a17d5c77ced421d2c8`** hem düzeltme branch'ine hem GitHub main'e push edildi. Main `dd96013` üzerinden fast-forward güncellendi; son fetch sonrası ancestry kontrolü geçti. Bu rapor ayrı dokümantasyon commit'iyle aynı iki ref'e gönderilir. Force-push/reset/veri temizliği yapılmadı; ortam dosyaları, kullanıcı localStorage verileri, `.data` ve test çalışma çıktıları commit edilmedi. Yalnız ayrı test context'inin hayalî verilerini gösteren iki PNG eklendi. [v0.2.2 raporu](docs/history/PUSULA_V022_REPORT.md) arşivlendi.
 
-Geliştirme `work/pusula-v022` branch'inde yapıldı. `backup/local-v020` yerel başlangıç yedeğidir. Doğrulanan çalışma branch'i GitHub'a push edildi; `main`, `6cb8387` üzerinden `4fe623b` teslimine fast-forward güncellendi. Bu rapor ek bir dokümantasyon commit'iyle aynı iki remote ref'e gönderilir. Force-push, hard reset veya kullanıcı verisi temizliği yapılmadı. `.env.local`, `node_modules`, `.next`, `.data`, Playwright çalışma çıktıları ve kullanıcı verileri commit edilmedi. Paylaşılan PNG'ler ayrı test context'indeki hayalî demo verileridir.
+## Düzeltmeler
 
-| Sprint               | Commit    | İçerik                                                              |
-| -------------------- | --------- | ------------------------------------------------------------------- |
-| Başlangıç snapshot   | `f45fb76` | Değişiklik öncesi yerel v0.2 kodu                                   |
-| 1 — Güvenli birleşme | `7d9e474` | GitHub belge geçmişi + yerel uygulama                               |
-| 2 — v0.2.1           | `204c8dd` | Müşteri/ID/şema, numeric input, USD seed, Decimal, ilk E2E          |
-| 3 — Tasarım temeli   | `a84c290` | Motion, özgün pusula, giriş prototipi, beş tasarım belgesi          |
-| 4 — Premium UX       | `2def65a` | Dashboard, satış/malzeme, responsive, yeni ürün, veri koruma        |
-| 5 — Doğrulama        | `4fe623b` | Son test kaydı, ekran görüntüleri, mimari/yol haritası bağlantıları |
+- Dolu satışta müşteri veya segment değişimi ortak onaya gider. Vazgeç/Escape taslağı ve localStorage kaydını birebir korur. Onay yalnız aktif taslağın satır, ölçü, malzeme/gider/fiyat/kur snapshot, not, ödeme planı ve peşinatını temizler. Yeni müşteri ve vadesi seçilir; faaliyet, satış tarihi ve para birimi korunur. Geçmiş satışlar ve teklifler değişmez.
+- Yeni müşteri bağımsız kaydedilir; dolu satışta seçim yine onay ister. İptalde müşteri kaydı kalır. Boş formda doğrudan seçilir. CRM kaydından sonra yeni detay açılır.
+- CRM filtrelenmiş tablo verisi memoize edildi. Yeni müşteri tıklamasında başlangıç Chrome denemesinde görülen yanıtsızlık, kararsız tablo verisi/sayfalama sıfırlama döngüsü giderildikten sonra oluşmadı. Elde edilmemiş bir başlangıç exception metni veya tüm tarayıcı hatalarının tek nedeni iddia edilmez.
+- Maliyet paneli USD birim alış, gerçek tüketim ve toplamı ayrı gösterir. USD fiyat motoru, fiyat geçmişi, TCMB servisi ve eski snapshot'lar korunur. Premium pusula/giriş/dashboard/sidebar/motion tasarımı korunur; onay Radix odak kilidi/Escape, kısa geçiş ve mobil düzen kullanır.
 
-## Kritik hata araştırması
-
-**Müşteri:** Değişiklik öncesindeki 46 jsdom testi geçiyordu; bu tek başına kullanıcının tarayıcısındaki açılış çökmesini yeniden üretmiyordu. Kodda doğrudan `crypto.randomUUID()` ve `structuredClone()` bağımlılıkları ile yalnız üst seviye array kontrolü yapan eski müşteri şeması okuması bulundu. Güvensiz LAN HTTP bağlamında randomUUID bulunmayabilir; eski kayıtta null ad, `.trim()`/`.slice()` yollarını bozabilir. Bunlar düzeltilmiş somut uyumluluk sorunlarıdır; başlangıçtaki yalnız açılış anı çökmesinin tek ve kesin sebebiymiş gibi sunulmaz.
-
-Tarayıcı uyumlu ID/kopyalama yardımcıları, null/eski müşteri alanları ve yinelenen ID'ler için idempotent dönüşüm, null-güvenli isim karşılaştırması ve kayıt hata mesajı eklendi. Playwright, randomUUID ve structuredClone kaldırılmış gerçek browser context'inde drawer açma/kaydetme, otomatik müşteri seçimi, ölçü/taslak koruma ve yenilemeyi hata oluşmadan doğruladı. Yeni kaydın ID'si çakışmayan biçimde üretilir.
-
-**Sayılar:** Eski kontrollü alanlar boş metni `Number('')` ile 0 yapıyor, kullanıcı yazarken state tekrar sıfır gösteriyordu. Ortak NumericInput ham düzenleme metnini korur; `1000`, `0.50`, `1,25`, temizleme ve negatif parsing testlidir. Boş/geçersiz değer hesaplamada NaN/validation olarak kalır; sahte 0 fiyat/kâr gösterilmez. Min/max uyarıları, Zod/domain doğrulaması ve normalize edilmiş form verisi birlikte kullanılır. Türkçe para formatı girişten ayrı gösterilir; binlik ayırıcıyla giriş önerilmez.
-
-**Veri:** Bir defalık `pusula.backup.v020`, eski demo/taslak/katalog/teklif JSON metinlerini tarayıcı içinde saklar. Mevcut anahtarlar silinmez. Boş numeric alanlar JSON'da null olsa da draft dönüşümünde geçersiz olarak geri yüklenir; sessizce 0 yapılmaz. Kullanıcı USD fiyatı ve eski snapshot'lar seed/kur güncellemesiyle değişmez.
-
-## Malzeme, kur ve maliyet
-
-- Kullanıcının verdiği 11 başlangıç referansı idempotent eklendi. USD ana maliyet korunur. TRY/EUR yalnız tarihsel USD/TRY **49.4204**, EUR/TRY **55.4110** referansıyla bir kez normalize edilir; canlı kur etiketi taşımaz.
-- Vinil 140 cm ve Oracal 105/126/137/152/160/200 cm verilen örneklere dayanır. Ölçüsü belirsiz diğer malzemeler stokta/üretime hazır kabul edilmez; kullanıcı ölçü onayı gerekir. Mevcut kullanıcı fiyatları ezilmez.
-- Yeni malzeme/varyant, SKU, kategori, marka, tedarikçi tanımı, maliyet birimi, KDV, tarih, açıklama ve varsayılan paylar düzenlenebilir. Pasifleştirme/arşiv, genişliği kaldırma/arşivden alma ve fiyat tarihçesi bulunur. Birim değiştirilirse maliyet yeniden girilmelidir.
-- Satılabilir ürün/hizmet ekleme malzemeden ayrıdır ve satış taslağını korur. Bir satış kalemi birden fazla malzeme/gider kullanabilir.
-- Rulo yalnız ilgili malzemenin uygun/stokta varyantlarından seçilir; en dar uygun ilk seçimdir. Diğer uygun rulolar için toplam USD maliyeti karşılaştırması gösterilir; en darın en ucuz olduğu varsayılmaz.
-- 135 × 200 cm + dört kenarda 2 cm → 139 × 204 cm. 137 cm Oracal reddedilir; 152 cm tüketim **3.1008 m²**, baskı **2.70 m²**, brüt fark **0.4008 m²**, yaklaşık **%12.93**. Vinil 140 cm → **2.856 m² × 1.20 = 3.4272 USD**.
-- Baskı, kenar payı, tüketim, brüt fark, kullanılabilir artık ve maliyetlendirilen fire ayrıdır. Artık maliyetten otomatik düşülmez. Metretül uzunlukla, m² alanla, plaka tam levha tüketimiyle hesaplanır. Otomatik döndürme/nesting yapılmaz.
-- Malzeme/gider toplamları, kur dönüşümü, marj/markup ve parasal yuvarlama Decimal tabanlıdır. Gider adı/birimi serbesttir. KDV ayrıdır; manuel fiyat gerçek kâr/marjı yeniden hesaplar. Eksik malzeme fiyatı kesin öneri ve kaydı engeller.
-- TCMB sunucu route'u USD/EUR döviz satış, yayın tarihi, çekilme zamanı ve kaynağı döndürür; beş dakikalık cache, son başarılı kur fallback'i, eskilik uyarısı ve anahtar kontrollü manuel kur denetim kaydı vardır. TCMB gerçek zamanlı piyasa kuru değildir.
-- Son canlı yerel API kontrolü HTTP 200: USD **49.4204**, EUR **55.411**, yayın **15.10.2026**, çekilme `2026-10-15T16:33:02.624Z`, `stale: false`. Bu kontrol anının kaydıdır; gelecekteki güncel kur iddiası değildir.
-- Eski ZY Reklam satış listesi aktif fiyat kaynağı olarak kullanılmaz. Tarihsel v0.1 demo fiyat/kuru yalnız kendi legacy snapshot'larında korunur. Geçmiş satış ve teklifler güncel katalogdan yeniden maliyetlenmez.
-
-## Premium deneyim
-
-`/login`: özgün katmanlı SVG pusula, metalik halka/ibre, yavaş ayrı katman hareketleri, sınırlı fare perspektifi, atmosferik lacivert alan ve açık demo giriş bildirimi. Gerçek şifre alınmaz, sahte güvenli oturum oluşturulmaz.
-
-Dashboard: kapatılabilir düşük opaklıklı pusula, sekiz renkli KPI, gerçek veri trendleri/dönem karşılaştırması, hızlı eylemler, grafikler ve detay panelleri. **Nakit durumu** yalnız demo nakit tahsilatını gösterir; gerçek kasa bakiyesi değildir. **Aktif işler** modül henüz çalışmadığı için açıkça 0/inaktif gösterilir; gerçek iş emri varmış gibi sunulmaz.
-
-Sidebar: 13 menü, koyu lacivert/turkuaz kimlik, gruplar, daraltma, mobil çekmece ve profil/giriş tasarımı bağlantısı. Satış geniş masaüstünde müşteri/kalemler/fiyat özeti alanlarına ayrılır; maliyet çalışma alanı ilişkili drawer'da malzeme/gider/fiyat panellerini sunar. Mobilde tek kolon ve yerel tablo scroll'u vardır. Müşteri segment ikonları, yeni müşteri drawer'ı ve mevcut arama/CSV/filtreler korunur.
-
-Motion tokenları, MotionConfig reducedMotion, kısa sayfa/drawer/hover/toast geçişleri ve skeleton eklendi. Kritik işlem animasyon bitişini beklemez. Pusula satış, müşteri, malzeme ve maliyette bulunmaz. Master Admin yalnız belgeli blueprint'tir; gerçek enforcement v0.3'te yapılır.
-
-Beş tasarım belgesi `docs/design/` altında amaç, görsel/etkileşim/motion/responsive/erişilebilirlik ve kabul kriterlerini içerir; ROADMAP/ARCHITECTURE ile bağlantılıdır.
+[Kök neden, değişen dosyalar ve kanıt](research/PUSULA_V023_BUG_AUDIT.md).
 
 ## Doğrulama
 
-| Kontrol        | Sonuç                                                            |
-| -------------- | ---------------------------------------------------------------- |
-| Başlangıç      | Build/lint başarılı, 46/46 test                                  |
-| Son build      | Başarılı, strict TypeScript                                      |
-| Son lint       | 0 hata, 0 uyarı                                                  |
-| Son Vitest     | **54/54**, 8 dosya; önceki 46 korunur                            |
-| Son Playwright | **12/12**, desktop Chrome ve Chromium mobil emülasyon; 43.1 s    |
-| Gerçek API     | HTTP 200, USD/EUR ve yayın/çekilme bilgileri                     |
-| Görsel kontrol | Masaüstü/mobil giriş ve dashboard PNG'leri üretildi ve incelendi |
+| Kontrol | Sonuç |
+| --- | --- |
+| Başlangıç | Build/lint başarılı; Vitest 54/54 |
+| Son build | Başarılı, strict TypeScript |
+| Son lint | Başarılı, 0 hata/uyarı |
+| Son Vitest | 63/63, 9 dosya; önceki 54 test kapsamı korunur |
+| Son Playwright | **20/20**, desktop Chrome + mobil Chromium; 1.3 dakika |
+| Görsel | Masaüstü/mobil onay PNG'leri incelendi; taşma yok, düğmeler okunur |
 
-İlk premium browser koşusunda 11/12 geçti. Mobil testin menü hydration zamanlaması ve kapalı menüde erişilebilir ad eksikliği düzeltildi. Son tam koşu değişmeyen uygulama koduyla 12/12 geçti; başarısız koşu başarı sayılmadı. Başka uygulamaya ait süreçler durdurulmadı; zaten açık olan bu projenin yerel geliştirme sunucusu yeniden kullanıldı.
+Testler bağımsız demo context'lerindedir; kullanıcı verisi temizlenmez. Kur fixture'ları canlı kur iddiası değildir. İlk Playwright koşusunda eşzamanlı tanılama aynı çıktı klasörüne yazınca trace ENOENT oluştu. Diğer ilk başarısız adımlar kapalı vergi bölümüne erişim, malzeme eklenmeden fiyat sabitleme, il locator'ı ve arşivden hesaplayıcıya dönme adımıydı. Konsol kontrolünün bulduğu favicon 404, SVG ve metadata tanımıyla giderildi; hata gizlenmedi. Bu koşular başarılı sayılmadı. Son sabit kodla tam koşu 20/20; CRM console error/pageerror/HTTP 5xx listesi boş. Ardından build/lint/Vitest tekrar başarılı tamamlandı.
 
-Kanıtlar: [doğrulama ayrıntıları](docs/validation/FINAL_VERIFICATION.md), [başlangıç](docs/validation/BASELINE.md), [ekran görüntüleri](docs/design/screenshots/).
+Kanıt görselleri: [masaüstü](docs/design/screenshots/v023-desktop-customer-switch.png), [mobil](docs/design/screenshots/v023-mobile-customer-switch.png). Önceki 12 browser senaryosu korunur; 8 yeni çalıştırma CRM, müşteri değişimi, boş form ve USD katalog/kur/snapshot akışlarını kapsar. Eski otomatik müşteri aktarımı beklentisi yeni onay kararıyla güncellendi. Vitest 63/63, 8.92 s; build 8.64 s; lint 0 hata/uyarı.
 
-## Bilinen sınırlar
+## Modül durumu ve v0.3
 
-- Gerçek kimlik/rol/Master Admin enforcement, bulut PostgreSQL, tenant güvenliği ve yedek/restore v0.3+ kapsamındadır. localStorage gerçek işletme verisi için güvenilir ana kaynak sayılmaz.
-- Stok miktarı/depo/alış hareketleri, iş emirleri, ileri nesting, operasyonel kasa/banka ve gerçek tahsilat v0.4–v0.6 kapsamındadır. Yeni tedarikçi tanımı bu modüllerin tamamı değildir.
-- Manuel kur endpoint'i yalnız sunucu anahtarıyla korunur; tam kullanıcı yetki sisteminin yerine geçmez. Varsayılan olarak anahtar yoksa kapalıdır.
-- `.data/` tek sunucu/kalıcı disk varsayar; dağıtık cache/DB değildir. Fiyat geçmişi demo kullanıcı kimliğiyle tutulur. Kullanıcı verilerini GitHub'a yedekleme yapılmaz.
-- Henüz sabitlenmemiş maliyet drawer girdileri kapanınca korunmaz; satışa uygulanmış snapshot, satış taslağı ve kaydedilmiş teklifler kalıcıdır.
-- Gerçek iOS/Safari cihazı, ekran okuyucu sertifikasyonu ve Lighthouse performans bütçesi ölçülmedi. Mobil Chromium emülasyonu, yatay taşma, klavye/Escape ve reduced-motion test edildi. Geliştirme PNG'lerinde Next.js geliştirme göstergesi görülebilir.
-- Açılış anındaki kullanıcı çökmesinin tam tarayıcı logu bulunmadığı için tek sebep iddiası yapılmaz; bulunan uyumluluk ve veri şeması riskleri düzeltildi ve gerçek browser kayıt/yenileme akışı doğrulandı.
+Alacaklar, Borçlar ve Tedarikçiler **Yakında** ekranlarıdır; işlem kaydetmez. Dashboard demo kayıtları gösterir. CRM cari/tahsilat gösterimi demo satışlardan türetilir; bağımsız cari defter değildir. Malzeme düzenleyicisindeki tedarikçi adı tanımı satın alma/borç modülü değildir.
 
-## Yerel kabul adımları
+v0.4'te çoklu tedarikçi–varyant ilişkisi, SupplierOffer ve Purchase/PurchaseLine ile tarih/miktar/birim/USD fiyat/kur snapshot'ı; v0.6'da alıma bağlı borç, kısmi ödeme, yöntem/vade/geçmiş/kalan borç/cari ekstre planı [denetimde](research/PUSULA_V023_BUG_AUDIT.md) açıklanır. Bu modüller erkenden uygulanmadı.
 
-1. `npm ci`, `npm run dev`; http://127.0.0.1:3000/login üzerinden demo giriş tasarımını açın.
-2. Dashboard faaliyet/tarih filtresini değiştirin; pusulayı kapatıp yenileyin; tercihin korunduğunu kontrol edin.
-3. Satışa folyo/ölçü/açıklama ekleyin; yeni müşteriyi drawer'dan kaydedin; seçimin ve taslağın yenilemede korunduğunu kontrol edin.
-4. Fiyat alanını silin; `1000`, `0.50`, `1,25` deneyin. Boş/geçersiz alanda fiyat kaydı yapılmadığını görün.
-5. Malzeme Yönetimi'nde kendi USD fiyatınızı değiştirin; kaynak tarihçesini görün; ölçü onayı gereken malzemeyi tamamlayın. Kur yenilemesinin USD fiyatını değiştirmediğini kontrol edin.
-6. Maliyet'te Vinil 140 cm ve Oracal 152 cm örneklerini çalıştırın; alternatif rulo, gider, marj/markup, manuel fiyat ve KDV'yi inceleyin. Teklifi sabitleyip katalog fiyatını değiştirin; eski snapshot sabit kalmalı.
-7. 390 px mobil görünüm, menü, Escape ve sistem reduced-motion tercihini deneyin.
+v0.3 PostgreSQL, sunucu otoritesi, kimlik/Master Admin/izin enforcement, audit, bulut yedek ve restore henüz uygulanmamıştır. localStorage demo/taslak içindir; gerçek işletme verisi ana kaynağı değildir. Fiyat tarihçesi demo kimliği, `.data` tek sunucu ve gerçek iOS/Safari ölçülmemiş olması sınırları sürer.
 
-Komutlar: `npm test`, `npm run test:e2e`, `npm run lint`, `npm run build`. Manuel kur kurulumu `.env.example` ve README'dedir. v0.3 ve sonrası bu görevde erkenden uygulanmadı.
+## Manuel kabul
+
+1. Satışlar'da müşteri seçin; ürün/ölçü/maliyet/peşinat/ödeme planı/not girin. Başka müşteri seçiminde Vazgeç ve Escape sonrası müşteri/taslak aynı kalmalı; yenilemede korunmalı.
+2. Devam et ve temizle sonrası yeni müşteri/vade seçilmeli; aktif kalem/plan/not/peşinat temizlenmeli. Eski satış ve teklifler değişmemeli.
+3. Dolu satıştan yeni müşteri kaydedip seçimden vazgeçin: yeni kayıt kalmalı, eski taslak korunmalı. Boş satışta doğrudan seçilmeli.
+4. CRM > Yeni müşteri: eksik/mükerrer/geçersiz VKN deneyin. Geçerli kayıt detay/listede görünmeli ve yenilemede kalmalı.
+5. Vinil140 USD fiyatını elle değiştirin; tarihçe ve hesaplayıcı aynı fiyatı göstermeli. TCMB yenileme USD'yi ve eski teklifi değiştirmemeli. Oracal135×200 +2cm paylarda137 reddedilmeli,152 tüketimi3.1008m² olmalı.
+6. 390px mobil, klavye/Escape ve reduced-motion kontrolü yapın.
+
+Komutlar: `npm ci`, `npm run dev`, `npm test`, `npm run test:e2e`, `npm run lint`, `npm run build`.
