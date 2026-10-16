@@ -27,6 +27,9 @@ async function run() {
       await admin.query(`GRANT CONNECT ON DATABASE "${target.pathname.slice(1)}" TO "${role}"`);
       await admin.query(`GRANT USAGE ON SCHEMA public TO "${role}"`);
       await admin.query(`GRANT SELECT,INSERT,UPDATE,DELETE ON "AuthUser","AuthSession","AuthAccount","AuthVerification","AuthRateLimit" TO "${role}"`);
+      await admin.query(`GRANT SELECT,INSERT,UPDATE,DELETE ON "AuthTwoFactor" TO "${role}"`);
+      await admin.query(`GRANT SELECT ON "AuthBootstrap" TO "${role}"`);
+      await admin.query(`GRANT SELECT,INSERT ON "AuthSecurityEvent" TO "${role}"`);
       const pooled = new URL(process.env[test ? "TEST_DATABASE_URL" : "DATABASE_URL"]!);
       pooled.username = role; pooled.password = password; changes[key] = pooled.toString();
       console.log(`Auth role verified: ${test ? "test" : "development"}`);

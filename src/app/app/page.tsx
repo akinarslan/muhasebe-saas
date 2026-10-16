@@ -10,6 +10,6 @@ export default async function CloudWorkspace() {
   return <main className="login-form-zone"><div className="login-form">
     <span className="badge neutral">BULUT ÇALIŞMA ALANI</span><h1>Hoş geldiniz, {session.user.name}</h1>
     <p>Gerçek oturumunuz doğrulandı. İşletme modüllerinin bulut verilerine geçişi Sprint D kapsamındadır.</p>
-    <Link href="/">Ayrı demo çalışma alanı</Link><SignOut />
+    <Link href="/account/security">Hesap güvenliği ve MFA</Link><Link href="/admin/users">Kullanıcı yönetimi</Link><Link href="/">Ayrı demo çalışma alanı</Link><SignOut />
   </div></main>;
 }

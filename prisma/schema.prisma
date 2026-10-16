@@ -110,11 +110,15 @@ model AuthUser {
   status String @default("ACTIVE")
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  twoFactorEnabled Boolean @default(false)
+  twoFactor AuthTwoFactor?
   sessions AuthSession[]
   accounts AuthAccount[]
 }
 model AuthSession {
   id String @id
+  mfaVerifiedAt DateTime? @db.Timestamptz(3)
+  stepUpAt DateTime? @db.Timestamptz(3)
   token String @unique
   userId String
   expiresAt DateTime @db.Timestamptz(3)
@@ -157,4 +161,28 @@ model AuthRateLimit {
   key String @unique
   count Int
   lastRequest BigInt
+}
+
+model AuthTwoFactor {
+  id String @id
+  userId String @unique
+  secret String
+  backupCodes String
+  verified Boolean @default(true)
+  failedVerificationCount Int @default(0)
+  lockedUntil DateTime? @db.Timestamptz(3)
+  user AuthUser @relation(fields:[userId], references:[id], onDelete:Cascade)
+}
+model AuthBootstrap {
+  id String @id
+  userId String @unique
+  tenantId String @db.Uuid
+  legalEntityId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+model AuthSecurityEvent {
+  id String @id @default(uuid())
+  userId String
+  action String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 }

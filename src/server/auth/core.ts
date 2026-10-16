@@ -2,6 +2,7 @@
 import { betterAuth, APIError } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { twoFactor } from "better-auth/plugins";
 import { createDatabase } from "@/server/db/client";
 
 const provisioning = new AsyncLocalStorage<boolean>();
@@ -34,6 +35,8 @@ export function createAuth(connection: string, secret: string, test = false) {
     advanced: { useSecureCookies: process.env.NODE_ENV === "production",
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax", path: "/" } },
     logger: { disabled: true },
+    plugins: [twoFactor({ issuer: "Pusula", schema: { twoFactor: { modelName: "AuthTwoFactor" } },
+      backupCodeOptions: { storeBackupCodes: "encrypted" }, twoFactorCookieMaxAge: 300 })],
     databaseHooks: {
       user: { create: { before: async () => {
         if (!provisioning.getStore()) throw new APIError("FORBIDDEN", { message: "Provisioning required" });
@@ -59,9 +62,45 @@ export async function activeSession(headers: Headers, source = identity()) {
   const user = await source.db.authUser.findUnique({ where: { id: result.user.id }, select: { status: true } });
   return user?.status === "ACTIVE" ? result : null;
 }
-const publicPaths = new Set(["/sign-in/email", "/sign-out", "/get-session"]);
+const publicPaths = new Set(["/sign-in/email", "/sign-out", "/get-session",
+  "/two-factor/enable", "/two-factor/verify-totp", "/two-factor/verify-backup-code", "/step-up"]);
 export async function authRequest(request: Request, source = identity()) {
   const path = new URL(request.url).pathname.replace(/^\/api\/auth/, "");
   if (!publicPaths.has(path)) return Response.json({ error: "Unavailable" }, { status: 404 });
-  return source.auth.handler(request);
+  if (request.method === "POST") {
+    if (request.headers.get("origin") !== (process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000"))
+      return Response.json({ error: "Origin rejected" }, { status: 403 });
+    const body = await request.clone().json().catch(() => null);
+    if (!body || body.trustDevice === true || body.disableSession === true || (body.method && body.method !== "totp"))
+      return Response.json({ error: "Invalid request" }, { status: 400 });
+  }
+  if (path === "/step-up") {
+    const session = await activeSession(request.headers, source);
+    if (!session || !session.user.twoFactorEnabled) return Response.json({ error: "MFA required" }, { status: 403 });
+    const key = `step-up:${session.user.id}:${Math.floor(Date.now()/300000)}`;
+    const bucket = await source.db.authRateLimit.upsert({ where: { key },
+      create: { id: key, key, count: 1, lastRequest: BigInt(Date.now()) }, update: { count: { increment: 1 } } });
+    if (bucket.count > 5) return Response.json({error:"Try later"},{status:429});
+    const body = await request.json();
+    try {
+      await source.auth.api.verifyPassword({ headers: request.headers, body: { password: body.password } });
+      await source.auth.api.verifyTOTP({ headers: request.headers, body: { code: body.code } });
+      await source.db.authSession.update({ where: { id: session.session.id }, data: { stepUpAt: new Date(), mfaVerifiedAt: new Date() } });
+      return Response.json({ verified: true });
+    } catch { return Response.json({ error: "Verification failed" }, { status: 403 }); }
+  }
+  const response = await source.auth.handler(request);
+  if (response.ok && ["/two-factor/verify-totp", "/two-factor/verify-backup-code"].includes(path)) {
+    const cookies = new Map((request.headers.get("cookie") ?? "").split(";").map(c => { const i=c.indexOf("="); return [c.slice(0,i).trim(),c.slice(i+1)]; }));
+    for (const value of response.headers.getSetCookie()) { const part=value.split(";")[0]; const i=part.indexOf("="); cookies.set(part.slice(0,i),part.slice(i+1)); }
+    const headers = new Headers(request.headers);
+    headers.set("cookie", [...cookies].map(([k,v])=>`${k}=${v}`).join("; "));
+    const session = await activeSession(headers, source);
+    if (session) {
+      await source.db.authSession.update({where:{id:session.session.id},data:{mfaVerifiedAt:new Date()}});
+      await source.db.authSecurityEvent.create({data:{userId:session.user.id,action:path.endsWith("verify-totp")?"MFA_TOTP_VERIFIED":"MFA_RECOVERY_USED"}});
+    }
+  }
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 }
