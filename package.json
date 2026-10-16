@@ -15,7 +15,18 @@
     "db:grants": "tsx scripts/db/setup.ts --grants",
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:migrate:test": "tsx scripts/db/migrate.ts --test",
-    "db:test": "node --conditions=react-server --import tsx scripts/db/verify.ts"
+    "db:test": "node --conditions=react-server --import tsx scripts/db/verify.ts",
+    "auth:setup": "tsx scripts/auth/setup.ts",
+    "auth:roles": "tsx scripts/auth/setup-authorization.ts",
+    "auth:bootstrap": "node --conditions=react-server --import tsx scripts/auth/bootstrap.ts",
+    "auth:test:c1": "node --conditions=react-server --import tsx scripts/auth/verify-c1.ts",
+    "auth:test:c2": "node --conditions=react-server --import tsx scripts/auth/verify-c2.ts",
+    "auth:test:c3": "node --conditions=react-server --import tsx scripts/auth/verify-c3.ts",
+    "auth:test:c4": "node --conditions=react-server --import tsx scripts/auth/verify-c4.ts",
+    "auth:test:c5": "node --conditions=react-server --import tsx scripts/auth/verify-c5.ts",
+    "auth:test": "npm run auth:test:c1 && npm run auth:test:c2 && npm run auth:test:c3 && npm run auth:test:c4 && npm run auth:test:c5",
+    "auth:prepare-browser": "node --conditions=react-server --import tsx scripts/auth/prepare-browser.ts",
+    "test:e2e:auth": "npm run auth:prepare-browser && playwright test --config playwright.auth.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

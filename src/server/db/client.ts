@@ -18,7 +18,21 @@ export function createDatabase(connectionString: string, test = false) {
 }
 const globalDb = globalThis as unknown as { pusulaDb?: PrismaClient };
 export function database() {
-  return (globalDb.pusulaDb ??= createDatabase(process.env.DATABASE_URL ?? ""));
+  const expected =
+    process.env.PUSULA_AUTH_E2E === "1" && process.env.NODE_ENV !== "production"
+      ? "pusula_test_runtime"
+      : "pusula_runtime";
+  try {
+    if (new URL(process.env.DATABASE_URL ?? "").username !== expected)
+      throw new Error();
+  } catch {
+    throw new Error("A restricted business runtime role is required.");
+  }
+  return (globalDb.pusulaDb ??= createDatabase(
+    process.env.DATABASE_URL ?? "",
+    process.env.PUSULA_AUTH_E2E === "1" &&
+      process.env.NODE_ENV !== "production",
+  ));
 }
 
 export async function databaseHealth(getDatabase = database): Promise<boolean> {

@@ -11,3 +11,4 @@ playwright-report/
 next-env.d.ts
 .neon
 src/generated/prisma/
+.next-auth-e2e/

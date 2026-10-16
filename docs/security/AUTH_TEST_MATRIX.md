@@ -25,3 +25,21 @@ Gerçek Neon/HTTP 11/11: 401/sahte kimlik; faaliyet düzeyinde filtrelenmemiş S
 Eski global manuel kur shared-token POST yolu güvenlik gerekçesiyle kapatıldı; TCMB GET/demo hesapları korunur. Eski manuel POST testleri yeni kapanma sözleşmesini doğrular; gerçek yetkili kur/validation yeni Neon suite'inde doğrulanır. Firma RLS korunur; app.user_id olan cloud transaction'ları ek action/activity/own politikalarına tabidir. Kimliksiz eski internal DAL yalnız Sprint B iç kullanımındadır, HTTP'ye açılmaz.
 
 Metadata migration'ı ilk denemede PowerShell UTF-8 BOM nedeniyle 42601 verdi; henüz uygulanmamış dosyanın BOM'u kaldırıldı, sadece başarısız kayıt rolled-back işaretlendi ve iki development DB'de deploy geçti. Başarılı migration değiştirilmedi/veri silinmedi. Ham Prisma teşhis çıktısı otomatik inceleme tarafından reddedildi; yalnız hata kodu/kategori teşhisi kullanıldı.
+
+## C5 — son doğrulama
+
+- Son `npm run auth:test`: **41/41** gerçek Neon kontrolü (C1 7, tekrar C2 7, C3 8, C4 11, C5 8). İlk C2 enrollment koşusu ayrıca 9/9 idi; tekrar kullanılan MFA fixture'ında enrollment iki kez yapılmaz. Browser suite her seferinde yeni kullanıcıyla enrollment yapar.
+- Son Vitest **81/81**, 12 dosya; eski 71 testlik kapsama 10 policy testi eklendi. Eski 7 shared-token kur testi, kapatılan yolun yeni güvenlik sözleşmesine göre güncellendi; yetkili kur/validation gerçek Neon C4 kontrollerindedir.
+- Sprint B DB **11/11**, build/strict TypeScript başarılı, lint 0 hata/uyarı.
+- Demo Playwright **22/22**, masaüstü ve mobil, 1.3 dakika. Giriş tasarım prototipi bildirimi gerçek session/demo ayrımı olarak güncellendi; pusula ve tercih akışı korunur.
+- Auth Playwright **2/2**, iki uzun uçtan uca senaryo: gerçek parola girişi, MFA öncesi sayfa engeli, QR/TOTP enrollment, recovery ilk gösterim, password+TOTP step-up, ALLOW/DENY preview/save/reopen, mobil yatay taşma, çıkış ve MFA ile tekrar giriş. Sayfa JavaScript hatası 0. Yeni API/browser fixture'ları ayrı test tenant'larında; trace/video kapalıdır.
+- Doğrudan development auth bağlantısı ayrıca başarılı; gerçek kullanıcı sayısı **0**, bootstrap henüz kapanmamış. Bu, gerçek operatör kurulumu tamamlandı demek değildir.
+- `npm audit --omit=dev`: 0. Tam audit: dev-only braces zincirinde 5 high; registry'de yamalı sürüm bulunmadı, Next14 major downgrade uygulanmadı.
+
+## Başarısız denemeler ve sınırlar
+
+Son başarılı koşudan önce QR Base32 test dönüşümü, kayıttan sonra eski liste state'i ve mobil toast'ın Yönet düğmesini örtmesi bulundu; düzeltildi. Beş saniyelik varsayılan assert soğuk dev metadata yenilemesine yetmediği için test önce PATCH sonucunu, sonra yenilenmiş listeyi sınırlı süreyle bekler. Mobilin ilk browser paket ayarı kurulu Chrome'a düzeltildi. Takılan tanı koşuları kesildi, başarı sayılmadı.
+
+Tekrar C3 last-master testi, önceki browser fixture'larının aynı tenant'a Master eklemesiyle yanlış varsayım yaptı; test ayrı tenant'a alındı ve tüm C1–C5 sıralı suite sonrasında geçti. Generated `.next-auth-e2e` ilk lint kapsamına girdi; yalnız generated/test/private çıktı klasörleri ignore edilerek gerçek kaynak lint'i temizlendi. Kod kuralları devre dışı bırakılmadı.
+
+Next geliştirme sunucusu bazı korunan sayfa yönlendirmelerinde `destination stream errored` kaydı ve adapter/pg `client.query` deprecation uyarısı üretir. Gerçek HTTP beklenen 401/403/redirect sonuçları ve browser JS hata kontrolü geçmiştir; bu uyarılar gizlenmedi. Production başlangıç/operasyon kabulü, gerçek cihaz/Safari ve tam accessibility sertifikasyonu ayrıca yapılmalıdır. Görseller hayalî test kullanıcılarıdır; MFA QR/recovery ekranları paylaşılmaz.

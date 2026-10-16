@@ -1,12 +1,12 @@
-﻿# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2.2
+# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2.2
 
-Türkçe, Next.js App Router tabanlı yerel prototip. Müşteri/satış/malzeme verileri tarayıcıda; TCMB kur hizmeti sunucudadır. Veritabanı, tam kullanıcı kimlik doğrulaması, gerçek ödeme ve resmî muhasebe entegrasyonu içermez.
+Türkçe Next.js uygulaması. Yerel müşteri/satış/malzeme demosu korunur; v0.3 geliştirme ortamında Neon PostgreSQL, Better Auth + TOTP ve tenant kapsamlı kullanıcı/izin yönetimi vardır. Gerçek ödeme ve resmî muhasebe entegrasyonu yoktur.
 
-v0.3 Sprint B'de [gerçek Neon geliştirme bağlantısı, Prisma migration ve RLS temeli](docs/architecture/NEON_CLOUD.md) kuruldu. Mevcut ekranlar hâlâ v0.2.3 localStorage demosudur; henüz auth/Master Admin veya gerçek işletme verisi geçişi yoktur. [Sprint denetimi](research/PUSULA_V030_AUDIT.md), [son rapor](LAST_REPORT.md). `npm run db:test` yalnız ayrı development test DB'sinde çalışır; `npm run build` ve `predev` Prisma client üretir.
+v0.3 Sprint B/C: [Neon ve kurulum](docs/architecture/NEON_CLOUD.md), [kimlik ve yetkiler](docs/security/AUTHORIZATION.md), [Master kurulumu](docs/security/MASTER_ADMIN_SETUP.md), [son rapor](LAST_REPORT.md). İşletme ekranlarının buluta taşınması Sprint D kapsamındadır.
 
 ## Kurulum
 
-v0.2.2 giriş tasarımını görmek için `/login` adresini açın. Gerçek kimlik doğrulama yoktur; demo bağlantısı çalışma alanına gider. Dashboard pusulası tercihle kapatılır; işlem ekranlarında büyük pusula bulunmaz.
+`/login` gerçek giriş, `/app` doğrulanmış bulut başlangıcı, `/account/security` MFA, `/admin/users` kullanıcı/izin yönetimidir. `/` ayrı localStorage demosudur; pusula tercihi korunur.
 
 Ham metin sayısal giriş, Decimal aritmetiği, LAN HTTP için ID fallback ve bir defalık `pusula.backup.v020` ham yerel yedeği eklendi. `1000`, `0.50`, `1,25` desteklenir; boş/geçersiz fiyatlar sıfır kabul edilmez. Binlik ayırıcı kullanmadan giriş yapın; gösterimde Türkçe para formatı kullanılır.
 
@@ -62,7 +62,7 @@ Her satış/teklif malzeme, varyant, birim, tüketim, USD birim maliyeti, giderl
 
 `GET /api/exchange-rate` sunucudan [TCMB XML](https://www.tcmb.gov.tr/kurlar/today.xml) alır; USD `ForexSelling / Unit` kullanır. Bu son yayımlanan gösterge kurudur, gerçek zamanlı piyasa kuru değildir. Yayın tarihi ve son başarılı çekilme zamanı gösterilir. Hata halinde `.data/exchange-rates.json` içindeki son başarılı TCMB kuru eski olabileceği uyarısıyla döner. Önbellek yoksa 503 döner; kur uydurulmaz ve fiyat sabitleme/satış kaydı kapalıdır. Hafta sonu/tatilde önceki yayın günü normal olabilir.
 
-Manuel kur için `.env.example` dosyasını `.env.local` olarak kopyalayıp `PUSULA_RATE_ADMIN_TOKEN` (en az 24 karakterlik benzersiz gizli anahtar) ve `PUSULA_RATE_ADMIN_NAME` tanımlayın; sunucuyu yeniden başlatın. Arayüzde **Yetkili manuel kur gir** üzerinden kur, gerekçe ve anahtarı gönderin. `POST /api/exchange-rate` anahtarı sunucuda sabit zamanlı karşılaştırır. Anahtar tarayıcıda/denetim dosyasında saklanmaz, gönderim sonrası formdan temizlenir. Yetkili adı, gerekçe, kur ve tarih denetim dosyasına yazılır. Ortam anahtarı yoksa manuel endpoint kapalıdır. Manuel kayıt TCMB önbelleğini ezmez; **TCMB kurunu yenile** TCMB kaynağına döner.
+Eski shared-token manuel kur POST yolu kapalıdır. TCMB GET/demo hesapları korunur. Gerçek manuel kur yalnız `/api/cloud/exchange-rate` üzerinden session + `exchange.manual` + taze parola/TOTP doğrulamasıyla tenant kapsamına kaydedilir. `.env.local` dosyasını silmeyin veya örnek dosyayla üzerine yazmayın.
 
 `.data/` yazılabilir olmalıdır. Yazımlar tek süreçte sıraya alınır ve geçici dosyadan atomik rename kullanır. Geçici sunucu diskinde veya çok sunuculu dağıtımda ortak kalıcılık garanti edilmez. Bu token kontrolü yalnızca manuel kur endpoint'ini korur; gerçek kullanıcı/rol/tenant güvenliği değildir.
 
@@ -87,3 +87,11 @@ Doğrulama sonuçları ve sınırlar için `LAST_REPORT.md` dosyasına bakın.
 ## Ürün ve mimari belgeler
 
 [ROADMAP](ROADMAP.md) · [ARCHITECTURE](ARCHITECTURE.md) · [GitHub ilk README kaydı](docs/history/GITHUB_README_20261015.md)
+
+## Sprint C kullanım ve kontroller
+
+Mevcut development kurulumu için: `npm run db:migrate`, `npm run db:migrate:test`, `npm run auth:setup`, `npm run auth:roles`. Bu komutlar production hedefini reddeder. İlk gerçek yönetici için özel yerel bootstrap dosyasını doldurup `npm run auth:bootstrap`; ardından MFA kurulumu yapın. [Ayrıntılı adımlar](docs/security/MASTER_ADMIN_SETUP.md).
+
+`npm run auth:test` gerçek izole Neon test DB'sindeki C1–C5 kapılarını sıralı çalıştırır. `npm run test:e2e:auth` ayrı 3100 portu/test DB'si ve şifreli hayalî fixture'larla browser akışını doğrular; auth trace/video kapalıdır. `npm run test:e2e` mevcut demo regresyonlarını 3000 portunda çalıştırır. Bu iki sunucunun build çıktıları ayrıdır.
+
+SMTP/API e-posta sağlayıcısı bağlanmadı. Development taşıyıcısı yalnız yerelde şifreli test iletisi oluşturur; gerçek davet/reset e-postası teslim edilmiş sayılmaz. Development hedef guard'ları değiştirilmeden production dağıtımı yapılmaz.

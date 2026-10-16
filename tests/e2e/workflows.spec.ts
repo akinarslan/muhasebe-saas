@@ -73,7 +73,10 @@ test("müşteri drawer, güvenli bağlam olmadan ID, taslak ve yenileme", async 
     await page.getByRole("button", { name: "Demo çalışma alanını aç" }).click();
   await nav(page, /^Satışlar/);
   await expect(page.getByLabel("En (cm)", { exact: true })).toHaveValue("135");
-  const customerId = await page.evaluate(() => JSON.parse(localStorage.getItem("pusula.demo.v1")!).customers.at(-1).id);
+  const customerId = await page.evaluate(
+    () =>
+      JSON.parse(localStorage.getItem("pusula.demo.v1")!).customers.at(-1).id,
+  );
   await page.getByLabel("Müşteri seçin").selectOption(customerId);
   await page.getByRole("button", { name: "Devam et ve temizle" }).click();
   await expect(page.getByLabel("Müşteri seçin")).toHaveValue(customerId);
@@ -132,10 +135,12 @@ test("responsive ekran ve reduced motion", async ({ page }, info) => {
   await nav(page, /^Müşteriler ve Cari/);
   await expect(page.locator("[data-compass]")).toHaveCount(0);
 });
-test("giriş prototipi, pusula ve tercih", async ({ page }, info) => {
+test("giriş, demo ayrımı, pusula ve tercih", async ({ page }, info) => {
   await page.goto("/login");
   await expect(page.locator('[data-compass="login"]')).toHaveCount(1);
-  await expect(page.getByText(/giriş tasarım prototipidir/)).toBeVisible();
+  await expect(
+    page.getByText(/Bulut oturumu sunucuda doğrulanır/),
+  ).toBeVisible();
   await page.screenshot({
     path: `test-results/${info.project.name}-login.png`,
     fullPage: true,

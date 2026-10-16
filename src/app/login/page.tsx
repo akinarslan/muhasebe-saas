@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  Compass,
-  ArrowUpRight,
-  ShieldCheck,
-
-
-} from "lucide-react";
+import { Compass, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { CompassScene } from "@/components/compass-scene";
 import { AuthForm } from "@/components/auth-form";
 export default function Login() {
@@ -35,7 +29,7 @@ export default function Login() {
           <span>
             <i /> REKLAM & YAZILIM
           </span>
-          <span>PUSULA / v0.2.2</span>
+          <span>PUSULA / v0.3</span>
         </div>
       </section>
       <section className="login-form-zone">
@@ -50,7 +44,8 @@ export default function Login() {
           <div className="prototype-notice">
             <ShieldCheck size={18} />
             <span>
-              Bulut oturumu sunucuda doğrulanır. Demo çalışma alanı ayrı ve yerel verilerle çalışır.
+              Bulut oturumu sunucuda doğrulanır. Demo çalışma alanı ayrı ve
+              yerel verilerle çalışır.
             </span>
           </div>
           <AuthForm />
@@ -67,7 +62,9 @@ export default function Login() {
             <span>AKILLI İŞ AKIŞLARI</span>
           </div>
         </div>
-        <footer>© {new Date().getFullYear()} Pusula · Güvenli çalışma alanı</footer>
+        <footer>
+          © {new Date().getFullYear()} Pusula · Güvenli çalışma alanı
+        </footer>
       </section>
     </main>
   );

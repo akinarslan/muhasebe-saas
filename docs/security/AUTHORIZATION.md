@@ -1,42 +1,47 @@
-# v0.3 Auth ve yetkilendirme sözleşmesi
+﻿# v0.3 kimlik ve yetkilendirme — Sprint C
 
-**Sprint A tasarımıdır; çalışan auth/Master Admin uygulaması henüz yoktur.** [Neon kararı](../architecture/NEON_CLOUD.md), [hedef mimari](../../ARCHITECTURE.md).
+16.10.2026. Better Auth **1.7.10** + Prisma **7.10.1** gerçek Neon development/test PostgreSQL üzerinde çalışır. Neon Managed Auth açılmadı. Bu belge çalışan geliştirme uygulamasını ve sınırlarını anlatır; production kabulü veya bağımsız yedek teslimi değildir. [Test kanıtı](AUTH_TEST_MATRIX.md), [ilk yönetici kurulumu](MASTER_ADMIN_SETUP.md).
 
-Sprint B güncellemesi: tenant/şirket composite FK ve non-owner runtime FORCE RLS gerçek Neon test DB'sinde doğrulandı. CompanyRepository yalnız internal server DAL'dir; bu sonuç kullanıcı kimliği/özel izin matrisi enforcement'ı değildir. O katman Sprint C'de kurulacak; henüz HTTP CRUD endpoint'i açılmadı.
+## Kimlik ve oturum
 
-## Kimlik
+Better Auth Prisma adapter'ı AuthUser/Session/Account/Verification/RateLimit/TwoFactor tablolarını ayrı **pusula_auth** rolüyle kullanır; testte **pusula_test_auth**. Bu roller non-owner/NOBYPASSRLS'dir ve işletme tablolarını okuyamaz. Business runtime auth tablolarına erişemez. Hedef, TLS ve kullanıcı adı guard'ları owner bağlantısının yanlışlıkla runtime olmasını reddeder.
 
-Managed Neon Auth MFA desteklemediğinden uygulamanın yönettiği Better Auth ve TOTP plugin seçildi. Auth verisi aynı PostgreSQL'de kendi tablolarında tutulacak; SDK'nın kurulu sürüm şeması CLI çıktısıyla migration'a alınacak. Elle özel şifre hashing/oturum sistemi yazılmaz. Cookie httpOnly, production secure, SameSite=Lax; trusted origins sabit allowlist; mutasyonlarda origin/CSRF doğrulaması. Public signup kapalı; davet hash'li, süreli, tek kullanımlık ve doğru e-postaya bağlı. Şifre sıfırlama cevabı hesap varlığını açığa vurmaz; verified mail taşıyıcısı olmadan akış tamamlandı sayılmaz. Şifre/session/TOTP secret/backup code localStorage'a veya loglara girmez.
+Parolalar Better Auth'ın hash mekanizmasıyla saklanır. Session cookie httpOnly, SameSite=Lax, production Secure; cookie cache kapalı, sekiz saat ömürlüdür. Korunan her istekte session, güncel kullanıcı durumu, aktif üyelik ve veritabanından izinler okunur. HTTP JSON'dan bearer session token'ları ayrıca çıkarılır. localStorage kimlik/yetki kaynağı değildir. DB hatası 503'tür; demo fallback yoktur.
 
-Master Admin bootstrap CLI/deploy secret ile, public endpoint olmadan; ilk sahip doğrulanmış e-posta hesabına tenant membership olarak atanır. İlk girişte MFA enrollment; TOTP doğrulanmadan yönetici işlemleri engellenir. Hassas işlem için taze reauthentication + ikinci faktör step-up kanıtı sunucuda doğrulanır. Tek başına `twoFactorEnabled` veya client `mfa=true` yetmez. OAuth/passwordless eklenirse credential dışı akışların MFA'yı bypass etmesi ayrıca engellenir. [Better Auth 2FA](https://better-auth.com/docs/plugins/2fa).
+Public signup endpoint'i yoktur; server API üzerinden doğrudan signup da AsyncLocalStorage provisioning kapısı olmadan reddedilir. Mutasyonlarda sabit origin kontrolü, veritabanı rate limit, normalize e-posta HMAC'li hesap kovası ve hassas step-up kovası vardır. İstemcinin forwarded IP değiştirmesi hesap kovasını atlatmaz. `/api/auth/*` açık endpoint listesiyle sınırlandırılır; genel Better Auth admin/get-token/MFA-disable/trust-device API'si açılmaz.
 
-Pasifleştirme membership ve gerektiğinde user seviyesinde; session'lar iptal edilir. Her istekte güncel üyelik/izin okunur; eski cookie veya client cache yetkiyi canlı tutmaz. Son aktif Master Admin koruması aynı tenant için transaction + kilitlemeyle uygulanır; iki eşzamanlı silme/demotion testi zorunludur. Platform çapında admin rolü bu sürümde açılmaz. MFA kurtarma kodları kullanıcıda güvenli tutulur; operatörün audit/MFA kontrollü kurtarma prosedürü ayrıca test edilir.
+Davet token'ı 256-bit rastgele, SHA-256 ile saklanmış, 24 saat süreli ve atomik tek kullanımlıktır. Kabul edilen kullanıcı rol verilmeden aktif olur; erişim default deny'dır. Parola sıfırlama Better Auth üzerinden 15 dakika ve tek kullanımlıktır; eski oturumları iptal eder. Yanıt hesap varlığını söylemez. SMTP yoktur: geliştirme taşıyıcısı yalnız `.data/auth-mail/*.enc` dosyalarına secret ile şifreli test iletisi yazar; HTTP outbox yoktur ve production'da bu taşıyıcı çalışmaz. Gerçek e-posta teslimatı ayrıca kurulmalıdır.
 
-## Tek sunucu policy giriş noktası
+## Master ve MFA
 
-1. Session'ı sunucuda doğrula; user aktifliği, membership ve oturum iptalini kontrol et.
-2. Seçilen tenant membership'ini sunucuda çöz; URL/body userId/role/tenantId otorite değildir.
-3. Kaynağın tenant/legal entity/activity kapsamını doğrula; tenant dışı kaydı okumadan reddet.
-4. İzin anahtarı için geçerli scope içindeki explicit deny varsa reddet. Aynı kapsamda allow override, sonra rol allow; yoksa default deny. Kapsam, süre, own-record ve tutar limiti uygulanır.
-5. Kritik eylemde step-up ve actor/approver ayrımı; izin yoksa DB mutasyonu olmaz. DTO projection hassas alanları çıkarır; serialization sonrasında string maskeleme yeterli değildir.
-6. Yetki/fiyat/kur/user mutasyonuyla AuditEvent aynı transaction'da commit edilir; loga parola/token veya tam müşteri/finans payload'ı yazılmaz.
+Bootstrap yalnız özel yerel dosya kullanan operatör CLI'sidir. Global tek kurulum işareti ve transaction kilidiyle kapanır; public Master kaydı yoktur. Mevcut kullanıcı sessizce terfi ettirilmez. Tenant Master'dır; platform çapında tüm firmaları gören süper kullanıcı değildir. Gerçek operatör dosyası doldurulmadığından bu teslimde gerçek ilk yönetici hesabı oluşturulmuş sayılmaz.
 
-Gör/Ekle/Düzenle/Onayla/İptal-TersKayıt/DışaAktar modül bazında ayrıdır. Özel aksiyonlar: `materials.cost.view/edit`, `fx.manual_override`, `sales.price.edit`, `sales.discount`, `ar.collect`, `ap.pay`, `cash.balance.view`, `bank.balance.view`, `inventory.adjust`, `users.manage`, `permissions.manage`. Gelecek modüller için izin adının bulunması işlemin implement edildiği anlamına gelmez.
+TOTP plugin'i kurulumu kodla doğrular. QR yerelde çizilir. TOTP secret ve recovery kodları Better Auth ile şifrelidir; recovery yalnız ilk üretimde gösterilir ve atomik karşılaştırmalı tüketimle tek kullanımlıdır. HTTP tekrar gösterme/yenileme/disable/trusted-device yolları kapalıdır. Master için yalnız twoFactorEnabled bayrağı yetmez: mevcut session satırında başarılı MFA kanıtı gerekir. Rol/override/davet/pasifleştirme/oturum iptali ve manuel kur için parola + TOTP step-up beş dakika geçerlidir. Recovery ile giriş yapılabilir; kritik step-up için TOTP gerekir. Kayıp TOTP için operatör kurtarma prosedürü bu sürümde otomatikleştirilmedi.
 
-Kişi kendi override/rol/membership/Master Admin durumunu artıramaz. Master Admin yalnız kendi tenant'ında yetki verebilir; bir membership'in kendi erişim alanını aşan grant engellenir. UI: kullanıcı -> rol şablonu -> allow/deny/inherit matrisi -> şirket/faaliyet kapsamı -> etkili izin özeti -> gerekçe/step-up -> atomik kaydet. Şablon kopyalanması özel deny'ları sessizce silemez.
+Kendi rol/override/üyelik değişikliği yasaktır. Son aktif Master'ın pasifleştirilmesi/demotion aynı tenant için transaction advisory lock + güncel count ile korunur; iki eşzamanlı işlem testi vardır. Rol ve override değişikliği sürüm kontrolüyle atomiktir; aktörün açık DENY veya kapsam sınırı daha geniş bir granta dönüştürülemez.
 
-## RLS savunması
+## Policy, kapsam ve RLS
 
-Repository parametrelerinde tenant filtresine ek PostgreSQL RLS tasarlanır. Runtime rolü owner/superuser/BYPASSRLS olamaz. Tenant tablolarında ENABLE + uygun FORCE ROW LEVEL SECURITY; `USING` ve `WITH CHECK` hem okuma hem yazmayı sınırlar. Transaction içinde doğrulanmış context için `set_config(..., true)` kullanılır; bütün sorgular aynı transaction client'ından gider. Pooled bağlantıda session-wide SET veya işlem dışına taşan sorgu yasaktır. Scope yoksa politika fail-closed olmalıdır. Auth tabloları için ayrı kontrollü adapter/rol sınırı gerekir; RLS'yi devre dışı bırakan genel HTTP erişimi açılmaz. [PostgreSQL RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html).
+`contextFor` -> aktif session -> kullanıcıya ait aktif Membership -> güncel RoleAssignment/RolePermission ve UserPermissionOverride -> `authorize`. Client tenant/user/role beyanı otorite değildir. `x-pusula-membership` yalnız oturum sahibinin üyelikleri arasından seçim yapabilir.
 
-## Kabul matrisi — tamamlanmadan güvenli sürüm denmez
+Karar: eşleşen scope içinde **DENY**, sonra özel **ALLOW**, sonra rol **ALLOW**, aksi halde **default deny**. Kapsam OWN, ACTIVITY, LEGAL_ENTITY, TENANT; composite FK şirket/faaliyet bağını korur. Departman/tutar/onay alanları geleceğe ayrılmıştır; bu sürümün yönetim formunda açık değildir. Desteklenmeyen koşullu ALLOW veri erişimi vermez.
 
-- Anonymous: sayfa redirect, API401; disabled/revoked session401/403.
-- Satışçı: izinli müşteri ekleme; USD maliyeti alanı yanıtta yok; doğrudan edit/export/cost snapshot endpoint'inde403.
-- Yeni grant sonraki istekte etkili; revoke mevcut cookie ile hemen reddedilir; deny allow'dan öncelikli.
-- Başka tenant ID'si, başka legal entity/activity, farklı resource ID ve batch/import payload'ı reddedilir.
-- Non-master self-escalation ve master'ın self-grant isteği reddedilir; son master eşzamanlı kaldırma engellenir.
-- MFA'sız/expired step-up ile sensitive değişiklik reddedilir; audit kaydı sır sızdırmaz.
-- İzin projection'ı müşteri satış detayı, dashboard kârı, CSV, teklif ve snapshot içindeki türetilmiş USD verisini de kapsar; yalnız malzeme listesi yeterli değildir.
+Business runtime'ın Sprint B tenant/şirket FORCE RLS ve WITH CHECK politikaları korunur. Cloud transaction her zaman `app.user_id`, `app.tenant_id`, `app.legal_entity_id` değerlerini transaction-local set eder. Müşteri/malzeme SELECT/INSERT ve fiyat/history yolları ek `pusula_can` scope/action politikalarına tabidir. Pooled işlem bittiğinde context sızmaz. Şirket adları yalnız aktif üyeliğin grant kapsamından listelenir. Auth dışındaki tenant güvenlik tabloları FORCE RLS'dir. Global Role/Permission şablonları runtime için salt okunurdur.
 
-Mevcut manuel kur endpoint'i paylaşılan sunucu token'ı kullanır; bulut modunda bu yolun RBAC bypass'ı olarak açık kalmasına izin verilmeyecek. Demo modundaki mevcut davranış testleri ayrı korunur.
+Eski CompanyRepository, kullanıcı context'i olmayan Sprint B internal DAL olarak kalır; HTTP'ye doğrudan açılmaz. Bu servis runtime credential'ları bir güven sınırıdır; SQL bağlantı parolası son kullanıcıya verilmez. Cloud controller'ları daima doğrulanmış context kullanır.
+
+## API ve hassas alanlar
+
+`/api/cloud`: users GET/PATCH/invite/sessions, invitations/accept, context, customers GET/POST, materials GET/cost PATCH, exchange-rate POST. Tam satış/stok/finans CRUD'u oluşturulmadı. Yetkisiz istekler 401/403; gizlenen kayıt 404 veya filtrelenmiş liste olabilir. Strict Zod şemaları sahte userId/role/tenantId alanlarını reddeder.
+
+Malzeme DTO'su pozitif alan listesiyle seçilir. materials.costView yoksa nested variants içinde usdCost yoktur; history/snapshot/derived margin payload'ları bu API'ye eklenmez. Fiyat audit özeti tutarı içermez; gerçek eski/yeni değer ayrı immutable fiyat geçmişindedir. Gelecek Sprint D satış/CSV/teklif/dashboard bulut DTO'ları aynı projeksiyon kuralına bağlanmadan açılmamalıdır.
+
+Eski `POST /api/exchange-rate` shared-token yolu **403 ile kapalıdır**. TCMB GET demo için korunur, manuel seçenek kapalıdır. Gerçek manuel kur `/api/cloud/exchange-rate` ile tenant'a özel immutable Decimal kayıt ve audit oluşturur; global demo cache'i değiştirmez.
+
+AuditEvent, tenant/şirket, aktör, hedef, UTC zaman, eylem ve sabit güvenli değişiklik özetini taşır. Runtime yalnız insert/select yapabilir; trigger update/delete'i owner için de engeller. Yetki/müşteri/fiyat/kur değişikliği ile audit aynı business transaction'ındadır. AuthSecurityEvent MFA/bootstrap olaylarını ayrı append-only tabloda saklar. Parola/token/secret/recovery veya tam müşteri payload'ı audit'e yazılmaz. Global session temizliği ayrı auth bağlantısındadır; üyelik iptali önce commit edilir, temizleme kesintisi erişimi geri açmaz.
+
+## Görünür sınırlar
+
+`/` yerel v0.2.3 demo; `/login`, `/app`, `/account/security`, `/admin/users` gerçek session kullanır. Demo verileri otomatik import edilmez. Sprint D gerçek satış/teklif/kur snapshot geçişi ve onaylı import; Sprint E bağımsız şifreli yedek/restore hâlâ bekler. Development outbox, Neon hesabı içi storage veya localStorage işletme yedeği sayılmaz. Üretim maili, operator hesabı/MFA kurulumu, dev-only dependency advisory ve production deployment kabulü ayrıca kapanmalıdır.
+
+Resmî kaynaklar: [Better Auth Prisma](https://better-auth.com/docs/adapters/prisma), [TOTP](https://better-auth.com/docs/plugins/2fa), [sessions](https://better-auth.com/docs/concepts/session-management), [PostgreSQL RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html).

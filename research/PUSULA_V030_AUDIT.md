@@ -75,3 +75,13 @@ Playwright'ın başlattığı `next dev`, Next16.4.1'in standart `AGENTS.md` reh
 ## Devam etmek için gereken
 
 Yalnız boş Neon Free development/staging projesi ve `.env.local` içinde pooled DATABASE_URL + direct DIRECT_DATABASE_URL. Sohbette “hazır”, bölge ve plan yeterlidir. Hesap parolası/API key gerekmiyor. Ayrıntılı [kurulum adımları](../docs/architecture/NEON_CLOUD.md#şimdi-gereken-kurulum). Auth e-posta taşıyıcısı/ilk sahip e-postası ve bağımsız backup hedefi kendi sprintlerinde istenecek; henüz ücretli hizmet veya prod geçiş talep edilmiyor.
+
+## Sprint C uygulama denetimi — 16.10.2026
+
+Sprint B'nin kimlik yoktur ifadeleri tarihsel aşama kaydıdır. Güncel kaynak: [AUTHORIZATION](../docs/security/AUTHORIZATION.md), [gerçek kapılar](../docs/security/AUTH_TEST_MATRIX.md). Better Auth1.7.10, ayrı auth SQL rolü, MFA session kanıtı, 5 dakikalık password+TOTP step-up, tek kullanımlık bootstrap/davet/reset, scoped role/override, action/activity/owner RLS, maliyet DTO projection ve append-only audit uygulandı. Cloud URL rol adı/target/TLS guard'ları ve business non-owner ayrımı korunur. Eski global manual-rate token bypass yolu kapatıldı.
+
+Gerçek yönetici dosyası kullanıcı tarafından hazırlanmadı; özel boş şablon/CLI vardır ve yalnız hayalî test yönetici hesaplarıyla doğrulandı. Gerçek SMTP/API sağlayıcısı yoktur; encrypted local test mail delivery olarak dürüstçe etiketlenir. Tüm yerel müşteri/satış/taslaklar demo olarak kalır, import yapılmaz. Kayıp TOTP için tam operatör kurtarma, distributed mail/outbox/retry, bağımsız yedek ve production hedef kabulü teslim edilmedi.
+
+C4 metadata SQL'inin ilk BOM hatası 42601 ile teşhis edildi; yalnız başarısız migration rollback işareti + düzeltilmiş ileri deploy kullanıldı. Ham Prisma teşhis çıktısı otomatik inceleme tarafından reddedildi; sabit hata kodlarıyla çözüm tamamlandı. Başarısız koşular başarılı sayılmadı. Browser testlerinde QR Base32 test dönüşümü ve eski kullanıcı listesini yeniden açma yarışı bulundu/düzeltildi.
+
+Dev toolchain audit yeniden incelendi: npm registry'de braces için son sürüm hâlâ3.0.3; GHSA-vfj7-8cjw-p6xm bu sürümü etkiliyor. `eslint-config-next`16.4.1 -> fast-glob3.3.1 -> micromatch4.0.8 -> braces3.0.3 zincirinde5 high raporlanır. npm çözümü Next14 eslint major downgrade olduğundan uygulanmadı; çalışan production dependency graph ayrı kontrol edilir. Bu bulgu gizlenmez/allowlist ile silinmez; production güvenlik kabulünde giderilmesi veya somut risk kabulü gerekir. [Advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).

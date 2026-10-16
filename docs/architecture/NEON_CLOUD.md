@@ -1,6 +1,6 @@
-# Neon Cloud — v0.3 Sprint A + doğrulanan Sprint B
+# Neon Cloud — v0.3 Sprint A / B / C
 
-16.10.2026. **Sprint B gerçek Neon bağlantısı, migration ve RLS kontrolleriyle doğrulandı.** Auth/Master Admin ve çalışan ekranların buluta taşınması henüz yapılmadı; v0.3 bütünü tamamlanmış değildir. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
+16.10.2026. **Sprint B/C gerçek Neon bağlantısı, auth/TOTP, izin ve RLS kontrolleriyle doğrulandı.** Gerçek operatör hesabı ve SMTP kurulmadı; işletme ekranlarının buluta taşınması Sprint D, bağımsız yedek Sprint E kapsamındadır. v0.3 bütünü/production kabulü tamamlanmış değildir. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
 
 ## Sprint B — gerçek kurulum
 
@@ -81,3 +81,17 @@ Sprint B kapısı gerçek development/test DB'lerinde geçti: migration tekrarla
 Bağlantı kurulumu tamamlandı; yeni proje açılması veya connection string'in sohbete gönderilmesi gerekmiyor. Mevcut `.neon` context'ini `development` üzerinde koruyun; her CLI çağrısında project/branch'i açık seçin. Production'a checkout/init/deploy/migration yapılmaz. Yeniden kurulum gerekiyorsa yukarıdaki allowlist ve rol ayrımını koruyan komutları kullanın; `.env.local` dosyasını silmeyin veya varsayılan owner URL ile runtime değerini ezmeyin.
 
 Sonraki Sprint C: Better Auth + TOTP, güvenli bootstrap, ilk yönetici e-postası, davet/reset için mail taşıyıcısı, session revoke ve default-deny kişi bazlı API izinleri. Bunlar için yeni bilgiler kendi aşamasında istenecek; bu Sprint B isteğinin kapsamı genişletilmedi.
+
+## Sprint C — çalışan kimlik / yetkilendirme katmanı
+
+16.10.2026. Yukarıdaki Sprint B açıklamaları o aşamanın tarihsel kaydıdır. C'de Better Auth1.7.10, TOTP, server-only bootstrap, scoped membership/role/override ve `/api/cloud` sözleşmeleri eklendi. [Gerçek güvenlik sözleşmesi](../security/AUTHORIZATION.md), [kurulum](../security/MASTER_ADMIN_SETUP.md), [test kapıları](../security/AUTH_TEST_MATRIX.md).
+
+- Aynı development dalı ve aynı iki DB kullanılır; production branch/DB kullanılmaz. Neon Auth/ücretli hizmet açılmadı.
+- Auth tabloları ayrı sınırlı `pusula_auth` / `pusula_test_auth` rollerindedir; business runtime auth tablolarını okuyamaz, auth rolü işletme tablolarını okuyamaz. URL rol adı guard'ları owner yanlış kullanımını reddeder. Global şablon Role/Permission salt okunurdur; tenant güvenlik tabloları FORCE RLS'dir.
+- Prisma7.10.1 korunur. C1–C5 için yeni ileri migration'lar vardır; önceki başarılı migration'lar değiştirilmez. SQL `pusula_can` ve ek restrictive kaynak politikaları, cloud session'dan türeyen kullanıcı/tenant/şirket/faaliyet/owner kapsamını sınırlar. Eski internal repository HTTP'ye doğrudan bağlanmaz.
+- `AUTH_DATABASE_URL`, `TEST_AUTH_DATABASE_URL`, `AUTH_SECRET`, `AUTH_TEST_SECRET` yalnız Git dışı `.env.local` dosyasına korunarak birleştirilir. Secret/parola/token çıktısı yoktur. `.env.bootstrap.local` boş yerel şablondur; gerçek operatör doldurmadan hesap açılmaz.
+- Auth browser testleri 3100 portunda, `.next-auth-e2e` çıktısında ve sadece test DB'sinde çalışır; development UI testleri 3000/.next ile ayrıdır. Test fixture kimlik bilgileri `.data` içinde şifrelidir. Auth trace/video kapalıdır.
+- Davet/reset transport arayüzü vardır, gerçek SMTP/API teslimatı yoktur. Yerel encrypted outbox development testi içindir; production'da kapalıdır. Kayıp TOTP operatör recovery ve bağımsız restore Sprint E/operasyon kabulünde tamamlanmalıdır.
+- `/` v0.2.3 localStorage demosu; `/app` gerçek session başlangıcı; `/admin/users` gerçek rol/izin yönetimi. Tam satış/teklif/finans/cloud import Sprint D'ye bırakıldı. v0.3 bütünü ve production dağıtımı tamamlanmış değildir.
+
+Komutlar: `npm run auth:setup`, `npm run auth:roles`, `npm run auth:bootstrap`, `npm run auth:test`, `npm run test:e2e:auth`. Bootstrap yalnız gerçek operatör yerel alanlarını doldurduktan sonra çalıştırılmalıdır. Yeniden seed mevcut kurulmuş Master'ı sessizce yeniden etkinleştirmez; bootstrap kayıt işareti silinmez.
