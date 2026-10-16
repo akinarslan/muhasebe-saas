@@ -1,50 +1,53 @@
-﻿# PUSULA v0.2.3 — Satış, müşteri ve maliyet stabilizasyonu
+﻿# PUSULA v0.3 — Sprint A / Neon kurulum kapısı
 
-16.10.2026 · [GitHub](https://github.com/akinarslan/muhasebe-saas)
+16.10.2026 · **v0.3 tamamlanmadı. Sprint A tamamlandı; Sprint B için staging bağlantısı bekleniyor.**
 
-## Teslim
+## Git ve yapılan çalışma
 
-Dal: `fix/pusula-v023-customer-sales`. Başlangıç `230030a`; fetch sonrası güncel main `dd96013`. Çalışma ağacı temizdi; yeni dal güncel main üzerinden oluşturuldu. Doğrulanan uygulama commit'i **`09ac7ebfb224da784d11c4a17d5c77ced421d2c8`** hem düzeltme branch'ine hem GitHub main'e push edildi. Main `dd96013` üzerinden fast-forward güncellendi; son fetch sonrası ancestry kontrolü geçti. Bu rapor ayrı dokümantasyon commit'iyle aynı iki ref'e gönderilir. Force-push/reset/veri temizliği yapılmadı; ortam dosyaları, kullanıcı localStorage verileri, `.data` ve test çalışma çıktıları commit edilmedi. Yalnız ayrı test context'inin hayalî verilerini gösteren iki PNG eklendi. [v0.2.2 raporu](docs/history/PUSULA_V022_REPORT.md) arşivlendi.
+Dal: `feat/pusula-v030-neon-cloud`. Başlangıç/origin main `21fa89bb851f69673527a0bc3910ae15b0167746`; çalışma ağacı temizdi. Fetch yapıldı, main'de ek değişiklik yoktu; yeni dal güncel origin/main üzerinden açıldı. Sprint A commit'i **`b9c8701fbfa850811093816317fabf8d04380adb`** GitHub feature branch'ine push edildi. Bu sonuç raporu ek dokümantasyon commit'iyle aynı dala gönderilir. Main'e eksik v0.3 birleştirilmedi; force push/hard reset kullanılmadı.
 
-## Düzeltmeler
+Mevcut kod/mimari/tasarım belgeleri ve resmî Neon/Better Auth/PostgreSQL kaynakları incelendi. Neon, standart PostgreSQL + pooled uygulama/direct migration bağlantısıyla seçildi. Prisma ve standart PostgreSQL adapter'ı repository/service sınırında planlandı; paket kurulmadı. Managed Better Auth MFA desteği henüz yol haritasında olduğundan zorunlu Master Admin MFA için uygulamanın yönettiği Better Auth + TOTP seçildi. Bu bir mimari karardır, çalışan kimlik doğrulama değildir.
 
-- Dolu satışta müşteri veya segment değişimi ortak onaya gider. Vazgeç/Escape taslağı ve localStorage kaydını birebir korur. Onay yalnız aktif taslağın satır, ölçü, malzeme/gider/fiyat/kur snapshot, not, ödeme planı ve peşinatını temizler. Yeni müşteri ve vadesi seçilir; faaliyet, satış tarihi ve para birimi korunur. Geçmiş satışlar ve teklifler değişmez.
-- Yeni müşteri bağımsız kaydedilir; dolu satışta seçim yine onay ister. İptalde müşteri kaydı kalır. Boş formda doğrudan seçilir. CRM kaydından sonra yeni detay açılır.
-- CRM filtrelenmiş tablo verisi memoize edildi. Yeni müşteri tıklamasında başlangıç Chrome denemesinde görülen yanıtsızlık, kararsız tablo verisi/sayfalama sıfırlama döngüsü giderildikten sonra oluşmadı. Elde edilmemiş bir başlangıç exception metni veya tüm tarayıcı hatalarının tek nedeni iddia edilmez.
-- Maliyet paneli USD birim alış, gerçek tüketim ve toplamı ayrı gösterir. USD fiyat motoru, fiyat geçmişi, TCMB servisi ve eski snapshot'lar korunur. Premium pusula/giriş/dashboard/sidebar/motion tasarımı korunur; onay Radix odak kilidi/Escape, kısa geçiş ve mobil düzen kullanır.
+Uygulama kodu ve paket sürümü değiştirilmedi; v0.2.3 demo, müşteri değişim onayı, USD maliyet motoru, TCMB, premium pusula ve taslaklar korunur. `.env.example` dosyasına boş sunucu değişkenleri eklendi. Gerçek secret/URL veya tarayıcı kullanıcı verisi okunup commit edilmedi. [Önceki rapor](docs/history/PUSULA_V023_REPORT.md) arşivlendi.
 
-[Kök neden, değişen dosyalar ve kanıt](research/PUSULA_V023_BUG_AUDIT.md).
+## İstenen 11 durum cevabı
 
-## Doğrulama
+| Soru | Gerçek durum |
+| --- | --- |
+| Neon bağlantısı gerçekten kuruldu mu? | **Hayır.** `.env.local` ve DATABASE_URL/DIRECT_DATABASE_URL yok. Bağlantı/migration çalıştırılmadı. |
+| Kullanılan Neon planı | Hesap/proje bilinmiyor. Hedef Free geliştirme; ücretli hizmet açılmadı. |
+| PostgreSQL'de tutulan kayıtlar | Henüz hiçbiri; cloud modül geçişi başlamadı. |
+| localStorage'da kalanlar | Demo müşteri/satış/borç/custom ürün, malzeme/varyant/USD fiyat geçmişi/gider/teklif; aktif taslak ve UI tercihleri. |
+| Master Admin çalışıyor mu? | Hayır. Bootstrap/MFA/rol/özel izin tasarımı belgelendi; runtime uygulanmadı. |
+| Özel izinler API'de uygulanıyor mu? | Hayır. Mevcut manuel kur token kontrolü gerçek kullanıcı RBAC yerine geçmez. |
+| Yedekleme gerçekten çalışıyor mu? | Hayır. Bağımsız şifreli hedef, scheduler ve alarm tasarımı hazır; kurulmadı. |
+| Restore testi yapıldı mı? | Hayır. İzole gerçek test DB ve backup hedefi olmadan başarı iddia edilmedi. |
+| Mevcut kullanıcı verileri korundu mu? | Evet; uygulama veri yazma yolları değiştirilmedi, kullanıcı tarayıcısı temizlenmedi, otomatik import yok. |
+| Hangi testler geçti? | Mevcut v0.2.3 build/lint +63 Vitest +20 Playwright. Bunlar cloud/auth/RLS kanıtı değildir. |
+| v0.4 için ne eksik? | Sprint B–F: gerçek Neon/migration/CRUD/RLS, auth/MFA/API izinleri, kalıcı modüller/onaylı import, bağımsız backup ve restore, güvenlik/E2E kabulü. |
+
+## Başlangıç doğrulaması
 
 | Kontrol | Sonuç |
 | --- | --- |
-| Başlangıç | Build/lint başarılı; Vitest 54/54 |
-| Son build | Başarılı, strict TypeScript |
-| Son lint | Başarılı, 0 hata/uyarı |
-| Son Vitest | 63/63, 9 dosya; önceki 54 test kapsamı korunur |
-| Son Playwright | **20/20**, desktop Chrome + mobil Chromium; 1.3 dakika |
-| Görsel | Masaüstü/mobil onay PNG'leri incelendi; taşma yok, düğmeler okunur |
+| npm run build | Başarılı, strict TypeScript, 7.29 s |
+| npm run lint | Başarılı, 0 hata/uyarı |
+| npm test | **63/63**, 9 dosya, 9.72 s |
+| npm run test:e2e | **20/20**, desktop Chrome ve mobil Chromium, 1.3 dakika |
+| Git secret sınırı | `.env.local` git check-ignore ile dışlanıyor; gerçek env/secret tanımlı değildi |
 
-Testler bağımsız demo context'lerindedir; kullanıcı verisi temizlenmez. Kur fixture'ları canlı kur iddiası değildir. İlk Playwright koşusunda eşzamanlı tanılama aynı çıktı klasörüne yazınca trace ENOENT oluştu. Diğer ilk başarısız adımlar kapalı vergi bölümüne erişim, malzeme eklenmeden fiyat sabitleme, il locator'ı ve arşivden hesaplayıcıya dönme adımıydı. Konsol kontrolünün bulduğu favicon 404, SVG ve metadata tanımıyla giderildi; hata gizlenmedi. Bu koşular başarılı sayılmadı. Son sabit kodla tam koşu 20/20; CRM console error/pageerror/HTTP 5xx listesi boş. Ardından build/lint/Vitest tekrar başarılı tamamlandı.
+Testler izole demo context'lerinde çalıştı. Motion reduced-motion ve Node FORCE_COLOR bildirimi uyarıdır; başarısız test gizlenmedi. Sprint A yalnız belge/boş env değişikliği olduğu için mevcut kodun doğrulaması tekrar genişletilmedi. Yeni veritabanı/güvenlik testleri ilgili sprintlerde gerçek test veritabanıyla eklenecek.
 
-Kanıt görselleri: [masaüstü](docs/design/screenshots/v023-desktop-customer-switch.png), [mobil](docs/design/screenshots/v023-mobile-customer-switch.png). Önceki 12 browser senaryosu korunur; 8 yeni çalıştırma CRM, müşteri değişimi, boş form ve USD katalog/kur/snapshot akışlarını kapsar. Eski otomatik müşteri aktarımı beklentisi yeni onay kararıyla güncellendi. Vitest 63/63, 8.92 s; build 8.64 s; lint 0 hata/uyarı.
+## Oluşturulan belgeler
 
-## Modül durumu ve v0.3
+- [Neon mimarisi, fiyat/limit araştırması ve kurulum](docs/architecture/NEON_CLOUD.md)
+- [Auth, kişisel izin matrisi, MFA ve RLS sözleşmesi](docs/security/AUTHORIZATION.md)
+- [Bağımsız şifreli yedek ve restore prosedürü](docs/security/BACKUP_RECOVERY.md)
+- [localStorage export/preview/onaylı idempotent geçiş](docs/migration/LOCAL_TO_NEON.md)
+- [Sprint A kod ve güvenlik denetimi](research/PUSULA_V030_AUDIT.md)
 
-Alacaklar, Borçlar ve Tedarikçiler **Yakında** ekranlarıdır; işlem kaydetmez. Dashboard demo kayıtları gösterir. CRM cari/tahsilat gösterimi demo satışlardan türetilir; bağımsız cari defter değildir. Malzeme düzenleyicisindeki tedarikçi adı tanımı satın alma/borç modülü değildir.
+## Devam için gerekli tek kurulum
 
-v0.4'te çoklu tedarikçi–varyant ilişkisi, SupplierOffer ve Purchase/PurchaseLine ile tarih/miktar/birim/USD fiyat/kur snapshot'ı; v0.6'da alıma bağlı borç, kısmi ödeme, yöntem/vade/geçmiş/kalan borç/cari ekstre planı [denetimde](research/PUSULA_V023_BUG_AUDIT.md) açıklanır. Bu modüller erkenden uygulanmadı.
+Talimatın bağlantı/hesap gerektiğinde ilgili aşamada durma kuralı uygulanıyor. [Neon Console](https://console.neon.tech) içinde boş **Free development/staging** projesi hazırlayın. Connect'ten pooling ON ve OFF URL'lerini alıp proje kökündeki Git dışı `.env.local` dosyasına `DATABASE_URL` ve `DIRECT_DATABASE_URL` olarak ekleyin. Mevcut dosyanız varsa üzerine yazmayın. URL/parolayı sohbete veya GitHub'a koymayın; burada yalnız **hazır**, projenin **planı ve bölgesi** yeterlidir. Hesap parolası veya Neon API key gerekmiyor.
 
-v0.3 PostgreSQL, sunucu otoritesi, kimlik/Master Admin/izin enforcement, audit, bulut yedek ve restore henüz uygulanmamıştır. localStorage demo/taslak içindir; gerçek işletme verisi ana kaynağı değildir. Fiyat tarihçesi demo kimliği, `.data` tek sunucu ve gerçek iOS/Safari ölçülmemiş olması sınırları sürer.
-
-## Manuel kabul
-
-1. Satışlar'da müşteri seçin; ürün/ölçü/maliyet/peşinat/ödeme planı/not girin. Başka müşteri seçiminde Vazgeç ve Escape sonrası müşteri/taslak aynı kalmalı; yenilemede korunmalı.
-2. Devam et ve temizle sonrası yeni müşteri/vade seçilmeli; aktif kalem/plan/not/peşinat temizlenmeli. Eski satış ve teklifler değişmemeli.
-3. Dolu satıştan yeni müşteri kaydedip seçimden vazgeçin: yeni kayıt kalmalı, eski taslak korunmalı. Boş satışta doğrudan seçilmeli.
-4. CRM > Yeni müşteri: eksik/mükerrer/geçersiz VKN deneyin. Geçerli kayıt detay/listede görünmeli ve yenilemede kalmalı.
-5. Vinil140 USD fiyatını elle değiştirin; tarihçe ve hesaplayıcı aynı fiyatı göstermeli. TCMB yenileme USD'yi ve eski teklifi değiştirmemeli. Oracal135×200 +2cm paylarda137 reddedilmeli,152 tüketimi3.1008m² olmalı.
-6. 390px mobil, klavye/Escape ve reduced-motion kontrolü yapın.
-
-Komutlar: `npm ci`, `npm run dev`, `npm test`, `npm run test:e2e`, `npm run lint`, `npm run build`.
+Gerçek bağlantı doğrulandıktan sonra Sprint B şema/migration/repository ve non-owner runtime rolü/RLS testleriyle devam eder. Auth e-posta taşıyıcısı/ilk yönetici kimliği ve bağımsız backup hedefi kendi aşamalarında istenecek. Production verisi test amacıyla silinmeyecek; v0.4 stok/alımlar ve v0.6 cari/kasa işlevleri bu çalışmada erkenden açılmayacak.
