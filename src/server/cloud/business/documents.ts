@@ -81,6 +81,7 @@ async function compute(
       throw new AccessError(422, "COST_REQUIRED");
     const catalog: PricingCatalog = { version: 2, materials: [], expenses: [] };
     const versions = [];
+    const costScopes: ReturnType<typeof resource>[] = [];
     for (const use of line.costing.materials) {
       const material = await tx.material.findFirst({
         where: {
@@ -108,6 +109,17 @@ async function compute(
       )
         throw new AccessError(422, "CONSUMPTION_DIMENSION_MISMATCH");
       if (!units[material.unit]) throw new AccessError(422, "UNIT_UNSUPPORTED");
+      costScopes.push({
+        tenantId: material.tenantId,
+        legalEntityId: material.legalEntityId,
+        activityId: material.activityId,
+        createdById: material.createdById ?? "",
+      });
+      if (
+        !can(c, "materials.costView", material) &&
+        line.costing.manualNetUsd === null
+      )
+        throw new AccessError(403, "MANUAL_PRICE_REQUIRED");
       const candidate = {
         id: material.id,
         name: material.name,
@@ -165,6 +177,17 @@ async function compute(
         quantity: use.quantity,
         usdAmount: expense.usdAmount.toNumber(),
       });
+      costScopes.push({
+        tenantId: expense.tenantId,
+        legalEntityId: expense.legalEntityId,
+        activityId: expense.activityId,
+        createdById: expense.createdById,
+      });
+      if (
+        !can(c, "materials.costView", expense) &&
+        line.costing.manualNetUsd === null
+      )
+        throw new AccessError(403, "MANUAL_PRICE_REQUIRED");
       versions.push({
         expenseId: expense.id,
         version: expense.version,
@@ -212,6 +235,7 @@ async function compute(
           version: product.version,
         },
         versions,
+        costScopes,
         discount: line.discount,
         realizedProfitUsd: money(
           new Decimal(netUsd).minus(result.totalCostUsd),
@@ -280,37 +304,97 @@ export async function documentRequest(
                 take: 200,
                 orderBy: { createdAt: "desc" },
               });
-        return rows.map((row) => ({
-          id: row.id,
-          customerId: row.customerId,
-          activityId: row.activityId,
-          createdAt: row.createdAt,
-          netUsd: row.netUsd.toString(),
-          netTry: row.netTry.toString(),
-          vatTry: row.vatTry.toString(),
-          totalTry: row.totalTry.toString(),
-          ...("revision" in row
-            ? { title: row.title, groupId: row.groupId, revision: row.revision }
-            : {
-                date: row.date,
-                dueDate: row.dueDate,
-                currency: row.currency,
-                notes: row.notes,
-                plans: row.plans.map((p) => ({
-                  dueDate: p.dueDate,
-                  method: p.method,
-                  amount: p.amount.toString(),
-                })),
-              }),
-          ...(can(c, "materials.costView", row)
-            ? {
-                costUsd: row.costUsd.toString(),
-                ...("snapshot" in row
-                  ? { snapshot: row.snapshot }
-                  : { lines: row.lines, rate: row.rateSnapshot }),
-              }
-            : {}),
-        }));
+        return rows.map((row) => {
+          const snapshots =
+            "lines" in row
+              ? row.lines.map((l) => l.snapshot)
+              : (
+                  (row.snapshot as { lines?: { snapshot: unknown }[] }).lines ??
+                  []
+                ).map((l) => l.snapshot);
+          const visibleCosts =
+            can(c, "materials.costView", row) &&
+            snapshots.every((s) =>
+              (
+                (s as { costScopes?: ReturnType<typeof resource>[] })
+                  .costScopes ?? [row]
+              ).every((r) => can(c, "materials.costView", r)),
+            );
+          const publicLines =
+            "lines" in row
+              ? row.lines.map((l) => ({
+                  productId: l.productId,
+                  description: l.description,
+                  quantity: l.quantity.toString(),
+                  widthCm: l.widthCm.toString(),
+                  heightCm: l.heightCm.toString(),
+                  discount: l.discount.toString(),
+                  vat: l.vat.toString(),
+                  netUsd: l.netUsd.toString(),
+                  netTry: l.netTry.toString(),
+                  vatTry: l.vatTry.toString(),
+                  totalTry: l.totalTry.toString(),
+                }))
+              : (
+                  (
+                    row.snapshot as {
+                      lines?: {
+                        productId: string;
+                        description: string;
+                        quantity: number;
+                        widthCm: number;
+                        heightCm: number;
+                        netTry: string;
+                        totalTry: string;
+                      }[];
+                    }
+                  ).lines ?? []
+                ).map((l) => ({
+                  productId: l.productId,
+                  description: l.description,
+                  quantity: l.quantity,
+                  widthCm: l.widthCm,
+                  heightCm: l.heightCm,
+                  netTry: l.netTry,
+                  totalTry: l.totalTry,
+                }));
+          return {
+            id: row.id,
+            customerId: row.customerId,
+            activityId: row.activityId,
+            createdAt: row.createdAt,
+            netUsd: row.netUsd.toString(),
+            netTry: row.netTry.toString(),
+            vatTry: row.vatTry.toString(),
+            totalTry: row.totalTry.toString(),
+            lines: publicLines,
+            ...("revision" in row
+              ? {
+                  title: row.title,
+                  groupId: row.groupId,
+                  revision: row.revision,
+                }
+              : {
+                  date: row.date,
+                  dueDate: row.dueDate,
+                  currency: row.currency,
+                  notes: row.notes,
+                  plans: row.plans.map((p) => ({
+                    dueDate: p.dueDate,
+                    method: p.method,
+                    amount: p.amount.toString(),
+                  })),
+                }),
+            ...(visibleCosts
+              ? {
+                  costUsd: row.costUsd.toString(),
+                  ...("snapshot" in row
+                    ? { snapshot: row.snapshot }
+                    : { lines: row.lines, rate: row.rateSnapshot }),
+                }
+              : {}),
+          };
+        });
       },
       db,
       scope.legalEntityId,
@@ -320,6 +404,8 @@ export async function documentRequest(
       kind === "sales" ? C.saleCreate.parse(input) : C.quoteCreate.parse(input),
     digest = hash(data);
   authorize(c, `${permissionModule}.create`, resource(c, scope));
+  if (data.lines.some((l) => l.discount > 0))
+    authorize(c, "sales.discount", resource(c, scope));
   const existing = await scoped(
     c,
     async (tx) => {

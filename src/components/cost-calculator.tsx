@@ -37,6 +37,7 @@ export function CostCalculator({
   height = 200,
   quantity = 1,
   vat = 20,
+  catalogReadOnly = false,
 }: {
   catalog: PricingCatalog;
   onCatalogChange: (c: PricingCatalog) => void;
@@ -47,6 +48,7 @@ export function CostCalculator({
   height?: number;
   quantity?: number;
   vat?: number;
+  catalogReadOnly?: boolean;
 }) {
   const [input, setInput] = useState<PricingInput>(() =>
     initialInput
@@ -90,7 +92,7 @@ export function CostCalculator({
           ),
       ) ?? catalog.materials[0];
     if (!m) {
-      setManage(true);
+      if (!catalogReadOnly) setManage(true);
       return;
     }
     const suitable = m.variants
@@ -125,7 +127,7 @@ export function CostCalculator({
   }
   return (
     <div className="calculator">
-      {manage && (
+      {manage && !catalogReadOnly && (
         <section className="panel form-panel calculator-catalog">
           <div className="label-row">
             <h2>Malzeme ve gider yönetimi</h2>
@@ -170,6 +172,7 @@ export function CostCalculator({
               </Button>
               <button
                 className="text-button"
+                hidden={catalogReadOnly}
                 onClick={() => setManage(!manage)}
               >
                 <Plus size={14} />
@@ -400,7 +403,10 @@ export function CostCalculator({
                         <div className="consumption-stats">
                           <div>
                             <small>USD birim alış maliyeti</small>
-                            <b>{consumption.unitCostUsd.toFixed(4)} USD / {m?.unit}</b>
+                            <b>
+                              {consumption.unitCostUsd.toFixed(4)} USD /{" "}
+                              {m?.unit}
+                            </b>
                           </div>
                           <div>
                             <small>Gerçek tüketim</small>
@@ -517,6 +523,7 @@ export function CostCalculator({
                   Gider {i + 1}
                   <input
                     value={e.name}
+                    readOnly={catalogReadOnly}
                     onChange={(ev) =>
                       update({
                         expenses: input.expenses.map((x) =>
@@ -530,6 +537,7 @@ export function CostCalculator({
                   Birim
                   <input
                     value={e.unit}
+                    readOnly={catalogReadOnly}
                     onChange={(ev) =>
                       update({
                         expenses: input.expenses.map((x) =>
@@ -562,6 +570,7 @@ export function CostCalculator({
                     min="0"
                     step="0.000001"
                     value={e.usdAmount}
+                    readOnly={catalogReadOnly}
                     onChange={(ev) =>
                       update({
                         expenses: input.expenses.map((x) =>
@@ -588,6 +597,7 @@ export function CostCalculator({
             ))}
             <button
               className="text-button"
+              hidden={catalogReadOnly}
               onClick={() =>
                 update({
                   expenses: [

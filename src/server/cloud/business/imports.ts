@@ -28,6 +28,54 @@ import {
   createMaterialRecord,
   createProductRecord,
 } from "./catalog";
+const historySchema = z
+  .object({
+    id: z.string().max(200).optional(),
+    at: z.iso.datetime(),
+    previous: z.number().finite().min(0).max(999999999).nullable(),
+    next: z.number().finite().min(0).max(999999999),
+    userId: z.string().max(100),
+    userName: z.string().max(100),
+  })
+  .strict();
+const materialImport = C.materialCreate
+  .extend({
+    variants: z
+      .array(
+        C.variantSchema.extend({
+          history: z.array(historySchema).max(200).default([]),
+        }),
+      )
+      .min(1)
+      .max(100),
+  })
+  .superRefine((m, ctx) => {
+    for (const [index, v] of m.variants.entries()) {
+      for (const [i, h] of v.history.entries())
+        if (
+          Date.parse(h.at) > Date.now() ||
+          (i > 0 &&
+            (Date.parse(h.at) < Date.parse(v.history[i - 1].at) ||
+              h.previous === null ||
+              !new Decimal(h.previous).eq(v.history[i - 1].next)))
+        )
+          ctx.addIssue({
+            code: "custom",
+            path: ["variants", index, "history", i],
+            message: "Invalid historical price chain",
+          });
+      if (
+        v.history.length &&
+        (v.usdCost === null ||
+          !new Decimal(v.history.at(-1)!.next).eq(v.usdCost))
+      )
+        ctx.addIssue({
+          code: "custom",
+          path: ["variants", index, "usdCost"],
+          message: "History does not match current USD cost",
+        });
+    }
+  });
 
 const record = z
   .object({
@@ -101,6 +149,8 @@ export async function importRequest(
             r.demo ||
             (r.kind === "customer" && /^c\d+$/.test(r.sourceId)) ||
             (r.kind === "product" && /^p\d+$/.test(r.sourceId)) ||
+            (r.kind === "material" &&
+              (r.sourceId === "mat-folyo" || r.sourceId.startsWith("seed-"))) ||
             ((r.kind === "sale" || r.kind === "quote") &&
               (r.data.legacyDemo === true ||
                 (r.data.rate as { source?: string } | undefined)?.source ===
@@ -132,7 +182,7 @@ export async function importRequest(
             : (r.kind === "customer"
                 ? C.customerCreate
                 : r.kind === "material"
-                  ? C.materialCreate
+                  ? materialImport
                   : C.productCreate
               ).safeParse(value);
           if (!parsed.success && status === "ready") status = "invalid-fields";
@@ -213,6 +263,14 @@ export async function importRequest(
           version: 1,
           entries,
           counts: {
+            foundCustomers: data.records.filter((r) => r.kind === "customer")
+              .length,
+            foundMaterials: data.records.filter((r) => r.kind === "material")
+              .length,
+            foundProducts: data.records.filter((r) => r.kind === "product")
+              .length,
+            foundSales: data.records.filter((r) => r.kind === "sale").length,
+            foundQuotes: data.records.filter((r) => r.kind === "quote").length,
             ready: entries.filter((e) => e.status === "ready").length,
             excluded: entries.filter((e) => e.status === "excluded-demo")
               .length,
@@ -348,11 +406,22 @@ export async function importRequest(
                   C.customerCreate.parse(r.data),
                 )
               : r.kind === "material"
-                ? await createMaterialRecord(
-                    tx,
-                    c,
-                    C.materialCreate.parse(r.data),
-                  )
+                ? await (async () => {
+                    const m = materialImport.parse(r.data);
+                    const histories = m.variants.map((v) => v.history);
+                    return createMaterialRecord(
+                      tx,
+                      c,
+                      C.materialCreate.parse({
+                        ...m,
+                        variants: m.variants.map(({ history, ...v }) => {
+                          void history;
+                          return v;
+                        }),
+                      }),
+                      histories,
+                    );
+                  })()
                 : r.kind === "product"
                   ? await createProductRecord(
                       tx,

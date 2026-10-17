@@ -1,4 +1,7 @@
 import "server-only";
+import { catalogRequest } from "./business/catalog";
+import { documentRequest } from "./business/documents";
+import { importRequest } from "./business/imports";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { database } from "@/server/db/client";
@@ -50,6 +53,25 @@ export async function cloudRequest(
       body = JSON.parse(text);
     }
     const h = request.headers;
+    if (parts[0] === "workspace") {
+      const handler =
+        parts[1] === "imports"
+          ? importRequest
+          : ["quotes", "sales"].includes(parts[1])
+            ? documentRequest
+            : catalogRequest;
+      return json(
+        await handler(
+          h,
+          parts.slice(1),
+          request.method,
+          body,
+          url.searchParams,
+          db,
+          source,
+        ),
+      );
+    }
     if (path === "invitations/accept" && request.method === "POST") {
       const key = `invite-accept:${Math.floor(Date.now() / 60000)}`;
       const bucket = await source.db.authRateLimit.upsert({
@@ -160,7 +182,19 @@ export async function cloudRequest(
         : status === 400
           ? "INVALID_INPUT"
           : "SERVICE_UNAVAILABLE";
-    console.warn("CLOUD_REQUEST_FAILED", { requestId, status, code });
+    const databaseCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      /^P\d{4}$/.test(String(error.code))
+        ? String(error.code)
+        : undefined;
+    console.warn("CLOUD_REQUEST_FAILED", {
+      requestId,
+      status,
+      code,
+      databaseCode,
+    });
     return Response.json(
       { error: code, requestId },
       {

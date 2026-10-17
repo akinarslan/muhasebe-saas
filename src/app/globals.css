@@ -2957,3 +2957,218 @@ summary {
   padding: 0;
   box-shadow: none;
 }
+.cloud-nav-button {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #a4b6ce;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.cloud-nav-button:hover,
+.cloud-nav-button[aria-current] {
+  color: #d7ffff;
+  background: linear-gradient(90deg, #0a746c77, #164e7822);
+  box-shadow: inset 3px 0 #37d5cd;
+}
+.cloud-scope {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.cloud-scope label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
+}
+.cloud-scope select {
+  min-width: 155px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  color: var(--text);
+}
+.cloud-alert {
+  padding: 14px 18px;
+  border: 1px solid #a6ded4;
+  border-radius: 12px;
+  background: #edfcf8;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.cloud-alert.error {
+  background: #fff4f3;
+  border-color: #f0c5bf;
+  color: #a53631;
+}
+.cloud-material {
+  padding: 22px;
+  border-top: 1px solid var(--line);
+}
+.cloud-material h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.cloud-material p,
+.cloud-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.cloud-note {
+  padding: 14px 22px;
+  background: #f3f7fc;
+}
+.cloud-import {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+.cloud-import label {
+  display: grid;
+  gap: 8px;
+}
+.cloud-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.cloud-rate {
+  background: #eaf6fa;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.cloud-rate small {
+  display: block;
+  color: var(--muted);
+}
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: #07132988;
+  backdrop-filter: blur(3px);
+  z-index: 70;
+}
+.cloud-job-dialog {
+  position: fixed;
+  inset: 3vh 3vw;
+  z-index: 80;
+  overflow: auto;
+  border-radius: 20px;
+  background: var(--bg, #f5f7fb);
+  box-shadow: 0 32px 100px #08162b66;
+}
+.cloud-job-dialog > .drawer-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+}
+.cloud-job-dialog .cloud-user-body {
+  display: grid;
+  gap: 20px;
+}
+.confirm-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(94vw, 480px);
+  padding: 28px;
+  z-index: 110;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 20px 80px #08162b55;
+}
+.confirm-dialog p {
+  line-height: 1.7;
+  margin: 14px 0;
+}
+.cloud-user-body pre,
+.cloud-import pre {
+  overflow: auto;
+  max-width: 100%;
+  font-size: 12px;
+  background: #f3f6fa;
+  padding: 15px;
+  border-radius: 10px;
+}
+.cloud-shell .table-scroll {
+  overflow-x: auto;
+}
+.cloud-shell .block {
+  display: block;
+}
+@media (max-width: 700px) {
+  .cloud-scope {
+    width: 100%;
+  }
+  .cloud-nav-button {
+    padding: 12px 6px;
+    font-size: 10px;
+    gap: 4px;
+    flex-direction: column;
+  }
+  .cloud-job-dialog {
+    inset: 1vh 1vw;
+  }
+  .cloud-job-dialog .cloud-user-body {
+    padding: 15px;
+  }
+  .cloud-material {
+    padding: 14px;
+  }
+  .cloud-toolbar {
+    flex-wrap: wrap;
+  }
+}
+.drawer-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
+.drawer-header p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.cloud-user-drawer > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.cloud-user-drawer > form > .cloud-user-body {
+  overflow-y: auto;
+  flex: 1;
+}
+.cloud-shell .cloud-panel {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .cloud-nav-button {
+    width: calc(33.333% - 4px);
+  }
+}

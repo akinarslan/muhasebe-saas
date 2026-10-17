@@ -1,5 +1,6 @@
 "use client";
 import { createId } from "@/lib/runtime";
+import { useEffect, useRef } from "react";
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useForm, useWatch } from "react-hook-form";
@@ -53,12 +54,17 @@ export function CustomerDrawer({
   onOpenChange,
   customers,
   onSave,
+  customer,
+  cloud = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   customers: Customer[];
-  onSave: (c: Customer) => void;
+  onSave: (c: Customer) => void | Promise<void>;
+  customer?: Customer;
+  cloud?: boolean;
 }) {
+  const pendingId = useRef(createId());
   const {
     register,
     handleSubmit,
@@ -66,7 +72,7 @@ export function CustomerDrawer({
     setValue,
     setError,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -85,12 +91,49 @@ export function CustomerDrawer({
     },
   });
   const city = useWatch({ control, name: "city" });
-  function submit(v: Values) {
+  useEffect(() => {
+    if (open) {
+      pendingId.current = createId();
+      reset(
+        customer
+          ? {
+              name: customer.name,
+              segment: customer.segment,
+              city: customer.city,
+              district: customer.district,
+              phone: customer.phone,
+              email: customer.email,
+              taxOffice: customer.taxOffice ?? "",
+              taxId: customer.taxId ?? "",
+              contact: customer.contact ?? "",
+              address: customer.address ?? "",
+              notes: customer.notes ?? "",
+              term: customer.term ?? 30,
+            }
+          : {
+              name: "",
+              segment: "Mağaza-İşyeri",
+              city: "",
+              district: "",
+              phone: "",
+              email: "",
+              taxOffice: "",
+              taxId: "",
+              contact: "",
+              address: "",
+              notes: "",
+              term: 30,
+            },
+      );
+    }
+  }, [open, customer, reset]);
+  async function submit(v: Values) {
     if (
       customers.some(
         (c) =>
-          normalize(c.name) === normalize(v.name) ||
-          (v.taxId && c.taxId === v.taxId),
+          c.id !== customer?.id &&
+          (normalize(c.name) === normalize(v.name) ||
+            (v.taxId && c.taxId === v.taxId)),
       )
     ) {
       setError("root", {
@@ -100,9 +143,9 @@ export function CustomerDrawer({
       return;
     }
     try {
-      onSave({
+      await onSave({
         ...v,
-        id: createId(),
+        id: customer?.id ?? pendingId.current,
         tenantId: tenant.id,
         legalEntityId: entity.id,
       });
@@ -125,7 +168,9 @@ export function CustomerDrawer({
               <UserRoundPlus size={21} />
             </span>
             <div>
-              <Dialog.Title>Yeni müşteri</Dialog.Title>
+              <Dialog.Title>
+                {customer ? "Müşteri detayı" : "Yeni müşteri"}
+              </Dialog.Title>
               <Dialog.Description>
                 Müşterinizi ekleyin, kaldığınız yerden devam edin.
               </Dialog.Description>
@@ -134,10 +179,15 @@ export function CustomerDrawer({
               <X size={20} />
             </Dialog.Close>
           </header>
-          <form onSubmit={handleSubmit(submit)} className="drawer-form">
+          <form
+            onSubmit={(event) => void handleSubmit(submit)(event)}
+            className="drawer-form"
+          >
             <div className="drawer-body">
               <div className="info-box">
-                Bu kayıt yalnızca bu tarayıcıdaki demo verilerine eklenir.
+                {cloud
+                  ? "Bu kayıt yetkili şirket kapsamında Neon bulut veritabanına kaydedilir."
+                  : "Bu kayıt yalnızca bu tarayıcıdaki demo verilerine eklenir."}
               </div>
               <h3>Müşteri bilgileri</h3>
               <label>
@@ -268,7 +318,9 @@ export function CustomerDrawer({
               >
                 Vazgeç
               </Button>
-              <Button type="submit">Müşteriyi kaydet</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Kaydediliyor…" : "Müşteriyi kaydet"}
+              </Button>
             </footer>
           </form>
         </Dialog.Content>

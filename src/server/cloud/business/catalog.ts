@@ -142,6 +142,13 @@ export async function createMaterialRecord(
   tx: Tx,
   c: Context,
   input: z.infer<typeof C.materialCreate>,
+  legacyHistories: {
+    at: string;
+    previous: number | null;
+    next: number;
+    userId: string;
+    userName: string;
+  }[][] = [],
 ) {
   const s = input;
   authorize(c, "materials.create", resource(c, s));
@@ -179,7 +186,7 @@ export async function createMaterialRecord(
       payloadHash: digest,
     },
   });
-  for (const v of variants) {
+  for (const [index, v] of variants.entries()) {
     const variant = await tx.materialVariant.create({
       data: {
         tenantId: c.tenantId,
@@ -191,15 +198,28 @@ export async function createMaterialRecord(
         usdCost: v.usdCost,
         inStock: v.inStock,
         active: v.active,
+        priceVersion: 1 + (legacyHistories[index]?.length ?? 0),
       },
     });
+    for (const h of legacyHistories[index] ?? [])
+      await tx.materialPriceHistory.create({
+        data: {
+          tenantId: c.tenantId,
+          legalEntityId: s.legalEntityId,
+          variantId: variant.id,
+          previousUsd: h.previous,
+          nextUsd: h.next,
+          recordedAt: new Date(h.at),
+          actorId: `legacy:${h.userId}:${h.userName}`.slice(0, 200),
+        },
+      });
     if (v.usdCost !== null)
       await tx.materialPriceHistory.create({
         data: {
           tenantId: c.tenantId,
           legalEntityId: s.legalEntityId,
           variantId: variant.id,
-          previousUsd: null,
+          previousUsd: legacyHistories[index]?.at(-1)?.next ?? null,
           nextUsd: v.usdCost,
           actorId: c.userId,
         },
@@ -438,11 +458,26 @@ export async function catalogRequest(
                 .toLocaleLowerCase("tr")
                 .includes(search),
           )
-          .map(({ payloadHash: unused, sourceId: unused2, ...r }) => {
-            void unused;
-            void unused2;
-            return r;
-          });
+          .map((r) => ({
+            id: r.id,
+            tenantId: r.tenantId,
+            legalEntityId: r.legalEntityId,
+            activityId: r.activityId,
+            name: r.name,
+            email: r.email,
+            segment: r.segment,
+            city: r.city,
+            district: r.district,
+            phone: r.phone,
+            taxOffice: r.taxOffice,
+            taxId: r.taxId,
+            contact: r.contact,
+            address: r.address,
+            notes: r.notes,
+            term: r.term,
+            active: r.active,
+            version: r.version,
+          }));
       }
       if (kind === "products" && method === "GET") {
         return tx.cloudProduct.findMany({
