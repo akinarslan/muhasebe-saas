@@ -1,5 +1,6 @@
 ﻿import "server-only";
 import { activeSession, identity } from "./core";
+import { stepUpExpiresAt } from "@/lib/auth/security-state";
 export async function requireMfa(
   headers: Headers,
   stepUp = false,
@@ -19,10 +20,7 @@ export async function requireMfa(
   ]);
   if (!user?.twoFactorEnabled || !stored?.mfaVerifiedAt)
     throw new Error("MFA_REQUIRED");
-  if (
-    stepUp &&
-    (!stored.stepUpAt || Date.now() - stored.stepUpAt.getTime() > 300000)
-  )
+  if (stepUp && !stepUpExpiresAt(stored.stepUpAt))
     throw new Error("STEP_UP_REQUIRED");
   return session;
 }

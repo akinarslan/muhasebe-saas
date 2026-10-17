@@ -203,9 +203,10 @@ async function run() {
             f.source,
           );
           assert.equal(response.status, 503);
-          assert.deepEqual(await response.json(), {
-            error: "SERVICE_UNAVAILABLE",
-          });
+          const body = await response.json();
+          assert.deepEqual(Object.keys(body).sort(), ["error", "requestId"]);
+          assert.equal(body.error, "SERVICE_UNAVAILABLE");
+          assert.match(body.requestId, /^[a-f0-9-]{36}$/);
         } finally {
           await db.$disconnect();
         }

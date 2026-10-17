@@ -145,13 +145,17 @@ export function resendCarrier(): MailCarrier {
               "email_above_quota",
             ].includes(e.name)
               ? "QUOTA_EXCEEDED"
-              : e.statusCode === 429
-                ? "RATE_LIMITED"
-                : e.statusCode === 401
-                  ? "AUTHENTICATION"
-                  : e.statusCode === 403
-                    ? "SENDER_OR_RECIPIENT_REJECTED"
-                    : "PROVIDER_REJECTED",
+              : e.statusCode == null ||
+                  e.statusCode === 408 ||
+                  e.statusCode >= 500
+                ? "NETWORK_OR_TIMEOUT"
+                : e.statusCode === 429
+                  ? "RATE_LIMITED"
+                  : e.statusCode === 401
+                    ? "AUTHENTICATION"
+                    : e.statusCode === 403
+                      ? "SENDER_OR_RECIPIENT_REJECTED"
+                      : "PROVIDER_REJECTED",
           );
         }
         if (!result.data?.id)

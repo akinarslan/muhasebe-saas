@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { database } from "@/server/db/client";
 import { identity } from "@/server/auth/core";
@@ -32,6 +33,7 @@ export async function cloudRequest(
   db = database(),
   source = identity(),
 ) {
+  const requestId = randomUUID();
   try {
     const url = new URL(request.url),
       path = url.pathname.replace(/^\/api\/cloud\//, "");
@@ -146,10 +148,25 @@ export async function cloudRequest(
       return json(await manualRate(h, body, db, source), 201);
     return json({ error: "NOT_FOUND" }, 404);
   } catch (error) {
-    if (error instanceof AccessError)
-      return json({ error: error.reason }, error.status);
-    if (error instanceof z.ZodError || error instanceof SyntaxError)
-      return json({ error: "INVALID_INPUT" }, 400);
-    return json({ error: "SERVICE_UNAVAILABLE" }, 503);
+    const status =
+      error instanceof AccessError
+        ? error.status
+        : error instanceof z.ZodError || error instanceof SyntaxError
+          ? 400
+          : 503;
+    const code =
+      error instanceof AccessError
+        ? error.reason
+        : status === 400
+          ? "INVALID_INPUT"
+          : "SERVICE_UNAVAILABLE";
+    console.warn("CLOUD_REQUEST_FAILED", { requestId, status, code });
+    return Response.json(
+      { error: code, requestId },
+      {
+        status,
+        headers: { "Cache-Control": "no-store", "X-Request-Id": requestId },
+      },
+    );
   }
 }

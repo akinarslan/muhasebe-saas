@@ -13,6 +13,7 @@ import {
 } from "./context";
 import { permissions, roleTemplates } from "@/lib/auth/catalog";
 import { decide } from "@/lib/auth/policy";
+import { invitationState } from "@/lib/auth/security-state";
 export const userChangeSchema = z
   .object({
     version: z.number().int().positive(),
@@ -290,6 +291,20 @@ export async function listUsers(
     orderBy: { createdAt: "desc" },
     take: 1000,
   });
+  const invitations = await source.db.authInvitation.findMany({
+    where: {
+      tenantId: context.tenantId,
+      membershipId: { in: members.map((m) => m.id) },
+    },
+    select: {
+      membershipId: true,
+      acceptedAt: true,
+      revokedAt: true,
+      expiresAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 1000,
+  });
   return {
     membershipId: context.membershipId,
     canManage:
@@ -309,6 +324,9 @@ export async function listUsers(
     members: members.map((m) => ({
       ...m,
       user: users.find((u) => u.id === m.userId),
+      invitationStatus: invitationState(
+        invitations.find((i) => i.membershipId === m.id),
+      ),
       mailStatus:
         deliveries.find(
           (d) =>

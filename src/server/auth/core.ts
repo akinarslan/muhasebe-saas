@@ -3,6 +3,7 @@ import { betterAuth, APIError } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHmac } from "node:crypto";
+import { stepUpExpiresAt } from "@/lib/auth/security-state";
 import { twoFactor } from "better-auth/plugins";
 import {
   localTestCarrier,
@@ -180,6 +181,7 @@ const publicPaths = new Set([
   "/two-factor/verify-totp",
   "/two-factor/verify-backup-code",
   "/step-up",
+  "/step-up/status",
 ]);
 export async function authRequest(request: Request, source = identity()) {
   const path = new URL(request.url).pathname.replace(/^\/api\/auth/, "");
@@ -188,6 +190,33 @@ export async function authRequest(request: Request, source = identity()) {
     /^\/reset-password\/[A-Za-z0-9_-]{20,200}$/.test(path);
   if (!publicPaths.has(path) && !resetRedirect)
     return Response.json({ error: "Unavailable" }, { status: 404 });
+  if (path === "/step-up/status") {
+    if (request.method !== "GET")
+      return Response.json({ error: "Method unavailable" }, { status: 405 });
+    const session = await activeSession(request.headers, source);
+    if (!session)
+      return Response.json(
+        { error: "UNAUTHENTICATED" },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    const stored = await source.db.authSession.findUnique({
+      where: { id: session.session.id },
+      select: { stepUpAt: true, mfaVerifiedAt: true },
+    });
+    const serverTime = Date.now();
+    const expiresAt =
+      session.user.twoFactorEnabled && stored?.mfaVerifiedAt
+        ? stepUpExpiresAt(stored.stepUpAt, serverTime)
+        : null;
+    return Response.json(
+      {
+        verified: !!expiresAt,
+        expiresAt: expiresAt?.toISOString() ?? null,
+        serverTime,
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
   if (path === "/get-session") {
     const session = await activeSession(request.headers, source);
     return Response.json(
@@ -239,6 +268,8 @@ export async function authRequest(request: Request, source = identity()) {
     }
   }
   if (path === "/step-up") {
+    if (request.method !== "POST")
+      return Response.json({ error: "Method unavailable" }, { status: 405 });
     const session = await activeSession(request.headers, source);
     if (!session || !session.user.twoFactorEnabled)
       return Response.json({ error: "MFA required" }, { status: 403 });
@@ -264,7 +295,10 @@ export async function authRequest(request: Request, source = identity()) {
         where: { id: session.session.id },
         data: { stepUpAt: new Date(), mfaVerifiedAt: new Date() },
       });
-      return Response.json({ verified: true });
+      return Response.json(
+        { verified: true },
+        { headers: { "Cache-Control": "no-store" } },
+      );
     } catch {
       return Response.json({ error: "Verification failed" }, { status: 403 });
     }

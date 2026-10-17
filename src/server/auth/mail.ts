@@ -58,7 +58,15 @@ export function trackedCarrier(
           error instanceof MailFailure ? error.code : "CARRIER_FAILURE";
         await db.authMailDelivery.update({
           where: { id: record.id },
-          data: { status: "FAILED", errorCode: code },
+          data: {
+            status: [
+              "NETWORK_OR_TIMEOUT",
+              "INVALID_PROVIDER_RESPONSE",
+            ].includes(code)
+              ? "UNKNOWN"
+              : "FAILED",
+            errorCode: code,
+          },
         });
         console.warn("AUTH_MAIL_FAILED", { deliveryId: record.id, code });
         throw new MailFailure(code);

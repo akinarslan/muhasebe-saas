@@ -110,7 +110,13 @@ async function sendInvitation(
       ["QUOTA_EXCEEDED", "RATE_LIMITED"].includes(error.code)
     )
       throw new AccessError(429, `MAIL_${error.code}`);
-    throw new AccessError(502, "MAIL_SEND_FAILED");
+    throw new AccessError(
+      502,
+      error instanceof MailFailure &&
+        ["NETWORK_OR_TIMEOUT", "INVALID_PROVIDER_RESPONSE"].includes(error.code)
+        ? "MAIL_DELIVERY_UNKNOWN"
+        : "MAIL_SEND_FAILED",
+    );
   }
 }
 export async function inviteUser(
@@ -121,13 +127,41 @@ export async function inviteUser(
 ) {
   const data = schema.parse(input),
     c = await inviteContext(headers, db, source);
-  if (await source.db.authUser.findUnique({ where: { email: data.email } }))
-    return { status: "not_created", delivery: "none", membershipId: undefined };
+  async function rejectExisting(userId: string): Promise<never> {
+    const member = await scoped(
+      c,
+      (tx) =>
+        tx.membership.findFirst({ where: { tenantId: c.tenantId, userId } }),
+      db,
+    );
+    // Only disclose membership states inside the caller's authorized tenant.
+    throw new AccessError(
+      409,
+      member?.status === "INVITED"
+        ? "ALREADY_PENDING"
+        : member
+          ? "ALREADY_MEMBER"
+          : "INVITATION_UNAVAILABLE",
+    );
+  }
+  const existing = await source.db.authUser.findUnique({
+    where: { email: data.email },
+    select: { id: true },
+  });
+  if (existing) return rejectExisting(existing.id);
   const created = await provisionIdentity(() =>
     source.auth.api.signUpEmail({
       body: { ...data, password: randomBytes(32).toString("base64url") },
     }),
-  );
+  ).catch(async (error) => {
+    // Unique identity and membership constraints prevent concurrent duplicates.
+    const raced = await source.db.authUser.findUnique({
+      where: { email: data.email },
+      select: { id: true },
+    });
+    if (raced) return rejectExisting(raced.id);
+    throw error;
+  });
   await source.db.authUser.update({
     where: { id: created.user.id },
     data: { status: "INVITED" },
