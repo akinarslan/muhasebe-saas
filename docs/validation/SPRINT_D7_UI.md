@@ -38,3 +38,5 @@ Komutlar: `npm run build`, `npm run lint`, `npm test`, `npm run db:test`, `npm r
 - D7 arama testleri: normal/focus/filled computed style, filtre eşleşme/boş sonuç/temizleme, mobil sayfa taşmaması. Desktop ve mobil altı son PNG bizzat incelendi: ikon/metin hizalı, placeholder örtüşmüyor, iç çerçeve yok ve dış focus görünür. Son desktop 360 px / input 306 px; focus shadow 3 px turkuaz. Mobilde alan mevcut panel genişliğine daralır. Başlangıç görüntüleri de incelendi. Müşteri/kullanıcı ekranı ve davet hata drawer'ı mevcut tam akışta kontrol edildi.
 
 - Son demo Playwright: **22/22**, desktop/mobil, **1.7 dakika**. Toplam son browser kontrolleri **26/26** (22 demo + 4 auth/cloud/D7).
+
+Git: `549d4bd` D7 teslimi mevcut feature dalına başarıyla push edildi; ardından fark 0/0 ve çalışma ağacı temizdi. 27 staged dosyada yerel sır taraması PASS. Push kaydı ayrı dokümantasyon commit'iyle eklenir; main korunur.
