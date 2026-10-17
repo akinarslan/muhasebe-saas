@@ -34,7 +34,8 @@ export const hash = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
 export const resource = (c: Context, s: Scope) => ({
   tenantId: c.tenantId,
-  ...s,
+  legalEntityId: s.legalEntityId,
+  activityId: s.activityId,
   createdById: c.userId,
 });
 export async function validateScope(tx: Tx, c: Context, s: Scope) {
