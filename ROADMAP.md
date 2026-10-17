@@ -249,3 +249,19 @@ ZY Reklam'da baski yarida kalmasi, murekkep dagilmasi, baski kafasinin surtmesi,
 - **Lazer kesim firesi:** yanlis kesilen ahsap, pleksi; hatali olcu, catlama/kirilma, yanik/erime, hizalama/hareket, operator/makine hatasi ve diger nedenlerle malzeme kaybi, gercek levha/lot/kalinlik/malzeme varyanti bazinda stoktan dusulur. Planli kesim artigi, kurtarilabilir parca ve hata kaynakli anormal fire ayri kayit; cift stok dusumu yok. Yeniden kesim ayri is/gider kaydi.
 - Gun/hafta/ay/3/6/12 ay/yil analitigi: UV baski toplam vs UV alt turleri; lazer kesim toplam vs ahsap/pleksi; adet, m2, metretul, kesim uzunlugu/sure (birimler ayri); makine, urun, malzeme, musteri, tedarikci, uretim hizi, maliyet USD+TRY tarihsel, ciro, kar, marj, planli/anormal fire ve yeniden uretim. Tarihsel TL raporlar islem kuru bazli nominal degerdir; USD toplam rapor ayridir.
 - Surum kapilari: v0.4 makine/teknoloji/urun/malzeme eslesme ve USD tarife versiyonlari; v0.5 is emri bazli UV/lazer gercek uretim + lazer/UV fire/stok hareketleri + USD/TRY sabit snapshot; v0.6 alt tur bazinda raporlar; v0.7 canli ZY Reklam kabul. Master Admin makine tarifesi duzenleme, maliyet goruntuleme, fire onay ve analitik ihrac izinlerini ozel atar.
+
+
+## REKLAM ATOLYESI MAKINE KATALOGU VE GENISLETILMIS UV URUN TURleri (2026-10-17)
+Asagidaki liste desteklenebilecek makine/urun kategorileridir; ZY Reklam'in dogrulanmis aktif makine envanteri sayilmaz. Master Admin makine markasi/modeli, teknik kapasitesi ve aktif urun eslesmelerini kaydeder; kullanici yeni makine, proses ve urun ekleyebilir.
+- Roll UV: standart UV folyo, UV vinil/branda, one-way vision, lightbox/backlit film, Duratrans, UV uyumlu gergi tavan, duvar kagidi, uygun tekstil/SEG, seffaf film/ters baski, beyaz murekkep katmanlari. Urunler/medyalar ve baski modlari ayri boyutlardir.
+- Flatbed UV: pleksi/akrilik, ahsap/MDF, PVC/dekota, kompozit, cam, metal, dekoratif levha UV baskilari; beyaz murekkep, vernik, cok katmanli baski makine opsiyonu olarak.
+- Solvent/eco-solvent: branda/vinil, folyo, one-way vision, arac giydirme gorselleri, uygun billboard malzemeleri.
+- Lazer (tip/uyumluluk kontrolu): ahsap/MDF/kontrplak kesim ve oyma, uygun pleksi kesim, harita/harf/dekoratif urunler, markalama; lazer turu ve malzeme kalinlik siniri zorunlu.
+- CNC router: MDF/ahsap, kompozit, uygun akrilik/PVC panel kesim, kanal/oyma; makine ve takim uyumlulugu kontrolu.
+- Kesim plotteri: folyo harf/logo, baskes etiket, arac yazisi, sablon.
+- Laminator: mat/parlak laminasyon, yuzey kaplama, montaj filmi; nihai urun yerine isleme/uretim asamasina baglanir.
+- Sublimasyon/isi transfer: kupa, tekstil ve uygun promosyon urunleri; DTF ve UV DTF kendi teknoloji/ekipman opsiyonlariyla ayri proses.
+- Kutu harf/tabela ekipmani: metal harf bukme/kaynak/montaj, isikli/isyksiz harf; birden fazla makine-asama iceren BOM/work order.
+- Urun bazli gunluk/haftalik/aylik/3-6-12 aylik/yillik adet, m2, metretul, kesim uzunlugu, ciro, USD+TRY tarihsel fiyat ve maliyet, brut kar, makine suresi, fire/yeniden islem raporlari. Genel UV toplam ve alt UV kategorileri hiyerarsik raporlanir; ayni cikti iki kez sayilmaz.
+- Her makine uyumlu malzeme, kalinlik/en, boya/murekkep, beyaz/vernik kapasitesi, kesim teknigi, uygulama kategorisi gibi yeteneklerle eslesir. UV DTF'nin yalniz Roll UV makinesiyle otomatik yapilabildigi varsayilmaz. Uyum dogrulanmayan gergi tavan/tekstil/ozel UV film pasif secenek olarak sunulur.
+- v0.4 makine katalog ve uygunluk eslesmeleri; v0.5 gercek is emri/makine-asama, zaman, sarf, fire; v0.6 kategori ve makine istatistigi; v0.7 ZY Reklam canli kullanimi.
