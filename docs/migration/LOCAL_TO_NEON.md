@@ -1,27 +1,33 @@
-# localStorage -> Neon geçiş sözleşmesi
+﻿# localStorage → Neon — Sprint D geçişi
 
-**Sprint A planı; henüz exporter/importer veya veri taşıma çalıştırılmadı.** Tarayıcıdaki veriler okunup GitHub'a gönderilmedi. `.env.local` bağlantısı tek başına otomatik import başlatmayacaktır.
+17.10.2026. Çalışan aktarım API'si `/api/cloud/workspace/imports/preview` ve `/confirm` altındadır. Gerçek kullanıcı verisi bu geliştirme sırasında aktarılmadı. Otomatik import veya localStorage temizleme yoktur.
 
-## Korunacak kaynaklar
+## Kullanım
 
-`pusula.demo.v1`: müşteri/satış/demo borçlar/customProducts; `pusula.pricing.v2`: malzeme/varyant/USD fiyat geçmişi/gider/tedarikçi tanımı; `pusula.quotes.v2`: teklif snapshot'ı; `pusula.draft.v1`: geçici aktif taslak. Mevcut `pusula.backup.v020` yedeği ve bütün anahtarlar yerinde kalır. Tema/pusula tercihleri tarayıcıda kalır; gerçek bulut veri kaynağına dönüşmez.
+1. `/app` içinde şirket/faaliyet seçin; **Veri aktarımı** ekranına girin. Şirket geneli müşteri faaliyetsiz/paylaşılan kayıttır; bir faaliyetin kaydı başka faaliyete zorla bağlanmaz.
+2. **Yerel kaynak yedeğini indir** yalnız açık tıklamayla `pusula.demo.v1`, `pusula.pricing.v2`, `pusula.quotes.v2`, `pusula.draft.v1`, `pusula.backup.v020` ham metinlerini yerel referans dosyasına indirir. Bu dosya özel veri içerir; Git/issue'ya eklemeyin. Ham referans yedeği doğrudan normalize import dosyası değildir.
+3. **Bu tarayıcıdaki kayıtları önizle** müşteri, malzeme ve customProducts alanlarını normalize eder; dosya seçimi normalize JSON'u kabul eder. Önizleme kaynak ID/tür/durum, bulunan/hazır/demo/geçersiz/önceden aktarılmış sayıları ve finansal toplamları gösterir. Kaynak veriler silinmez.
+4. Demo c1… müşteri, p1… ürün, mat-folyo/seed-* malzeme, legacyDemo veya legacy-demo kur işaretli finansal kayıtlar varsayılan olarak hariçtir. Kullanıcının değiştirdiği seed kimliği de gerçek kayıt varsayılmaz; yerel kaynak yedeğinde incelenir. Eski ZY satış referansı aktif alış fiyatına dönüşmez.
+5. Geçersiz alan, kaynak ID çakışması, bozuk USD fiyat zinciri, eksik referans veya doğrulanamayan finansal geçmiş varsa onay engellenir. Önizleme **30 dakika** geçerlidir. Açık onay + güncel parola/TOTP step-up gerekir. Kimlik, tenant ve aktör gövdeden alınmaz.
+6. Başarılı onay hedef kayıtları + ImportRecord eşlemelerini + mutabakat + audit'i tek transaction'da yazar. Aynı batch tekrar onaylanınca önceki mutabakat döner; farklı dosyadaki aynı kaynak ID yeniden oluşturulmaz. Aynı kaynak ID değişik içerikle gelirse conflict önizlemesi oluşur. Hata rollback yapar; başarı toast'ı verilmez.
 
-## Onaylı geçiş akışı
+## Normalize dosya sözleşmesi
 
-1. Tarayıcı içinde Export: sürüm, UTC tarih, kaynak anahtarları ve bütün ham JSON'lar kullanıcıya yerel dosya olarak sunulur. Dosya özel müşteri/finans verisi içerir; Git/issue/log'a konmaz. Server'a otomatik yükleme yok.
-2. Parse ve preview: Zod boyut/satır sınırları, eski şema dönüşümü (`repairCustomers`, `migrateDemo`, `migrateDraft`), referans/unique kontrolü, USD/unit/Decimal/tarih doğrulaması. Geçersiz satırlar gerekçeyle karantinaya ayrılır; sıfıra çevrilmez. Migration öncesi/sonrası karşılaştırma hash'i alınır.
-3. Demo sınıflaması: mevcut demo namespace/legacyDemo/seed ID'ler güçlü işarettir; yalnız bunlarla gerçeklik kesin belirlenmez. Varsayılan seçim **hiçbiri**; kullanıcı gerçek kayıtları açıkça seçer, referans bağımlılıkları preview'da gösterilir. 32 demo müşteri/84 demo satış/24 demo borç otomatik aktarılmaz. Tarihsel örnek fiyat referansları gerçek alım/satış gibi işlenmez.
-4. Authenticated Import: yetkili kullanıcı + tenant sunucuda çözülür; `import.create` ve ilgili modül izinleri, gerekçe/step-up gerekir. Kullanıcının payload tenantId/userId alanları yok sayılmaz, şema gereği reddedilir veya kontrollü source metadata'ya ayrılır; otorite değildir.
-5. Idempotency: tenant+source namespace+source ID unique ImportRecord eşlemesi ve import manifest hash. Tekrar aynı batch/satır aynı kayıtları döndürür; eşzamanlı import unique constraint ile engellenir. Aynı source ID farklı içerik içerirse conflict preview gerekir; eski fiyat ve snapshot ezilmez.
-6. Transaction: tüm seçili bağımlılıklar doğrulanmadan yazma yok; uygun batch sınırları ve rollback/tekrar devam manifest'i. Yeni UUID eşlemeleri satış-müşteri-varyant ilişkilerini korur. Fiyat geçmişinin actor/source bilgisi legacy metadata olarak korunur; gerçek import aktörü ayrı audit'tedir.
-7. Mutabakat: satır sayımları, USD fiyat/birim/önceki-sonraki revision, satış maliyet/gider/kur/tarih snapshot hash'i ve Decimal toplamları eşleşir. Sunucudan tekrar okuyarak doğrulama; başarıdan sonra dahi localStorage silinmez. Eski veriler kullanıcıya salt referans/export olarak kalır; bulut state için fallback yapılmaz.
+Üst seviye `{ records: [...], financialRecords?: 0 }`. Şirket/faaliyet UI seçiminden sunulur. Her kayıt `{sourceId, kind, demo?:false, data}`; kind `customer`, `material`, `product`, `sale`, `quote` olabilir. Boyut controller'da 64 KB, kayıt sayısı en fazla200'dür; maliyet kalemleri ve varyantlar ayrıca sınırlandırılır. Büyük dosyaları bağımlılıkları koruyan küçük batch'lere ayırın; timeout tamamlanmış işlem sayılmaz. Aynı source ID namespace'ini farklı eski veri setleri için tekrar kullanmayın.
 
-## Kalıcılık ve taslak
+- **customer:** ad, segment, il/ilçe, telefon/e-posta, vergi, adres/iletişim/notlar/vade/aktiflik. Bozuk/null alanlar preview'da reddedilir; sessizce 0 veya örnek kişi yapılmaz. Yeni UUID, ImportRecord kaynak ID eşlemesiyle tutulur.
+- **material:** bulut materialCreate alanları; birim `square_meter|linear_meter|piece|sheet`, rulo/ölçü/varyant, USD fiyatı string veya null. Varyant `history` alanı isteğe bağlıdır: `{id?,at,previous,next,userId,userName}`. Tarihler sıralı ve geçmişte, zincir tutarlı, son next mevcut USD maliyetine eşit olmalıdır. Eski olaylar immutable MaterialPriceHistory'ye orijinal tarih ve `legacy:` aktör etiketiyle yazılır; son ithal durum gerçek import aktörüyle ayrı kaydolur. Orijinal kaynak ID ve tam metadata önizleme manifestinde korunur. Bulutta yeni fiyat değişiklikleri gerçek session aktörünü kullanır.
+- **product:** ad, kategori, birim, `service|manufacture|resale`, aktiflik. Eski sabit satış/alış fiyatı ürün fiyatı olarak seed edilmez.
+- **sale/quote:** `customerSourceId`, başlık, orijinal tarih/vade, para birimi, `rate {value,source:tcmb|manual,publishedAt,fetchedAt,reason?}`, kalemler ve `expected {costUsd,netUsd,netTry,vatTry,totalTry}` gerekir. Kalem `productSourceId`, ölçü/adet/iskonto/KDV, costing girdisi ve **orijinal tarihsel catalog** içerir. Sunucu mevcut katalogla yeniden fiyatlamak yerine bu tarihsel katalog ve kurdan Decimal hesaplar; beklenen tüm tutarları birebir karşılaştırır. Referans customer/product aynı batch'te hazır veya önceden aktarılmış olmalıdır. Örnek format doğrulaması `scripts/auth/verify-d.ts` içindeki sentetik historical fixture'dadır.
 
-Gerçek müşteri/katalog/teklif/satış/kullanıcı/izin kaynakları PostgreSQL olacak. UI tercihi ve geçici taslak localStorage olabilir; taslak anahtarı authenticated user+tenant ile ayrılır. Eski `pusula.draft.v1` yalnız demo/legacy olarak kalır; başka kullanıcıya veya tenant'a otomatik bağlanmaz. Logout sırasında sunucu verisi tarayıcıda otoritatif cache olarak bırakılmaz. Kaydetme hatasında form korunur ve başarı toast'ı verilmez.
+Tarihsel katalogdaki malzeme/varyant/expense ID'leri UUID olmalıdır; eski yerel ID'lerin kaynak eşlemesi hazırlanırken tutarlı UUID'lerle normalize edilmesi gerekir. Eski localStorage finansal belgeleri otomatik olarak şirket/müşteri/ürüne bağlanmaz: müşteri içermeyen maliyet teklifleri, demo ürün referansları ve eski şemalar **inceleme gerektiren finansal kayıt** olarak sayılır. İlişkileri belirlenmiş normalize dosya hazırlanıp tekrar önizlenmeden bu belgeler taşınamaz. Mevcut UI bunun için otomatik eşleme sihirbazı sunmaz; hatalı/eksik arşivi başarılı aktarıldı saymaz.
 
-Aktarım, demo borç ve ödeme alanlarını operasyonel cari/kasa modülüne çeviremez; v0.4/v0.6 işlevleri ayrı fazdır. Ödeme planı finansal tahsilat değildir. Decimal hesap motoru aynı kalır; sunucu maliyeti tekrar hesaplar, istemcinin kâr/kur/price snapshot beyanına doğrudan güvenmez.
+Gider türleri gerçek bulut Giderler ekranında eklenir; eski varsayılan gider şablonları ve tedarikçi tanımları otomatik operasyonel kayda dönüşmez. Eski gerçek ödeme/kasa/demo borç alanları import edilmez. Ödeme planları yalnız TRY vade planıdır; tahsilat/cari hareket değildir. Tema, pusula tercihi ve eski satış taslağı tarayıcıda kalır. Bulut taslağı açık sayfa belleğindedir; yenilemede kalıcı taslak iddiası yoktur.
 
-## Sprint D kabul testleri
+## Mutabakat ve sınırlar
 
-Eski/null alanlı export; bozuk JSON/NaN/birim/eksik maliyet uyarıları; mükerrer ve eşzamanlı import; tenant ID manipülasyonu; yetkisiz içe aktarma; demo varsayılan dışlama; immutable satış/teklif kur ve USD snapshot karşılaştırması; başarısız transaction sonrası sıfır kısmi kayıt; orijinal localStorage metninin birebir korunması. **Bu testler henüz uygulanmadı.**
+Sonuç customer/material/product/sale/quote sayıları, atlanan kaynak sayısı ve ayrı satış/teklif TRY toplamlarını döndürür. Tarihsel maliyet, birim, gerçek tüketim, gider ve kur snapshot'ı belgenin içinde saklanır; güncel fiyat/kur bunları değiştirmez. Yetkisiz kullanıcı USD veya nested cost/profit snapshot'ını alamaz. Import edilmiş maliyet metadata'sı yalnız costView yetkisiyle önizlenir.
+
+Sentetik testler demo dışlama, açık onay, yeniden onay, değişik kaynak içerik conflict'i, USD fiyat geçmişi, tarihsel satış/teklif mutabakatı ve bozuk toplam reddini doğrular. Gerçek işletme verisi taşınmadan önce kullanıcı kendi önizlemesini incelemelidir. Bu araç bağımsız yedek değildir; Sprint E şifreli bağımsız yedek/scheduler/restore testi henüz yoktur.
+
+Satış satırları ve planları sonradan aynı satışa eklenemez; ana satışın yaratıldığı transaction'da yazılır. Yeni belge/revizyon oluşturmak eski snapshot'ı değiştirmez. Restore işlemlerinde child sealing guard'ının post-data oluşturulması veya tüm veri yükünün uygun atomik transaction'ı Sprint E kabulünde ayrıca sınanmalıdır.

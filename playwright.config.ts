@@ -5,7 +5,7 @@ export default defineConfig({
   workers: 1,
   timeout: 45000,
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:3100",
     channel: "chrome",
     trace: "retain-on-failure",
   },
@@ -17,9 +17,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- --port 3000",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: true,
+    command: "npx tsx scripts/auth/start-test-server.ts",
+    url: "http://127.0.0.1:3100/login",
+    reuseExistingServer: false,
     timeout: 90000,
   },
 });

@@ -95,3 +95,8 @@ Mevcut development kurulumu için: `npm run db:migrate`, `npm run db:migrate:tes
 `npm run auth:test` gerçek izole Neon test DB'sindeki C1–C6.1 kapılarını sıralı çalıştırır. `npm run test:e2e:auth` ayrı 3100 portu/test DB'si ve şifreli hayalî fixture'larla browser akışını doğrular; auth trace/video kapalıdır. `npm run test:e2e` mevcut demo regresyonlarını 3000 portunda çalıştırır. Bu iki sunucunun build çıktıları ayrıdır.
 
 Resend sunucu taşıyıcısı eklendi; doğrulanmış test alıcısı ve domain gereksinimleri [Resend kurulumunda](docs/security/RESEND_SETUP.md). Şifreli development taşıyıcısı korunur; API kabulü alıcıya teslim onayı değildir. Development hedef guard'ları değiştirilmeden production dağıtımı yapılmaz.
+## Sprint D — gerçek işletme alanı
+
+`/` yerel demo olarak korunur; `/app` gerçek Neon kayıtlarıdır. Müşteri, malzeme/varyant/USD fiyat geçmişi, ürün/gider, teklif revizyonu ve ilişkisel satış/vade planları sunucu scope/izin kontrolüyle çalışır. Sunucu Decimal hesabı ve immutable kur/maliyet snapshot'ı otoritedir. Gerçek tahsilat/kasa/stok hareketleri oluşturulmaz.
+
+Kontrollü import ve sınırları: [LOCAL_TO_NEON](docs/migration/LOCAL_TO_NEON.md). Gerçek kaynaklar otomatik taşınmaz; eski finansal arşiv için ilişki ve tarihsel katalogları doğrulanmış normalize dosya gerekir. Yerel veriler silinmez. Test komutu: `npm run cloud:test`; tüm browser testleri ayrı test DB'sinde3100 portunu kullanır. Son sonuçlar LAST_REPORT.md'dedir; Sprint E ve production kabulü ayrı aşamadır.

@@ -24,6 +24,7 @@ import { NumericInput } from "./ui/numeric-input";
 import { SignOut } from "./auth-form";
 import { StepUpVerification } from "./step-up-verification";
 import { createId } from "@/lib/runtime";
+import { numericValue } from "@/lib/numeric";
 import { money } from "@/lib/finance";
 import type { Customer } from "@/lib/types";
 import type {
@@ -396,7 +397,51 @@ export function CloudDesk() {
         usdAmount: Number(e.usdAmount),
       })),
   };
+  function dueFor(id: string) {
+    const d = new Date();
+    d.setDate(
+      d.getDate() + (data.customers.find((c) => c.id === id)?.term ?? 0),
+    );
+    return d.toISOString().slice(0, 10);
+  }
+  const jobDirty = Boolean(
+    jobLines.length ||
+    snapshot ||
+    plans.length ||
+    title ||
+    productId ||
+    manualPrice ||
+    manualMaterial ||
+    manualVariant ||
+    width !== 135 ||
+    height !== 200 ||
+    quantity !== 1 ||
+    selectedRate !== "tcmb" ||
+    dueDate !== dueFor(customerId),
+  );
+  function clearCustomerDraft(id: string) {
+    rateGeneration.current++;
+    setCustomerId(id);
+    setJobLines([]);
+    setSnapshot(null);
+    setProductId("");
+    setManualPrice("");
+    setManualMaterial("");
+    setManualVariant("");
+    setZeroCostConfirmed(false);
+    setWidth(135);
+    setHeight(200);
+    setQuantity(1);
+    setTitle("");
+    setPlans([]);
+    setPreviousId(undefined);
+    setDueDate(dueFor(id));
+    setSelectedRate("tcmb");
+    setRate(null);
+    setJobKey(createId());
+  }
   function resetJob() {
+    clearCustomerDraft("");
     rateGeneration.current++;
     setJob(false);
     setJobLines([]);
@@ -413,11 +458,14 @@ export function CloudDesk() {
   }
   function switchCustomer(value: string) {
     if (value === customerId) return;
-    if (jobLines.length || snapshot) {
+    if (jobDirty) {
       setSwitchTarget({ kind: "customer", value });
       return;
     }
     setCustomerId(value);
+    setDueDate(dueFor(value));
+    setPreviousId(undefined);
+    setJobKey(createId());
   }
   async function saveCustomer(customer: Customer) {
     setError("");
@@ -475,6 +523,27 @@ export function CloudDesk() {
       e = editor;
     if (!e) return;
     await run(async () => {
+      if (e.kind === "rate") {
+        const saved = await api("exchange-rate", "POST", {
+          usdTry: text("usdTry").replace(",", "."),
+          reason: text("reason"),
+        });
+        rateGeneration.current++;
+        setManualRates(await api(`workspace/rates?${query}`));
+        setSelectedRate(saved.id);
+        setRate({
+          source: "manual",
+          value: Number(saved.usdTry),
+          publishedAt: saved.publishedAt.slice(0, 10),
+          fetchedAt: saved.createdAt,
+          reason: text("reason"),
+        });
+        setRateError("");
+        setEditor(null);
+        setEditorKey(createId());
+        setNotice("Yetkili manuel kur kaydedildi ve seçildi.");
+        return;
+      }
       let path = e.kind,
         method = e.row ? "PATCH" : "POST",
         payload: object = {};
@@ -591,12 +660,13 @@ export function CloudDesk() {
         heightCm: height,
         discount: 0,
         vat: snapshot.input.vat,
-        zeroCostConfirmed: false,
+        zeroCostConfirmed,
         costing: snapshot.input,
       },
     ]);
     setSnapshot(null);
     setProductId("");
+    setZeroCostConfirmed(false);
   }
   async function saveDocument() {
     await run(async () => {
@@ -806,7 +876,7 @@ export function CloudDesk() {
         </Link>
         <Link href="/account/security">Hesap güvenliği</Link>
         <Link href="/">Demo alanı</Link>
-        <div className="cloud-sidebar-foot">
+        <div className="cloud-sidebar-foot cloud-business-foot">
           <Cloud size={16} /> Neon PostgreSQL
           <SignOut />
         </div>
@@ -1497,7 +1567,7 @@ export function CloudDesk() {
                 defaultValue={editorKey}
               />
               <div className="cloud-user-body">
-                {editor?.kind !== "cost" && (
+                {editor?.kind !== "cost" && editor?.kind !== "rate" && (
                   <label>
                     Ad
                     <input
@@ -1506,6 +1576,27 @@ export function CloudDesk() {
                       defaultValue={editorRow?.name ?? ""}
                     />
                   </label>
+                )}
+                {editor?.kind === "rate" && (
+                  <>
+                    <label>
+                      USD/TRY manuel kur
+                      <NumericInput name="usdTry" min={0.000001} required />
+                    </label>
+                    <label>
+                      Manuel kur gerekçesi
+                      <textarea
+                        name="reason"
+                        minLength={5}
+                        maxLength={500}
+                        required
+                      />
+                    </label>
+                    <p>
+                      Tenant genelinde ayrı, değişmez kur kaydı oluşturulur.
+                      Parola/TOTP ile yakın tarihli doğrulama gerekir.
+                    </p>
+                  </>
                 )}
                 {["products", "materials"].includes(editor?.kind ?? "") && (
                   <label>
@@ -1734,8 +1825,7 @@ export function CloudDesk() {
         open={job}
         onOpenChange={(open) => {
           if (!open && !busy) {
-            if (jobLines.length || snapshot)
-              setSwitchTarget({ kind: "scope", value: company });
+            if (jobDirty) setSwitchTarget({ kind: "scope", value: company });
             else resetJob();
           }
         }}
@@ -1759,7 +1849,7 @@ export function CloudDesk() {
                 variant="ghost"
                 aria-label="Taslağı kapat"
                 onClick={() => {
-                  if (jobLines.length || snapshot)
+                  if (jobDirty)
                     setSwitchTarget({ kind: "scope", value: company });
                   else resetJob();
                 }}
@@ -1844,6 +1934,15 @@ export function CloudDesk() {
                     ? "Yetkili manuel USD/TRY"
                     : "TCMB USD döviz satış"}
                 </b>{" "}
+                {can("exchange.manual") && can("exchange.view") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditor({ kind: "rate" })}
+                  >
+                    Yetkili manuel kur ekle
+                  </Button>
+                )}
                 {rate
                   ? `${rate.value} TL · Yayın ${rate.publishedAt} · Çekilme ${new Date(rate.fetchedAt).toLocaleString("tr")}`
                   : "Kur bekleniyor"}
@@ -1886,7 +1985,7 @@ export function CloudDesk() {
                     min={0.01}
                     value={width}
                     onChange={(e) => {
-                      setWidth(Number(e.target.value));
+                      setWidth(numericValue(e.target.value));
                       setSnapshot(null);
                     }}
                   />
@@ -1897,7 +1996,7 @@ export function CloudDesk() {
                     min={0.01}
                     value={height}
                     onChange={(e) => {
-                      setHeight(Number(e.target.value));
+                      setHeight(numericValue(e.target.value));
                       setSnapshot(null);
                     }}
                   />
@@ -1908,12 +2007,24 @@ export function CloudDesk() {
                     min={0.01}
                     value={quantity}
                     onChange={(e) => {
-                      setQuantity(Number(e.target.value));
+                      setQuantity(numericValue(e.target.value));
                       setSnapshot(null);
                     }}
                   />
                 </label>
               </div>
+              {data.products.find((p) => p.id === productId)?.kind ===
+                "service" &&
+                can("materials.costView") && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={zeroCostConfirmed}
+                      onChange={(e) => setZeroCostConfirmed(e.target.checked)}
+                    />
+                    Bu hizmetin malzeme ve gider maliyeti olmadığını onaylıyorum
+                  </label>
+                )}
               {productId && can("materials.costView") && (
                 <CostCalculator
                   key={`${productId}:${width}:${height}:${quantity}:${rate?.fetchedAt}`}
@@ -2205,10 +2316,7 @@ export function CloudDesk() {
             <Button
               onClick={() => {
                 if (switchTarget?.kind === "customer") {
-                  setCustomerId(switchTarget.value);
-                  setJobLines([]);
-                  setSnapshot(null);
-                  setJobKey(createId());
+                  clearCustomerDraft(switchTarget.value);
                 } else if (switchTarget) {
                   resetJob();
                   setCompany(switchTarget.value);

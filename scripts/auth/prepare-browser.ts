@@ -37,6 +37,7 @@ async function run() {
         }),
       );
       const targetName = `Browser ${project} sales ${randomBytes(4).toString("hex")}`;
+      await admin.tenantExchangeRate.create({data:{tenantId:tenant.id,actorId:master.user.id,usdTry:"50",reason:"Isolated browser fixture only",publishedAt:new Date("2026-10-17")}});
       const target = await provisionIdentity(() =>
         source.auth.api.signUpEmail({
           body: {

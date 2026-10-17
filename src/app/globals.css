@@ -3172,3 +3172,25 @@ summary {
     width: calc(33.333% - 4px);
   }
 }
+.cloud-business-foot {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+}
+.cloud-business-foot > .btn {
+  grid-column: 1/-1;
+  width: 100%;
+  justify-content: flex-start;
+}
+@media (max-width: 760px) {
+  .cloud-business-foot {
+    display: flex;
+    flex: 1 1 100%;
+    justify-content: space-between;
+    padding: 12px 0 0;
+    margin-top: 4px;
+  }
+  .cloud-business-foot > .btn {
+    width: auto;
+  }
+}

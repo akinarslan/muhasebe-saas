@@ -55,3 +55,18 @@ AuthInvitation kabul/iptal/expiry lifecycle'ı mail durumundan ayrıdır. Mail t
 GET /api/auth/step-up/status yalnız aynı aktif cookie session'ının güncel MFA/stepUpAt kanıtını ve sunucu expiry/zamanını no-store döndürür. Beş dakika sınırında ve gelecekteki timestamp'te geçersizdir. Client sayacı/UI yeşil onayı yetki kaynağı değildir; kritik API her seferinde yeniden denetler. Logout/yeni oturum/başka kimlik kanıtı devralamaz. Davet modalı doğrulama sonrasında otomatik replay yapmaz; kullanıcı oluşturmayı yeniden onaylar.
 
 MFA değiştirme/yenileme bu sprintte açılmaz. Kurulu SDK'nın doğrulanmış faktörü doğrudan yeniden enable etmeyi reddetmesi ve disable akışının Master zorunlu MFA sözleşmesini tek başına sağlamaması nedeniyle [MFA kurtarma prosedürü ve kalan kapı](MFA_RECOVERY.md) belgelendi. Public disable, secret görüntüleme ve recovery yenileme kapalı kalır.
+## Sprint D — işletme API izinleri
+
+`/api/cloud/workspace` müşteri/katalog/teklif/satış/import servisleri aynı contextFor -> authorize -> scoped transaction zincirini kullanır. Yeni ürün/gider/teklif/import eylemleri ve activities.manage katalogda ve DB Permission tablosundadır; MASTER şablonuna eklenir. Diğer roller kendiliğinden genişletilmez. Önceki materials.costView/costEdit anahtarları korunur; bunlar talimattaki materials.cost.view/edit anlamına gelir.
+
+RLS görünmeyen satırı API görünür yapamaz. Tenant/aktör payload alanları strict şema ile reddedilir; şirket/faaliyet DB'den doğrulanır. Liste kapsamları RLS'de tekrar filtrelenir; metadata düzenleme optimistic version taşır. Fiyat düzenleme costEdit, varyant oluşturma variants (+fiyat varsa costEdit), geçmiş okuma costView+history gerektirir. Birim değişimi mevcut malzemede reddedilir. İskonto için sales.discount gerekir.
+
+USD fiyatı/gider tutarı yalnız costView projeksiyonunda bulunur. Belge snapshot, toplam maliyet ve profit/margin aynı kontrolden geçer; snapshot'taki tüm costScopes de denetlenir. CostView olmayan kullanıcı manuel satış fiyatıyla kayıt oluşturabilir; sunucu maliyeti yine DB'den hesaplar. UI'da hesaplama girdilerindeki isim/birim/fiyat overrides bulut katalog tutarını değiştiremez.
+
+Immutable quote/sale/line/plan/import-record tablolarının runtime UPDATE/DELETE grant'i yoktur; trigger owner için de tarihi korur. Yeni quote revision ayrı satırdır. Paylaşılan müşteri activityId=null ile şirket kapsamında kullanılabilir; faaliyetle sınırlı üyelik bunu yaratma yetkisini kendiliğinden kazanmaz. Bir faaliyetin müşterisi başka faaliyete zorla bağlanamaz.
+
+Import preview fiyat içeriyorsa costView gerekir. Onay imports.confirm, yakın tarihli session step-up ve her hedef modülün create/costEdit izinlerini yeniden doğrular. Kaynak aktör metadata'sı gerçek import aktörü yerine geçmez: legacy fiyat geçmişinde `legacy:` etiketi, audit'te gerçek oturum aktörü saklanır. Eski/geçersiz önizleme, uyuşmayan hash, bozuk zincir veya finansal toplam kabul edilmez. Hiçbir ödeme alanı gerçek tahsilata dönüştürülmez.
+
+Hata cevabı sabit kod ve opaque requestId'dir; log yalnız bu alanlar ve varsa Prisma Pxxxx kodunu taşır. SQL, müşteri payload'ı, connection string veya token loglanmaz. Bulut verileri localStorage'a otoritatif cache olarak yazılmaz. Yetki kesintisinde demo kaydıyla başarı üretilmez.
+
+D6 ek bütünlük migration'ı: `202610170013_sale_line_sealing`, mevcut bir satışın satır/plan kümesine sonraki transaction'dan INSERT'i de engeller. Normal nested create ve tarihsel import aynı transaction'da kalır. Güncelleme/silme koruması ayrı immutable trigger'larla devam eder. İşlem sadece RLS aktör/tenant/şirket kapsamı içinde görünür parent üzerinde çalışır; güvenlik definer/bypass kullanılmaz. Restore kabulü Sprint E'de bu guard'ı da kapsamalıdır.

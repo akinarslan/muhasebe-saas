@@ -16,6 +16,7 @@
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:migrate:test": "tsx scripts/db/migrate.ts --test",
     "db:test": "node --conditions=react-server --import tsx scripts/db/verify.ts",
+    "cloud:test": "node --conditions=react-server --import tsx scripts/auth/verify-d.ts",
     "auth:setup": "tsx scripts/auth/setup.ts",
     "auth:roles": "tsx scripts/auth/setup-authorization.ts",
     "auth:bootstrap": "node --conditions=react-server --import tsx scripts/auth/bootstrap.ts",

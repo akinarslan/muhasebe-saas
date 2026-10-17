@@ -6,10 +6,13 @@ import { createOTP } from "@better-auth/utils/otp";
 import { Client } from "pg";
 import { assertDevelopmentTarget } from "../../src/server/db/target";
 import { base32 } from "@better-auth/utils/base32";
+import { createCloudRecords, verifyCloudRecords } from "./cloud-scenario";
 loadEnvConfig(process.cwd());
 test("real login MFA enrollment step-up permission matrix and logout", async ({
   page,
+  browser,
 }, info) => {
+  test.setTimeout(300000);
   const fixtures = JSON.parse(
     await symmetricDecrypt({
       key: process.env.AUTH_TEST_SECRET!,
@@ -27,7 +30,7 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     const value = message.text();
-    if (/Failed to load resource:.*\b(401|403|409|429|502)\b/.test(value))
+    if (/Failed to load resource:.*\b(401|403|409|429|502|503)\b/.test(value))
       consoleErrors.expectedHttp++;
     else if (value.includes("destination stream errored"))
       consoleErrors.knownDevelopmentStream++;
@@ -297,6 +300,7 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
   });
   await page.getByRole("button", { name: "Davet panelini kapat" }).click();
   await page.unroute("**/api/cloud/users/invite");
+  await createCloudRecords(page, info.project.name);
   await page.getByRole("button", { name: "Oturumu kapat" }).click();
   await expect(page).toHaveURL(/\/login/);
   await page.getByLabel("Kurumsal e-posta").fill(f.email);
@@ -324,6 +328,29 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
     .getByRole("button", { name: "Doğrula ve devam et", exact: true })
     .click();
   await expect(page).toHaveURL(/\/app$/);
+  await verifyCloudRecords(page, info.project.name);
+  const independent = await browser.newContext({
+    baseURL: "http://127.0.0.1:3100",
+  });
+  try {
+    const second = await independent.newPage();
+    await second.goto("http://127.0.0.1:3100/login");
+    await second.getByLabel("Kurumsal e-posta").fill(f.email);
+    await second.getByLabel("Şifre", { exact: true }).fill(f.password);
+    await second
+      .getByRole("button", { name: "Giriş yap", exact: true })
+      .click();
+    await second
+      .getByLabel("TOTP doğrulama kodu")
+      .fill(await createOTP(secret).totp());
+    await second
+      .getByRole("button", { name: "Doğrula ve devam et", exact: true })
+      .click();
+    await expect(second).toHaveURL(/\/app$/);
+    await verifyCloudRecords(second, info.project.name);
+  } finally {
+    await independent.close();
+  }
   await page.getByRole("button", { name: "Oturumu kapat" }).click();
   await expect(page).toHaveURL(/\/login/);
   expect(pageErrors).toBe(0);

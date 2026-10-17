@@ -311,7 +311,14 @@ export async function createHistorical(
         groupId: randomUUID(),
         revision: 1,
         snapshot: JSON.parse(
-          JSON.stringify({ historical: true, rate: data.rate, lines: mapped }),
+          JSON.stringify({
+            historical: true,
+            originalDate: data.date,
+            originalDueDate: data.dueDate,
+            currency: data.currency,
+            rate: data.rate,
+            lines: mapped,
+          }),
         ),
       },
     });
