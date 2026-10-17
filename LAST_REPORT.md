@@ -61,6 +61,6 @@ Başlangıç e41d81d; mevcut feature dalı temiz ve remote ile aynıydı. Uzak m
 | D3 sunucu teklif / satış |245fd76 |
 | D4 import / tarihsel mutabakat |9c48aa9 |
 | D5 bulut UI / güvenlik |ec6526b |
-| D6 son koruma / test / belgeler | Bu raporla ayrı commit |
+| D6 son koruma / test / belgeler |0ada51f |
 
-D6 commit/push sonucu son teslim mesajında verilir. Main birleştirilmez; force-push, hard reset veya veri temizliği yapılmadı. Önceki [C6.1 raporu](docs/history/PUSULA_V030_SPRINT_C61_REPORT.md) arşivlendi. Yerel komutlar: `npm run build`, `npm run lint`, `npm test`, `npm run db:test`, `npm run auth:test`, `npm run cloud:test`, `npm run test:e2e`, `npm run test:e2e:auth`. Mimari [NEON_CLOUD](docs/architecture/NEON_CLOUD.md), izinler [AUTHORIZATION](docs/security/AUTHORIZATION.md).
+D1–D6 commit'leri GitHub feature dalına başarıyla push edildi; `0ada51f` sonrasında yerel/uzak farkı0/0 ve çalışma ağacı temizdi. Bu push kaydı ayrı dokümantasyon commit'iyle aynı dala gönderilir. D5'te10 ve D6'da22 staged dosya gerçek yerel sırlara karşı tarandı; PASS alındı. Main birleştirilmedi; force-push, hard reset veya veri temizliği yapılmadı. Önceki [C6.1 raporu](docs/history/PUSULA_V030_SPRINT_C61_REPORT.md) arşivlendi. Yerel komutlar: `npm run build`, `npm run lint`, `npm test`, `npm run db:test`, `npm run auth:test`, `npm run cloud:test`, `npm run test:e2e`, `npm run test:e2e:auth`. Mimari [NEON_CLOUD](docs/architecture/NEON_CLOUD.md), izinler [AUTHORIZATION](docs/security/AUTHORIZATION.md).
