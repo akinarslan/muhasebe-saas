@@ -21,7 +21,7 @@ export function PasswordForm({
         </h1>
         <p>
           {mode === "request"
-            ? "SMTP bağlı değildir. Geliştirme mesajı şifreli yerel test taşıyıcısına kaydedilir; gerçek e-posta gönderilmez."
+            ? "Hesabınız uygunsa sıfırlama işlemi başlatılır. Güvenliğiniz için hesap ve gönderim bilgisi bu ekranda paylaşılmaz."
             : "Bağlantılar süreli ve tek kullanımlıktır. Parolanız en az 12 karakter olmalıdır."}
         </p>
         <form
@@ -55,7 +55,7 @@ export function PasswordForm({
               if (!response.ok) throw new Error();
               setMessage(
                 mode === "request"
-                  ? "Hesap uygunsa geliştirme test iletisi oluşturulmuştur. Gerçek e-posta gönderilmedi."
+                  ? "İstek alındı. Bu bildirim e-posta gönderim onayı değildir. İleti ulaşmazsa yöneticinizle görüşün."
                   : "İşlem tamamlandı. Yeni parolanızla giriş yapabilirsiniz.",
               );
               form.reset();

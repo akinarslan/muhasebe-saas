@@ -51,6 +51,9 @@ async function run() {
       await admin.query(
         `GRANT SELECT,INSERT,UPDATE,DELETE ON "AuthInvitation" TO "${role}"`,
       );
+      await admin.query(
+        `GRANT SELECT,INSERT,UPDATE ON "AuthMailDelivery" TO "${role}"`,
+      );
       const pooled = new URL(
         process.env[test ? "TEST_DATABASE_URL" : "DATABASE_URL"]!,
       );

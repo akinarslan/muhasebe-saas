@@ -297,6 +297,7 @@ model AuthInvitation {
  membershipId String @db.Uuid
  tenantId String @db.Uuid
  expiresAt DateTime @db.Timestamptz(3)
+ revokedAt DateTime? @db.Timestamptz(3)
  acceptedAt DateTime? @db.Timestamptz(3)
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  @@index([userId])
@@ -311,4 +312,18 @@ model TenantExchangeRate {
  publishedAt DateTime @db.Date
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  @@index([tenantId,createdAt])
+}
+
+model AuthMailDelivery {
+ id String @id @default(uuid())
+ userId String
+ membershipId String? @db.Uuid
+ kind String
+ provider String
+ status String
+ errorCode String?
+ providerMessageId String?
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ @@index([userId,createdAt])
 }

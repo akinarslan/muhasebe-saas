@@ -4,7 +4,12 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHmac } from "node:crypto";
 import { twoFactor } from "better-auth/plugins";
-import { localTestCarrier, type MailCarrier } from "./mail";
+import {
+  localTestCarrier,
+  configuredCarrier,
+  trackedCarrier,
+  type MailCarrier,
+} from "./mail";
 import { createDatabase } from "@/server/db/client";
 
 const provisioning = new AsyncLocalStorage<boolean>();
@@ -15,7 +20,7 @@ export function createAuth(
   connection: string,
   secret: string,
   test = false,
-  mail: MailCarrier = localTestCarrier(secret),
+  carrier?: MailCarrier,
 ) {
   if (secret.length < 32) throw new Error("Auth configuration is unavailable.");
   let role = "";
@@ -27,6 +32,11 @@ export function createAuth(
   if (role !== (test ? "pusula_test_auth" : "pusula_auth"))
     throw new Error("A restricted authentication role is required.");
   const db = createDatabase(connection, test);
+  // Integration tests never inherit live mail settings or send real messages.
+  const mail = trackedCarrier(
+    db,
+    carrier ?? (test ? localTestCarrier(secret) : configuredCarrier(secret)),
+  );
   const origin = process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000";
   const auth = betterAuth({
     appName: "Pusula",
@@ -58,8 +68,23 @@ export function createAuth(
       maxPasswordLength: 128,
       revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 900,
-      sendResetPassword: async ({ user, url }) => {
-        await mail.send({ to: user.email, kind: "RESET", url });
+      sendResetPassword: async ({ user, url, token }) => {
+        await db.authVerification.deleteMany({
+          where: {
+            value: user.id,
+            identifier: {
+              startsWith: "reset-password:",
+              not: `reset-password:${token}`,
+            },
+          },
+        });
+        try {
+          await mail.send({ to: user.email, kind: "RESET", url });
+        } catch {
+          await db.authVerification.deleteMany({
+            where: { identifier: `reset-password:${token}` },
+          });
+        }
       },
     },
     rateLimit: {
@@ -244,7 +269,17 @@ export async function authRequest(request: Request, source = identity()) {
       return Response.json({ error: "Verification failed" }, { status: 403 });
     }
   }
+  // A real provider must not make the public reset endpoint observably faster
+  // for unknown accounts. Keep the response floor above its 15s send timeout.
+  const resetDeadline =
+    path === "/request-password-reset" && source.mail.provider === "resend"
+      ? Date.now() + 20000
+      : 0;
   const response = await source.auth.handler(request);
+  if (resetDeadline > Date.now())
+    await new Promise((resolve) =>
+      setTimeout(resolve, resetDeadline - Date.now()),
+    );
   if (
     response.ok &&
     [
@@ -289,6 +324,11 @@ export async function authRequest(request: Request, source = identity()) {
     }
   }
   response.headers.set("Cache-Control", "no-store");
+  if (path === "/request-password-reset" && response.ok)
+    return Response.json(
+      { status: "request_received" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   if (
     response.ok &&
     response.headers.get("content-type")?.includes("application/json")

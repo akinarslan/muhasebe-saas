@@ -13,7 +13,11 @@ import {
   revokeUserSessions,
   userDetails,
 } from "@/server/authorization/users";
-import { inviteUser, acceptInvitation } from "@/server/auth/invitations";
+import {
+  inviteUser,
+  acceptInvitation,
+  resendInvitation,
+} from "@/server/auth/invitations";
 import {
   customers,
   createCustomer,
@@ -60,6 +64,12 @@ export async function cloudRequest(
       return json(await inviteUser(h, body, db, source));
     if (parts[0] === "users" && parts[1]) {
       z.uuid().parse(parts[1]);
+      if (
+        parts.length === 3 &&
+        parts[2] === "resend-invite" &&
+        request.method === "POST"
+      )
+        return json(await resendInvitation(h, parts[1], db, source));
       if (parts.length === 2 && request.method === "PATCH")
         return json(await changeUser(h, parts[1], body, db, source));
       if (parts.length === 2 && request.method === "GET")

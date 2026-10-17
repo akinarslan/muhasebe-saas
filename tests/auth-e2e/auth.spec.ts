@@ -132,6 +132,30 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
     path: `test-results/auth-${info.project.name}-users.png`,
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Kullanıcı davet et" }).click();
+  const invitationName = `C6 ${info.project.name} ${Date.now()}`;
+  await dialog.getByLabel("Ad soyad").fill(invitationName);
+  await dialog
+    .getByLabel("E-posta", { exact: true })
+    .fill(`browser-c6-${Date.now()}@example.invalid`);
+  await dialog
+    .getByRole("button", { name: "Davet oluştur", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0, { timeout: 20000 });
+  await expect(page.getByRole("status")).toContainText(
+    "yerel test taşıyıcısına",
+  );
+  await page.getByLabel("Kullanıcı ara").fill(invitationName);
+  await expect(
+    page.getByRole("row").filter({ hasText: invitationName }),
+  ).toContainText("Davet: Yerel test");
+  await page
+    .getByRole("button", { name: `${invitationName} kullanıcısını yönet` })
+    .click();
+  await expect(
+    dialog.getByRole("button", { name: "Daveti yeniden gönder", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Kullanıcı panelini kapat" }).click();
   await page.getByRole("button", { name: "Oturumu kapat" }).click();
   await expect(page).toHaveURL(/\/login/);
   await page.getByLabel("Kurumsal e-posta").fill(f.email);

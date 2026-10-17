@@ -270,6 +270,26 @@ export async function listUsers(
       lastLoginAt: true,
     },
   });
+  const deliveries = await source.db.authMailDelivery.findMany({
+    where: {
+      userId: { in: members.map((m) => m.userId) },
+      OR: [
+        { membershipId: { in: members.map((m) => m.id) } },
+        { kind: "RESET", membershipId: null },
+      ],
+    },
+    select: {
+      userId: true,
+      membershipId: true,
+      kind: true,
+      provider: true,
+      status: true,
+      errorCode: true,
+      updatedAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 1000,
+  });
   return {
     membershipId: context.membershipId,
     canManage:
@@ -289,6 +309,12 @@ export async function listUsers(
     members: members.map((m) => ({
       ...m,
       user: users.find((u) => u.id === m.userId),
+      mailStatus:
+        deliveries.find(
+          (d) =>
+            d.userId === m.userId &&
+            (!d.membershipId || d.membershipId === m.id),
+        ) ?? null,
     })),
     permissions,
     roles: roleTemplates,

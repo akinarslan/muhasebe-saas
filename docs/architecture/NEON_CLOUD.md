@@ -1,6 +1,6 @@
 # Neon Cloud — v0.3 Sprint A / B / C
 
-16.10.2026. **Sprint B/C gerçek Neon bağlantısı, auth/TOTP, izin ve RLS kontrolleriyle doğrulandı.** Gerçek operatör hesabı ve SMTP kurulmadı; işletme ekranlarının buluta taşınması Sprint D, bağımsız yedek Sprint E kapsamındadır. v0.3 bütünü/production kabulü tamamlanmış değildir. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
+16.10.2026. **Sprint B/C gerçek Neon bağlantısı, auth/TOTP, izin ve RLS kontrolleriyle doğrulandı.** Gerçek operatör hesabı production kabulünden ayrıdır; Resend C6 taşıyıcısı eklendi, canlı gönderim/domain koşulları [kurulum belgesindedir](../security/RESEND_SETUP.md); işletme ekranlarının buluta taşınması Sprint D, bağımsız yedek Sprint E kapsamındadır. v0.3 bütünü/production kabulü tamamlanmış değildir. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
 
 ## Sprint B — gerçek kurulum
 
@@ -91,7 +91,7 @@ Sonraki Sprint C: Better Auth + TOTP, güvenli bootstrap, ilk yönetici e-postas
 - Prisma7.10.1 korunur. C1–C5 için yeni ileri migration'lar vardır; önceki başarılı migration'lar değiştirilmez. SQL `pusula_can` ve ek restrictive kaynak politikaları, cloud session'dan türeyen kullanıcı/tenant/şirket/faaliyet/owner kapsamını sınırlar. Eski internal repository HTTP'ye doğrudan bağlanmaz.
 - `AUTH_DATABASE_URL`, `TEST_AUTH_DATABASE_URL`, `AUTH_SECRET`, `AUTH_TEST_SECRET` yalnız Git dışı `.env.local` dosyasına korunarak birleştirilir. Secret/parola/token çıktısı yoktur. `.env.bootstrap.local` boş yerel şablondur; gerçek operatör doldurmadan hesap açılmaz.
 - Auth browser testleri 3100 portunda, `.next-auth-e2e` çıktısında ve sadece test DB'sinde çalışır; development UI testleri 3000/.next ile ayrıdır. Test fixture kimlik bilgileri `.data` içinde şifrelidir. Auth trace/video kapalıdır.
-- Davet/reset transport arayüzü vardır, gerçek SMTP/API teslimatı yoktur. Yerel encrypted outbox development testi içindir; production'da kapalıdır. Kayıp TOTP operatör recovery ve bağımsız restore Sprint E/operasyon kabulünde tamamlanmalıdır.
+- Davet/reset transport arayüzüne Resend C6 taşıyıcısı ve kalıcı gönderim durumları eklendi. API kabulü teslim onayı değildir; canlı test sonucu LAST_REPORT.md içindedir. Yerel encrypted outbox development testi içindir; production'da kapalıdır. Kayıp TOTP operatör recovery ve bağımsız restore Sprint E/operasyon kabulünde tamamlanmalıdır.
 - `/` v0.2.3 localStorage demosu; `/app` gerçek session başlangıcı; `/admin/users` gerçek rol/izin yönetimi. Tam satış/teklif/finans/cloud import Sprint D'ye bırakıldı. v0.3 bütünü ve production dağıtımı tamamlanmış değildir.
 
 Komutlar: `npm run auth:setup`, `npm run auth:roles`, `npm run auth:bootstrap`, `npm run auth:test`, `npm run test:e2e:auth`. Bootstrap yalnız gerçek operatör yerel alanlarını doldurduktan sonra çalıştırılmalıdır. Yeniden seed mevcut kurulmuş Master'ı sessizce yeniden etkinleştirmez; bootstrap kayıt işareti silinmez.

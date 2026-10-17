@@ -94,4 +94,4 @@ Mevcut development kurulumu için: `npm run db:migrate`, `npm run db:migrate:tes
 
 `npm run auth:test` gerçek izole Neon test DB'sindeki C1–C5 kapılarını sıralı çalıştırır. `npm run test:e2e:auth` ayrı 3100 portu/test DB'si ve şifreli hayalî fixture'larla browser akışını doğrular; auth trace/video kapalıdır. `npm run test:e2e` mevcut demo regresyonlarını 3000 portunda çalıştırır. Bu iki sunucunun build çıktıları ayrıdır.
 
-SMTP/API e-posta sağlayıcısı bağlanmadı. Development taşıyıcısı yalnız yerelde şifreli test iletisi oluşturur; gerçek davet/reset e-postası teslim edilmiş sayılmaz. Development hedef guard'ları değiştirilmeden production dağıtımı yapılmaz.
+Resend sunucu taşıyıcısı eklendi; doğrulanmış test alıcısı ve domain gereksinimleri [Resend kurulumunda](docs/security/RESEND_SETUP.md). Şifreli development taşıyıcısı korunur; API kabulü alıcıya teslim onayı değildir. Development hedef guard'ları değiştirilmeden production dağıtımı yapılmaz.

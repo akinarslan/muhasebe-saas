@@ -1,4 +1,4 @@
-﻿# İlk Master Admin ve hesap güvenliği
+# İlk Master Admin ve hesap güvenliği
 
 Bu kurulum yalnız onaylı Neon **development** veritabanını kullanır. Production dağıtımı değildir.
 
@@ -10,6 +10,6 @@ Bu kurulum yalnız onaylı Neon **development** veritabanını kullanır. Produc
 
 ## E-posta sınırı
 
-SMTP/API sağlayıcısı henüz bağlanmadı. Development taşıyıcısı davet/reset mesajlarını `.data/auth-mail/*.enc` içinde auth secret ile şifreli test iletisi olarak saklar. Gerçek e-posta gönderildiği iddia edilmez. Bu dosyalar ve secret Git dışındadır. Test okuyucusu yalnız sunucu/operatör kodudur; HTTP outbox endpoint'i yoktur. Production'da yerel taşıyıcı hata verir; gerçek sağlayıcı kurulmadan teslimat yapılamaz.
+Resend API taşıyıcısı eklendi; [kurulum ve gönderim kuralları](RESEND_SETUP.md). `AUTH_MAIL_PROVIDER=local` seçildiğinde development taşıyıcısı davet/reset mesajlarını `.data/auth-mail/*.enc` içinde auth secret ile şifreli test iletisi olarak saklar; bu modda gerçek e-posta gönderilmez. Bu dosyalar ve secret Git dışındadır. Test okuyucusu yalnız sunucu/operatör kodudur; HTTP outbox endpoint'i yoktur. Production'da yerel taşıyıcı hata verir; doğrulanmış domain ve HTTPS uygulama adresi gerekir.
 
 Kayıp TOTP ve tükenmiş recovery kodları için otomatik MFA kapatma akışı yoktur. Operatör kimlik doğrulaması ve denetlenebilir kurtarma prosedürü ayrıca gerekir; veritabanında gelişigüzel MFA bayrağı değiştirilmemelidir.

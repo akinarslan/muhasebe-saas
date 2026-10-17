@@ -24,7 +24,9 @@
     "auth:test:c3": "node --conditions=react-server --import tsx scripts/auth/verify-c3.ts",
     "auth:test:c4": "node --conditions=react-server --import tsx scripts/auth/verify-c4.ts",
     "auth:test:c5": "node --conditions=react-server --import tsx scripts/auth/verify-c5.ts",
-    "auth:test": "npm run auth:test:c1 && npm run auth:test:c2 && npm run auth:test:c3 && npm run auth:test:c4 && npm run auth:test:c5",
+    "auth:test:c6": "node --conditions=react-server --import tsx scripts/auth/verify-c6.ts",
+    "mail:test": "node --conditions=react-server --import tsx scripts/auth/mail-smoke.ts",
+    "auth:test": "npm run auth:test:c1 && npm run auth:test:c2 && npm run auth:test:c3 && npm run auth:test:c4 && npm run auth:test:c5 && npm run auth:test:c6",
     "auth:prepare-browser": "node --conditions=react-server --import tsx scripts/auth/prepare-browser.ts",
     "test:e2e:auth": "npm run auth:prepare-browser && playwright test --config playwright.auth.config.ts"
   },
@@ -50,6 +52,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",
     "recharts": "^3.3.0",
+    "resend": "6.34.1",
     "server-only": "0.0.1",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.1.12"

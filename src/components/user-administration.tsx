@@ -34,6 +34,13 @@ type Member = {
   status: string;
   version: number;
   isMaster: boolean;
+  mailStatus?: {
+    kind: string;
+    provider: string;
+    status: string;
+    errorCode: string | null;
+    updatedAt: string;
+  } | null;
   user?: {
     name: string;
     email: string;
@@ -64,6 +71,15 @@ const statuses: Record<string, string> = {
   INACTIVE: "Pasif",
   SUSPENDED: "Askıya alındı",
 };
+const mailLabel = (member: Member | null) => {
+  const mail = member?.mailStatus;
+  if (!mail) return "Gönderim kaydı yok";
+  return `${mail.kind === "RESET" ? "Parola" : "Davet"}: ${mail.status === "ACCEPTED" ? "Resend kabul etti" : mail.status === "LOCAL_TEST" ? "Yerel test" : mail.status === "FAILED" ? "Gönderilemedi" : "İşleniyor"}`;
+};
+const deliveryNotice = (delivery: string) =>
+  delivery === "resend_accepted"
+    ? "Resend iletiyi kabul etti. Bu durum alıcıya teslim onayı değildir."
+    : "İleti şifreli yerel test taşıyıcısına kaydedildi; gerçek e-posta gönderilmedi.";
 const tabs = [
   "Genel bilgiler",
   "Roller",
@@ -83,11 +99,18 @@ async function api(path: string, method = "GET", body?: unknown) {
   return data;
 }
 const errorText = (error: unknown) =>
-  error instanceof Error && error.message === "STEP_UP_REQUIRED"
-    ? "Önce Hesap güvenliği sayfasında parola ve TOTP ile yeniden doğrulayın."
-    : error instanceof Error && error.message === "VERSION_CONFLICT"
-      ? "Kayıt başka bir işlemde değişti. Listeyi yenileyin."
-      : "İşlem tamamlanamadı. Yetkinizi ve bağlantınızı kontrol edin; kaydedilmemiş alanlar korunuyor.";
+  error instanceof Error &&
+  ["MAIL_QUOTA_EXCEEDED", "MAIL_RATE_LIMITED", "INVITE_RATE_LIMITED"].includes(
+    error.message,
+  )
+    ? "Gönderim sınırına ulaşıldı. Bir süre sonra yeniden deneyin; günlük/aylık kota dolduysa yenilenmesini bekleyin."
+    : error instanceof Error && error.message === "MAIL_SEND_FAILED"
+      ? "E-posta gönderilemedi. Gönderim ayarlarını kontrol edin; bekleyen kullanıcıdan daveti yeniden gönderebilirsiniz."
+      : error instanceof Error && error.message === "STEP_UP_REQUIRED"
+        ? "Önce Hesap güvenliği sayfasında parola ve TOTP ile yeniden doğrulayın."
+        : error instanceof Error && error.message === "VERSION_CONFLICT"
+          ? "Kayıt başka bir işlemde değişti. Listeyi yenileyin."
+          : "İşlem tamamlanamadı. Yetkinizi ve bağlantınızı kontrol edin; kaydedilmemiş alanlar korunuyor.";
 export function UserAdministration() {
   const [data, setData] = useState<Data | null>(null),
     [metadata, setMetadata] = useState<Metadata | null>(null),
@@ -115,6 +138,7 @@ export function UserAdministration() {
       setData(users);
       setMetadata(context);
       setError("");
+      return users as Data;
     } catch (e) {
       setError(errorText(e));
     }
@@ -347,6 +371,7 @@ export function UserAdministration() {
                       "Durum",
                       "Faaliyet kapsamı",
                       "Son giriş",
+                      "Gönderim",
                       "İşlemler",
                     ].map((h) => (
                       <th key={h}>{h}</th>
@@ -402,6 +427,13 @@ export function UserAdministration() {
                                 "tr-TR",
                               )
                             : "Henüz giriş yok"}
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${m.mailStatus?.status === "FAILED" ? "danger" : "neutral"}`}
+                          >
+                            {mailLabel(m)}
+                          </span>
                         </td>
                         <td>
                           <Button
@@ -479,6 +511,61 @@ export function UserAdministration() {
               {tab === "Genel bilgiler" && (
                 <>
                   <h3>Üyelik bilgileri</h3>
+                  <div className="info-box">
+                    <strong>{mailLabel(selected)}</strong>
+                    {selected?.mailStatus && (
+                      <p>
+                        {new Date(selected.mailStatus.updatedAt).toLocaleString(
+                          "tr-TR",
+                        )}
+                      </p>
+                    )}
+                    {selected?.mailStatus?.status === "ACCEPTED" && (
+                      <p>API kabulü alıcıya teslim onayı değildir.</p>
+                    )}
+                    {selected?.mailStatus?.status === "FAILED" && (
+                      <p>
+                        İleti gönderilemedi. Gönderim ayarlarını ve kotayı
+                        kontrol edin.
+                      </p>
+                    )}
+                    {selected?.status === "INVITED" && data?.canManage && (
+                      <Button
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const result = await api(
+                              `users/${selected.id}/resend-invite`,
+                              "POST",
+                              {},
+                            );
+                            setNotice(deliveryNotice(result.delivery));
+                            const fresh: Data = await api("users");
+                            setData(fresh);
+                            setSelected(
+                              fresh.members.find((m) => m.id === selected.id) ??
+                                null,
+                            );
+                            setError("");
+                          } catch (e) {
+                            const fresh = await load();
+                            if (fresh)
+                              setSelected(
+                                fresh.members.find(
+                                  (m) => m.id === selected.id,
+                                ) ?? null,
+                              );
+                            setError(errorText(e));
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        Daveti yeniden gönder
+                      </Button>
+                    )}
+                  </div>
                   <p>
                     {selected?.user?.name}
                     <br />
@@ -813,11 +900,12 @@ export function UserAdministration() {
                   setInvite(false);
                   setNotice(
                     r.status === "created"
-                      ? "Davet şifreli yerel test taşıyıcısına kaydedildi. Gerçek e-posta gönderilmedi."
+                      ? deliveryNotice(r.delivery)
                       : "Davet oluşturulmadı; mevcut kimliği operatörle kontrol edin.",
                   );
                   await load();
                 } catch (e) {
+                  await load();
                   setError(errorText(e));
                 } finally {
                   setBusy(false);
@@ -833,9 +921,10 @@ export function UserAdministration() {
                 <input name="email" type="email" required />
               </label>
               <div className="info-box">
-                SMTP bağlı değil. Davet yalnız şifreli development test iletisi
-                olarak oluşturulur.
+                Test modunda yalnız izin verilen alıcıya gönderim yapılır. Son
+                gönderim durumu kullanıcı listesinde gösterilir.
               </div>
+              {error && <p role="alert">{error}</p>}
               <Button disabled={busy}>Davet oluştur</Button>
             </form>
           </Dialog.Content>
