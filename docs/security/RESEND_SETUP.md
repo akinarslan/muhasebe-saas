@@ -18,6 +18,8 @@ AUTH_MAIL_ALLOW_LOCAL_LINKS=false
 
 Test göndericisi daima `Pusula <onboarding@resend.dev>` olur; diğer alıcılara API çağrısından önce engel konur. Alıcıyı uygulamada tanımlamak, Resend hesabında doğrulamaz; sağlayıcı kısıtları ayrıca geçerlidir. Ayar değişikliğinde dev sunucusunu yeniden başlatın.
 
+Sağlayıcı test alıcısını HTTP 403 ile reddederse başka adrese otomatik gönderim yapılmaz. Anahtarın hesabı ile izin verilen alıcının eşleşmesi veya kendi domaininizin doğrulanması gerekir. SDK 6.34.1 development hata logger'ı ham yanıtı yazabildiğinden yalnız bu SDK instance'ında kapatılmıştır; global console korunur. Gerçek SDK/sahte 403 testi bu sınırı doğrular. SDK sürümü yükseltilirken bu test korunmalıdır. API origin'i resmî Resend adresine sabittir.
+
 `npm run mail:test -- --send-live` yalnız bir bağlantısız test iletisi gönderir. Komut otomatik testlere dahil değildir; API yanıtı kabul edilmedikçe başarılı çıkmaz. API anahtarı/alıcı/ham yanıt loglanmaz. Ücretli hizmet açmaz.
 
 Yerel davet/reset bağlantıları ancak geliştiricinin kendi çalışan uygulamasını kullandığı testte `AUTH_MAIL_ALLOW_LOCAL_LINKS=true` ile açılabilir. Bu açık onay yoksa localhost/özel ağ bağlantısı gönderilmez. Test modu production'da kapalıdır. Test dışı gerçek kullanıcılara localhost bağlantısı gönderilmez.

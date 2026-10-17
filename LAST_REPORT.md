@@ -1,12 +1,14 @@
 # PUSULA v0.3 — Sprint C6 / Resend e-posta entegrasyonu
 
-17.10.2026 · **Kod ve otomatik kontroller hazır. Canlı Resend gönderimi doğrulanmadı: izin verilen test alıcısı bekleniyor. Sprint C6 canlı kabulü ve production kurulumu tamamlandı denmez.**
+17.10.2026 · **Kod ve otomatik kontroller hazır. Canlı Resend denemesi HTTP 403 ile reddedildi: API anahtarı/alıcı eşleşmesi bekleniyor. Sprint C6 canlı kabulü ve production kurulumu tamamlandı denmez.**
 
 ## Sonuç
 
 Resmî Resend Node SDK **6.34.1** sürümü sabitlendi. Better Auth **1.7.10**, TOTP, Master Admin step-up/özel izinleri, Neon PostgreSQL ve v0.2.3 demo ekranları korundu. Server-only taşıyıcı mevcut davet ve parola sıfırlama callback'lerine bağlandı. Şifreli development taşıyıcısı alternatif olarak korunur; otomatik testler gerçek mail ayarlarını devralmaz.
 
-`RESEND_API_KEY` yerel `.env.local` içinde mevcut; değeri loga, tarayıcıya veya Git'e yazılmadı. **`RESEND_TEST_RECIPIENT` tanımlı değil.** İzin verilen doğrulanmış alıcının yerelde eklenmesi kullanıcıdan istendi. `npm run mail:test -- --send-live` çalıştırıldı; `VERIFIED_TEST_RECIPIENT_REQUIRED` ile **API çağrısından önce** durdu. Resend API kabulü, inbox teslimi veya canlı davet/reset gönderimi başarılıymış gibi raporlanmaz. Bu sprintte gerçek kişiye e-posta gönderilmedi.
+`RESEND_API_KEY` yerel `.env.local` içinde mevcut; değeri loga, tarayıcıya veya Git'e yazılmadı. İlk smoke alıcı eksikken API çağrısından önce durdu. Kullanıcı daha sonra test alıcısını bildirdi; adres yalnız Git dışındaki `.env.local` dosyasına kaydedildi. İkinci `npm run mail:test -- --send-live` denemesi gerçek Resend API'sinden **HTTP 403 / SENDER_OR_RECIPIENT_REJECTED** aldı: mevcut anahtarın hesabı farklı bir test alıcısına izin veriyor. Başka alıcıya gönderim yapılmadı. Kullanıcı bu alıcının hesabına ait anahtarı yerelde değiştireceğini belirtti; tamamlandı yanıtı bekleniyor. API kabulü veya inbox teslimi başarılıymış gibi raporlanmaz.
+
+Bu ilk gerçek hata yanıtında SDK'nın development logger'ı ham sağlayıcı mesajını konsola yazdı; API anahtarı yazılmadı, fakat sağlayıcı mesajı alıcı bilgisi içeriyordu. Yalnız sabitlenmiş SDK instance'ının `logError` hook'u kapatıldı; global console değiştirilmedi. Gerçek SDK ile sahte HTTP 403 regresyon testi eklendi. API hedefi de SDK ortam override'ı yerine açıkça resmî `https://api.resend.com` olarak sabitlendi. Sonraki hatalar yalnız güvenli uygulama koduyla işlenir.
 
 ## Uygulanan davranış
 
@@ -31,14 +33,14 @@ Production branch/DB'ye işlem yapılmadı. Neon Auth veya ücretli Neon/Resend 
 | Prisma client / migration / auth grants | Başarılı; iki development/test DB |
 | Build | Başarılı; strict TypeScript |
 | Lint | 0 hata / 0 uyarı |
-| Vitest | **92/92**, 13 dosya; önceki 81 + 11 Resend testi |
+| Vitest | **93/93**, 14 dosya; önceki 81 + 12 Resend/gizlilik testi |
 | Gerçek PostgreSQL suite | **11/11** RLS, CRUD, Decimal ve kesinti |
 | Auth/API C1–C5 | **41/41**, önceki kontroller korundu |
 | Yeni C6 gerçek DB suite | **6/6**, sahte taşıyıcı; gerçek mail göndermez |
 | Playwright demo | **22/22**, desktop + mobil Chromium; 1.2 dakika |
 | Playwright auth | **2/2**, desktop + mobil; 1.7 dakika; davet, yerel gönderim durumu ve yeniden gönderme eylemi de doğrulandı |
 | npm audit --omit=dev | **0** bulgu |
-| Canlı Resend smoke | **Bekliyor**: doğrulanmış test alıcısı eksik; API çağrısı yapılmadı |
+| Canlı Resend smoke | **HTTP 403**: mevcut anahtar bu test alıcısına izin vermiyor; başarı/kabul yok |
 
 Resend birim testleri: izin verilmeyen alıcı, localhost opt-in, production engeli, origin/path/HTTPS, test göndericisi, idempotency, API kabulü, günlük/aylık kota, rate-limit, yetki hatası, ağ hatası ve geçersiz başarı yanıtı. C6 DB testleri: başarısız gönderim/kalıcı durum/token iptali, yeniden gönderim, cooldown, eski token reddi, tek kullanımlı kabul, güvenli kullanıcı DTO'su, reset hata/gizlilik/tekrar deneme ve tek kullanımlılık.
 
@@ -46,7 +48,7 @@ Resend birim testleri: izin verilmeyen alıcı, localhost opt-in, production eng
 
 ## Kalan kabul adımı
 
-1. `.env.local` içine Resend hesabının izin verdiği **doğrulanmış** `RESEND_TEST_RECIPIENT` adresini ekleyin; adresi/anahtarı sohbete göndermeyin.
+1. Bildirilen alıcı yerelde kayıtlıdır. Kullanıcı aynı alıcının Resend hesabına ait `RESEND_API_KEY` değerini `.env.local` içinde değiştirmeli; anahtarı sohbete göndermeden güncellendiğini bildirmelidir. Mevcut anahtarla otomatik tekrar veya başka adrese gönderim yapılmaz.
 2. `npm run mail:test -- --send-live` ile tek bağlantısız test iletisi ve gerçek API kabulü doğrulanmalı. Davet/reset için geliştiricinin çalışan yerel uygulaması kullanılacaksa açık development local-link opt-in gerekir. Otomatik davet kabul/reset testleri gerçek DB ile geçti; canlı taşıyıcı üzerinden bu işlemler henüz test edilmedi.
 3. Gerçek kullanıcılara açılmadan önce kendi gönderici domaini DNS doğrulaması, yayınlanan HTTPS uygulama adresi, operatör hesabı/MFA ve production kabulü tamamlanmalı. Teslim/bounce webhook'ları bu sprintte eklenmedi; ACCEPTED yalnız API kabulüdür. Gönderim sonrası DB kesintisinde sonuç belirsiz kalabilir; otomatik retry yerine Resend paneli incelenmelidir.
 

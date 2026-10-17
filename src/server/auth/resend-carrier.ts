@@ -116,7 +116,14 @@ export function resendCarrier(): MailCarrier {
           ? undefined
           : `<div style="font-family:Arial,sans-serif;color:#14243a;max-width:560px"><h1 style="color:#0d9488">pusula</h1><h2>${subject}</h2><p>Hesap erişimi işleminizi tamamlamak için aşağıdaki bağlantıyı kullanın.</p><p><a href="${escape(message.url)}" style="background:#0d9488;color:white;padding:12px 18px;text-decoration:none;border-radius:8px">${action}</a></p><p>Bağlantı süreli ve tek kullanımlıdır.</p><p>${note}</p></div>`;
       try {
-        const result = await new Resend(process.env.RESEND_API_KEY).emails.send(
+        const client = new Resend(process.env.RESEND_API_KEY, {
+          baseUrl: "https://api.resend.com",
+        });
+        // SDK 6.34.1 logs raw API responses in development. Its version is
+        // pinned; suppress only this instance's logger, never global console.
+        // Regression tests exercise the real SDK against a synthetic 403.
+        Object.defineProperty(client, "logError", { value: () => undefined });
+        const result = await client.emails.send(
           {
             from: config.from,
             to: [message.to],
