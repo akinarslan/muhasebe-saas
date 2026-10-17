@@ -3,6 +3,7 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { StepUpVerification } from "./step-up-verification";
 export function SecurityForm({ enabled }: { enabled: boolean }) {
   const [verified, setVerified] = useState(enabled);
   const [uri, setUri] = useState("");
@@ -34,7 +35,7 @@ export function SecurityForm({ enabled }: { enabled: boolean }) {
       setUri("");
       setCodes([]);
       setMessage(
-        "Doğrulama başarılı. Yönetim için parola ve TOTP ile yeniden doğrulama beş dakika geçerlidir.",
+        "TOTP kurulumu tamamlandı. Yönetim işlemleri için aşağıda yeniden doğrulayın.",
       );
     }
   }
@@ -102,38 +103,7 @@ export function SecurityForm({ enabled }: { enabled: boolean }) {
           </form>
         </section>
       )}
-      {verified && !uri && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit(e.currentTarget, "step-up");
-          }}
-        >
-          <h3>Hassas işlem doğrulaması</h3>
-          <label>
-            Şifre
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          <label>
-            TOTP kodu
-            <input
-              name="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              required
-              pattern="[0-9]{6}"
-            />
-          </label>
-          <button className="btn btn-primary" disabled={busy}>
-            Yeniden doğrula
-          </button>
-        </form>
-      )}
+      {verified && !uri && <StepUpVerification />}
       <p role="status">{message}</p>
       <Link href="/admin/users">Kullanıcı yönetimi</Link>
     </div>

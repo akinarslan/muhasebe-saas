@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, LockKeyhole, LogOut } from "lucide-react";
@@ -9,13 +9,19 @@ export function AuthForm() {
   const [pending, setPending] = useState(false);
   const [factor, setFactor] = useState(false);
   const [recovery, setRecovery] = useState(false);
+  const [account, setAccount] = useState("");
+  const codeInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (factor) codeInput.current?.focus();
+  }, [factor, recovery]);
   return (
     <form
       onSubmit={async (event) => {
         event.preventDefault();
         setPending(true);
         setError("");
-        const form = new FormData(event.currentTarget);
+        const element = event.currentTarget;
+        const form = new FormData(element);
         try {
           const endpoint = factor
             ? recovery
@@ -33,6 +39,8 @@ export function AuthForm() {
           });
           if (!response.ok) throw new Error();
           if ((await response.json()).twoFactorRedirect) {
+            setAccount(String(form.get("email") ?? ""));
+            element.reset();
             setFactor(true);
             return;
           }
@@ -77,10 +85,29 @@ export function AuthForm() {
       ) : (
         <>
           <label>
+            Hesap e-postası
+            <input
+              type="email"
+              value={account}
+              readOnly
+              autoComplete="username"
+            />
+          </label>
+          <label>
             {recovery ? "Kurtarma kodu" : "TOTP doğrulama kodu"}
             <div className="login-field">
               <LockKeyhole size={17} />
-              <input name="code" required autoComplete="one-time-code" />
+              <input
+                key={recovery ? "recovery" : "totp"}
+                ref={codeInput}
+                name="code"
+                required
+                autoComplete="one-time-code"
+                inputMode={recovery ? "text" : "numeric"}
+                pattern={recovery ? undefined : "[0-9]{6}"}
+                maxLength={recovery ? 100 : 6}
+                placeholder={recovery ? "Kurtarma kodunuz" : "6 haneli kod"}
+              />
             </div>
           </label>
           <button
@@ -90,11 +117,41 @@ export function AuthForm() {
           >
             {recovery ? "TOTP kullan" : "Kurtarma kodu kullan"}
           </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={pending}
+            onClick={async () => {
+              setPending(true);
+              try {
+                const response = await fetch("/api/auth/sign-out", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: "{}",
+                });
+                if (!response.ok) throw new Error();
+                setFactor(false);
+                setRecovery(false);
+                setAccount("");
+                setError("");
+              } catch {
+                setError("Hesap değiştirilemedi. Yeniden deneyin.");
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            Hesap değiştir
+          </button>
         </>
       )}
       {error && <p role="alert">{error}</p>}
       <button className="btn btn-primary login-submit" disabled={pending}>
-        {pending ? "Doğrulanıyor…" : "Giriş yap"}
+        {pending
+          ? "Doğrulanıyor…"
+          : factor
+            ? "Doğrula ve devam et"
+            : "Giriş yap"}
       </button>
       {!factor && <Link href="/forgot-password">Parolamı unuttum</Link>}
     </form>

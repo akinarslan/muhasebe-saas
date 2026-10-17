@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { SignOut } from "./auth-form";
+import { StepUpVerification } from "./step-up-verification";
 import {
   permissions,
   roleTemplates,
@@ -34,6 +35,7 @@ type Member = {
   status: string;
   version: number;
   isMaster: boolean;
+  invitationStatus?: string;
   mailStatus?: {
     kind: string;
     provider: string;
@@ -74,7 +76,7 @@ const statuses: Record<string, string> = {
 const mailLabel = (member: Member | null) => {
   const mail = member?.mailStatus;
   if (!mail) return "Gönderim kaydı yok";
-  return `${mail.kind === "RESET" ? "Parola" : "Davet"}: ${mail.status === "ACCEPTED" ? "Resend kabul etti" : mail.status === "LOCAL_TEST" ? "Yerel test" : mail.status === "FAILED" ? "Gönderilemedi" : "İşleniyor"}`;
+  return `${mail.kind === "RESET" ? "Parola" : "Davet"}: ${mail.status === "ACCEPTED" ? "Resend kabul etti" : mail.status === "LOCAL_TEST" ? "Yerel test" : mail.status === "FAILED" ? "Gönderilemedi" : mail.status === "UNKNOWN" ? "Sonuç belirsiz" : "İşleniyor"}`;
 };
 const deliveryNotice = (delivery: string) =>
   delivery === "resend_accepted"
@@ -88,29 +90,53 @@ const tabs = [
   "Oturumlar",
   "Değişiklik geçmişi",
 ];
+class ApiFailure extends Error {
+  constructor(
+    code: string,
+    public requestId?: string,
+  ) {
+    super(code);
+  }
+}
 async function api(path: string, method = "GET", body?: unknown) {
   const response = await fetch(`/api/cloud/${path}`, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(30000),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? "SERVICE_UNAVAILABLE");
+  if (!response.ok)
+    throw new ApiFailure(data.error ?? "SERVICE_UNAVAILABLE", data.requestId);
   return data;
 }
+const errorMessage = (error: unknown) =>
+  error instanceof Error && error.message === "ALREADY_PENDING"
+    ? "Bu firmada bekleyen davet var. Kullanıcı listesindeki davetten yeniden gönderin."
+    : error instanceof Error && error.message === "ALREADY_MEMBER"
+      ? "Bu hesap zaten firma üyesi. Yeni davet oluşturulmadı."
+      : error instanceof Error && error.message === "INVITATION_UNAVAILABLE"
+        ? "Bu adres için yeni davet oluşturulamıyor. Operatörün kimlik/üyelik eşleşmesini incelemesi gerekiyor."
+        : error instanceof Error &&
+            (["MAIL_DELIVERY_UNKNOWN"].includes(error.message) ||
+              ["TimeoutError", "AbortError"].includes(error.name))
+          ? "İşlem sonucu belirsiz. Yeniden göndermeden önce listeyi ve sağlayıcı durumunu kontrol edin."
+          : error instanceof Error &&
+              [
+                "MAIL_QUOTA_EXCEEDED",
+                "MAIL_RATE_LIMITED",
+                "INVITE_RATE_LIMITED",
+              ].includes(error.message)
+            ? "Gönderim sınırına ulaşıldı. Bir süre sonra yeniden deneyin; günlük/aylık kota dolduysa yenilenmesini bekleyin."
+            : error instanceof Error && error.message === "MAIL_SEND_FAILED"
+              ? "E-posta gönderilemedi. Gönderim ayarlarını kontrol edin; bekleyen kullanıcıdan daveti yeniden gönderebilirsiniz."
+              : error instanceof Error && error.message === "STEP_UP_REQUIRED"
+                ? "Önce Hesap güvenliği sayfasında parola ve TOTP ile yeniden doğrulayın."
+                : error instanceof Error && error.message === "VERSION_CONFLICT"
+                  ? "Kayıt başka bir işlemde değişti. Listeyi yenileyin."
+                  : "İşlem tamamlanamadı. Yetkinizi ve bağlantınızı kontrol edin; kaydedilmemiş alanlar korunuyor.";
 const errorText = (error: unknown) =>
-  error instanceof Error &&
-  ["MAIL_QUOTA_EXCEEDED", "MAIL_RATE_LIMITED", "INVITE_RATE_LIMITED"].includes(
-    error.message,
-  )
-    ? "Gönderim sınırına ulaşıldı. Bir süre sonra yeniden deneyin; günlük/aylık kota dolduysa yenilenmesini bekleyin."
-    : error instanceof Error && error.message === "MAIL_SEND_FAILED"
-      ? "E-posta gönderilemedi. Gönderim ayarlarını kontrol edin; bekleyen kullanıcıdan daveti yeniden gönderebilirsiniz."
-      : error instanceof Error && error.message === "STEP_UP_REQUIRED"
-        ? "Önce Hesap güvenliği sayfasında parola ve TOTP ile yeniden doğrulayın."
-        : error instanceof Error && error.message === "VERSION_CONFLICT"
-          ? "Kayıt başka bir işlemde değişti. Listeyi yenileyin."
-          : "İşlem tamamlanamadı. Yetkinizi ve bağlantınızı kontrol edin; kaydedilmemiş alanlar korunuyor.";
+  `${errorMessage(error)}${error instanceof ApiFailure && error.requestId ? ` Başvuru: ${error.requestId}` : ""}`;
 export function UserAdministration() {
   const [data, setData] = useState<Data | null>(null),
     [metadata, setMetadata] = useState<Metadata | null>(null),
@@ -129,6 +155,8 @@ export function UserAdministration() {
   const [preview, setPreview] = useState(false),
     [busy, setBusy] = useState(false),
     [invite, setInvite] = useState(false);
+  const [stepUp, setStepUp] = useState(false);
+  const invitationInFlight = useRef(false);
   const load = useCallback(async () => {
     try {
       const [users, context] = await Promise.all([
@@ -296,7 +324,14 @@ export function UserAdministration() {
                 yönetin.
               </p>
             </div>
-            <Button disabled={!data?.canManage} onClick={() => setInvite(true)}>
+            <Button
+              disabled={!data?.canManage}
+              onClick={() => {
+                setInvite(true);
+                setError("");
+                setNotice("");
+              }}
+            >
               <UserPlus size={17} /> Kullanıcı davet et
             </Button>
           </div>
@@ -409,6 +444,21 @@ export function UserAdministration() {
                           >
                             {statuses[m.status]}
                           </span>
+                          {m.invitationStatus &&
+                            m.invitationStatus !== "NONE" && (
+                              <small>
+                                {
+                                  (
+                                    {
+                                      PENDING: "Davet bekliyor",
+                                      ACCEPTED: "Davet kabul edildi",
+                                      EXPIRED: "Davet süresi doldu",
+                                      CANCELLED: "Davet iptal edildi",
+                                    } as Record<string, string>
+                                  )[m.invitationStatus]
+                                }
+                              </small>
+                            )}
                         </td>
                         <td>
                           {m.roles[0]?.scope.kind === "TENANT"
@@ -527,6 +577,13 @@ export function UserAdministration() {
                       <p>
                         İleti gönderilemedi. Gönderim ayarlarını ve kotayı
                         kontrol edin.
+                      </p>
+                    )}
+                    {selected?.mailStatus?.status === "UNKNOWN" && (
+                      <p>
+                        Gönderim sonucu belirsiz. Yeniden göndermeden önce
+                        sağlayıcı panelini kontrol edin; eski bağlantı güvenlik
+                        için iptal edildi.
                       </p>
                     )}
                     {selected?.status === "INVITED" && data?.canManage && (
@@ -889,25 +946,33 @@ export function UserAdministration() {
               className="drawer-body"
               onSubmit={async (e) => {
                 e.preventDefault();
+                if (invitationInFlight.current) return;
+                invitationInFlight.current = true;
+                setNotice("");
                 const fields = new FormData(e.currentTarget);
                 setBusy(true);
+                setError("");
                 try {
                   const r = await api(
                     "users/invite",
                     "POST",
                     Object.fromEntries(fields),
                   );
+                  if (r.status !== "created" || !r.membershipId)
+                    throw new Error("INVITATION_UNAVAILABLE");
+                  await load();
+                  setSearch("");
                   setInvite(false);
-                  setNotice(
-                    r.status === "created"
-                      ? deliveryNotice(r.delivery)
-                      : "Davet oluşturulmadı; mevcut kimliği operatörle kontrol edin.",
-                  );
-                  await load();
+                  setNotice(`Davet oluşturuldu. ${deliveryNotice(r.delivery)}`);
                 } catch (e) {
-                  await load();
+                  if (e instanceof Error && e.message === "STEP_UP_REQUIRED") {
+                    setStepUp(true);
+                  } else {
+                    await load();
+                  }
                   setError(errorText(e));
                 } finally {
+                  invitationInFlight.current = false;
                   setBusy(false);
                 }
               }}
@@ -925,8 +990,32 @@ export function UserAdministration() {
                 gönderim durumu kullanıcı listesinde gösterilir.
               </div>
               {error && <p role="alert">{error}</p>}
-              <Button disabled={busy}>Davet oluştur</Button>
+              <Button disabled={busy}>
+                {busy ? "Davet işleniyor…" : "Davet oluştur"}
+              </Button>
             </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      <Dialog.Root open={stepUp} onOpenChange={setStepUp}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="drawer-overlay" style={{ zIndex: 90 }} />
+          <Dialog.Content className="step-up-modal">
+            <Dialog.Title>Güvenlik doğrulaması</Dialog.Title>
+            <Dialog.Description>
+              Davet bilgileri korunur. Doğrulama sonrası gönderimi yeniden
+              onaylayın; otomatik e-posta gönderilmez.
+            </Dialog.Description>
+            <StepUpVerification
+              onVerified={() => {
+                setStepUp(false);
+                setError("");
+                setNotice(
+                  "Kimliğiniz doğrulandı. Davet bilgilerini kontrol edip oluşturmayı yeniden onaylayın.",
+                );
+              }}
+            />
+            <Dialog.Close className="btn">Davet formuna dön</Dialog.Close>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
