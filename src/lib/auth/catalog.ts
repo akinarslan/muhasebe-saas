@@ -1,4 +1,5 @@
 ﻿export const permissionModules = {
+  activities: { manage: "Faaliyet tanımla" },
   customers: {
     view: "Görüntüle",
     create: "Ekle",
@@ -14,6 +15,7 @@
     cancel: "İptal et",
   },
   materials: {
+    edit: "Malzeme bilgisini düzenle",
     view: "Görüntüle",
     costView: "USD alış maliyetini gör",
     costEdit: "USD alış maliyetini değiştir",
@@ -25,6 +27,18 @@
     view: "Görüntüle",
     manual: "Manuel kur gir",
     approve: "Manuel kuru onayla",
+  },
+  products: { view: "Görüntüle", create: "Ekle", edit: "Düzenle" },
+  expenses: { view: "Görüntüle", create: "Ekle", edit: "Düzenle" },
+  quotes: {
+    view: "Görüntüle",
+    create: "Oluştur / revize et",
+    approve: "Onayla",
+  },
+  imports: {
+    view: "Önizlemeyi görüntüle",
+    create: "Önizleme oluştur",
+    confirm: "İçe aktarmayı onayla",
   },
   finance: {
     accounts: "Cari görüntüle",
@@ -63,6 +77,11 @@
   },
 } as const;
 export const moduleLabels: Record<string, string> = {
+  activities: "Faaliyetler",
+  products: "Ürünler",
+  expenses: "Gider türleri",
+  quotes: "Teklifler",
+  imports: "Veri aktarımı",
   customers: "Müşteriler",
   sales: "Satışlar",
   materials: "Malzemeler",

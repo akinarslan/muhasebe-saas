@@ -221,7 +221,7 @@ export async function changeCost(
       });
       await tx.materialVariant.update({
         where: { id: variantId },
-        data: { usdCost: cost },
+          data: { usdCost: cost, priceVersion: { increment: 1 } },
       });
       // Audit readers without cost access cannot infer amounts from the audit API.
       await tx.auditEvent.create({
