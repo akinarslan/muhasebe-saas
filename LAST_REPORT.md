@@ -1,4 +1,4 @@
-﻿# PUSULA v0.3 — Sprint C6 / Resend e-posta entegrasyonu
+# PUSULA v0.3 — Sprint C6 / Resend e-posta entegrasyonu
 
 17.10.2026 · **Kod ve otomatik kontroller hazır. Canlı Resend gönderimi doğrulanmadı: izin verilen test alıcısı bekleniyor. Sprint C6 canlı kabulü ve production kurulumu tamamlandı denmez.**
 
@@ -54,4 +54,4 @@ Resend birim testleri: izin verilmeyen alıcı, localhost opt-in, production eng
 
 ## Git
 
-Başlangıç `c96090ab25baf581aaa208605c80799f8a69557e`; geliştirme dalı `feat/pusula-v030-neon-cloud`. Doğrulanmış C6 değişiklikleri bu dala commit/push edilir. `main` birleştirilmez; force-push/hard reset/veri temizliği yapılmaz. Sırlar, `.env.local`, `.env.bootstrap.local`, `.data` ve test çıktıları commit edilmez. Canlı testin eksik olduğu teslimde açıkça korunur.
+Başlangıç `c96090ab25baf581aaa208605c80799f8a69557e`; geliştirme dalı `feat/pusula-v030-neon-cloud`. Doğrulanmış C6 uygulama commit **`a3cd27a`** GitHub geliştirme dalına başarıyla push edildi. Bu son rapor kaydı ayrı dokümantasyon commit ile aynı dala gönderilir. 24 staged dosya yapılandırılmış sır değerlerine karşı tarandı ve PASS aldı; 22 production tarayıcı artifact içinde yerel Resend anahtarı bulunmadı. `main` birleştirilmez; force-push/hard reset/veri temizliği yapılmaz. Sırlar, `.env.local`, `.env.bootstrap.local`, `.data` ve test çıktıları commit edilmez. Canlı testin eksik olduğu teslimde açıkça korunur.
