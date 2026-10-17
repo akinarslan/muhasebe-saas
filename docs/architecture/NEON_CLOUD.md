@@ -95,3 +95,7 @@ Sonraki Sprint C: Better Auth + TOTP, güvenli bootstrap, ilk yönetici e-postas
 - `/` v0.2.3 localStorage demosu; `/app` gerçek session başlangıcı; `/admin/users` gerçek rol/izin yönetimi. Tam satış/teklif/finans/cloud import Sprint D'ye bırakıldı. v0.3 bütünü ve production dağıtımı tamamlanmış değildir.
 
 Komutlar: `npm run auth:setup`, `npm run auth:roles`, `npm run auth:bootstrap`, `npm run auth:test`, `npm run test:e2e:auth`. Bootstrap yalnız gerçek operatör yerel alanlarını doldurduktan sonra çalıştırılmalıdır. Yeniden seed mevcut kurulmuş Master'ı sessizce yeniden etkinleştirmez; bootstrap kayıt işareti silinmez.
+
+## C6.1 — 17.10.2026 denetimi
+
+Development'ta mevcut bootstrap, MFA etkin operatör ve bekleyen üyelik salt okunur doğrulandı; bu görevde gerçek kullanıcı oluşturulmadı/silinmedi ve operatör faktörleri testlerde kullanılmadı. Davet conflict/requestId, session bağlı step-up status API'si ve lifecycle/gönderim durumu ayrımı eklendi. Yeni migration gerekmedi. [Kök neden](../../research/PUSULA_C61_INVITATION_AUDIT.md), [MFA kurtarma sınırı](../security/MFA_RECOVERY.md) ve [son doğrulama](../../LAST_REPORT.md) günceldir. C6 canlı Resend 403 kabulü/domain ve production onayı ayrı kalır.

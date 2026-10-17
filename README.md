@@ -92,6 +92,6 @@ Doğrulama sonuçları ve sınırlar için `LAST_REPORT.md` dosyasına bakın.
 
 Mevcut development kurulumu için: `npm run db:migrate`, `npm run db:migrate:test`, `npm run auth:setup`, `npm run auth:roles`. Bu komutlar production hedefini reddeder. İlk gerçek yönetici için özel yerel bootstrap dosyasını doldurup `npm run auth:bootstrap`; ardından MFA kurulumu yapın. [Ayrıntılı adımlar](docs/security/MASTER_ADMIN_SETUP.md).
 
-`npm run auth:test` gerçek izole Neon test DB'sindeki C1–C5 kapılarını sıralı çalıştırır. `npm run test:e2e:auth` ayrı 3100 portu/test DB'si ve şifreli hayalî fixture'larla browser akışını doğrular; auth trace/video kapalıdır. `npm run test:e2e` mevcut demo regresyonlarını 3000 portunda çalıştırır. Bu iki sunucunun build çıktıları ayrıdır.
+`npm run auth:test` gerçek izole Neon test DB'sindeki C1–C6.1 kapılarını sıralı çalıştırır. `npm run test:e2e:auth` ayrı 3100 portu/test DB'si ve şifreli hayalî fixture'larla browser akışını doğrular; auth trace/video kapalıdır. `npm run test:e2e` mevcut demo regresyonlarını 3000 portunda çalıştırır. Bu iki sunucunun build çıktıları ayrıdır.
 
 Resend sunucu taşıyıcısı eklendi; doğrulanmış test alıcısı ve domain gereksinimleri [Resend kurulumunda](docs/security/RESEND_SETUP.md). Şifreli development taşıyıcısı korunur; API kabulü alıcıya teslim onayı değildir. Development hedef guard'ları değiştirilmeden production dağıtımı yapılmaz.

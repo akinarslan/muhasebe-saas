@@ -43,3 +43,17 @@ Son başarılı koşudan önce QR Base32 test dönüşümü, kayıttan sonra esk
 Tekrar C3 last-master testi, önceki browser fixture'larının aynı tenant'a Master eklemesiyle yanlış varsayım yaptı; test ayrı tenant'a alındı ve tüm C1–C5 sıralı suite sonrasında geçti. Generated `.next-auth-e2e` ilk lint kapsamına girdi; yalnız generated/test/private çıktı klasörleri ignore edilerek gerçek kaynak lint'i temizlendi. Kod kuralları devre dışı bırakılmadı.
 
 Next geliştirme sunucusu bazı korunan sayfa yönlendirmelerinde `destination stream errored` kaydı ve adapter/pg `client.query` deprecation uyarısı üretir. Gerçek HTTP beklenen 401/403/redirect sonuçları ve browser JS hata kontrolü geçmiştir; bu uyarılar gizlenmedi. Production başlangıç/operasyon kabulü, gerçek cihaz/Safari ve tam accessibility sertifikasyonu ayrıca yapılmalıdır. Görseller hayalî test kullanıcılarıdır; MFA QR/recovery ekranları paylaşılmaz.
+
+## C6.1 — 17.10.2026
+
+- Değişiklik öncesi gerçek browser baseline: **2/2**, mevcut test kimliğinde HTTP 200/not_created ve drawer kapanması masaüstü/mobilde yeniden üretildi. Resend veya gerçek operatör credentials kullanılmadı.
+- Yeni `npm run auth:test:c61`: **13/13** gerçek izole Neon/HTTP kontrolü. Mevcut/pending üye conflict, requestId, yetkisiz istek gizliliği, geçerli/eksik/expired step-up, concurrent create tek mesaj, liste lifecycle/delivery, başka kimliğe kanıt aktarımının reddi, explicit DENY, eşleşmeyen kimliği firmaya bağlamama, forbidden/rate-limit/network/provider failure, explicit resend ve logout.
+- Mevcut C1–C6: **47/47** korundu. C5 outage testine yeni minimal requestId sözleşmesi assertion'ı eklendi. C6 eski token/tek kullanım/reset kontrolleri korunur. Yeni toplam auth/API kapsamı **60 kontrol**; paket `auth:test` C6.1'i de sıraya ekler.
+- Vitest **99/99**, 16 dosya. C6'daki 93 test korunur; expiry sınırı/lifecycle, server-confirmed UI, remount/expiry/fail-closed, TOTP focus/read-only/recovery/account switch ve gerçek SDK normalized network gizliliği eklendi.
+- Son build ve strict TypeScript başarılı; lint 0 hata/uyarı. PostgreSQL/RLS suite **11/11**. Demo browser **22/22**, 1.4 dakika.
+- Auth browser final **2/2**, 2.5 dakika: başarı paneli/yenileme, 409 drawer/input koruma, modal step-up ve form devamı, pending conflict, sahte provider failure, yanlış eski başarı bildiriminin görünmemesi, TOTP odak/hesap değiştirme ve logout desktop/mobilde geçti. Her projede dört beklenen HTTP konsol hatası; sıfır beklenmeyen konsol hatası ve pageerror. Hata drawer PNG'leri incelendi; sır/QR/recovery içermeyen hayalî fixture'lardır ve Git dışındadır.
+- Development salt okunur denetiminde mevcut operatör/MFA ve pending üyelik bulundu. Gerçek operatörle destructive test yapılmadı; gerçek mail gönderilmedi. Şema/migration değişikliği gerekmedi.
+
+İlk C6.1 lint, render sırasında `Date.now()` çağrısını ve kullanılmayan test import'unu yakaladı. State başlangıcı deterministik yapılıp import düzeltildi; kurallar kapatılmadı. İlk UI görsel incelemesinde önceki başarının toast'ı yeni hata sırasında görünüyordu; yeni davet/submit başlangıcında temizlenmesi ve regresyon assertion'ı eklendi. Geçersiz/eksik/çakışan isteklerin beklenen 401/403/409/429/502/503 kayıtları requestId ile güvenli loglanır. Eski Next development redirect stream, pg deprecation ve NO_COLOR uyarıları devam eder; browser pageerror kontrolü ayrıca yapılır.
+
+TOTP rotation için çalışan bir endpoint eklenmedi; [belgeli operatör prosedürü/kalan kapı](MFA_RECOVERY.md) ve [kök neden denetimi](../../research/PUSULA_C61_INVITATION_AUDIT.md) geçerlidir.

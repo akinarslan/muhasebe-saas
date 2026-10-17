@@ -193,4 +193,4 @@ Bu ara surum, v0.3 bulut/veritabani gecisinden once tamamlanacak kritik kullanim
 
 ### v0.3 Sprint C geliştirme teslimi
 
-Better Auth + TOTP, server session, güvenli bootstrap CLI, Master kullanıcı yönetimi, scoped rol/override, sınırlı cloud API/RLS ve audit uygulanmıştır; [son rapor](LAST_REPORT.md) gerçek doğrulama ve kalanları belirtir. Gerçek operatör hesabı/MFA ve e-posta sağlayıcısı kurulu değildir. Sprint D çalışan satış/teklif/müşteri ekranlarının onaylı bulut veri geçişi; Sprint E bağımsız şifreli yedek/restore ve operasyon kabulü bekler. v0.4–v0.6 işlem modülleri erkenden açılmadı.
+Better Auth + TOTP, server session, güvenli bootstrap CLI, Master kullanıcı yönetimi, scoped rol/override, sınırlı cloud API/RLS ve audit uygulanmıştır; [son rapor](LAST_REPORT.md) gerçek doğrulama ve kalanları belirtir. C6.1 salt okunur denetiminde development operatörü/MFA mevcuttur; gerçek Resend kabulü/domain ve production onayı ayrı kalır. Sprint D çalışan satış/teklif/müşteri ekranlarının onaylı bulut veri geçişi; Sprint E bağımsız şifreli yedek/restore ve operasyon kabulü bekler. v0.4–v0.6 işlem modülleri erkenden açılmadı.

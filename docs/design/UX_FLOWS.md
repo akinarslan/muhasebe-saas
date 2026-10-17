@@ -12,3 +12,13 @@ Görsel: akış numaraları, durum rozetleri, sabit sonuç kartı ve kaynak/tari
 Animasyon: drawer 300 ms, sayfa 220 ms, başarı toast; kullanıcı işlemi bloklanmaz. Responsive: sol müşteri/orta kalemler/sağ özet masaüstünde, mobilde aynı sırayla tek kolon. Erişilebilirlik: etiketler, Escape, focus trap, görünür focus, reduced-motion.
 
 Kabul: Playwright masaüstü/mobil akışları; 46 eski test + yeni regresyonlar; snapshot ve taslak kaybı yok. Master Admin izinleri yalnız blueprint; sunucu enforcement v0.3'tür.
+
+## C6.1 — gerçek hesap ve davet akışı
+
+Gerçek `/login` parola aşamasından sonra ayrı salt okunur hesap + odaklanan altı haneli TOTP/kurtarma aşamasına geçer; hesap değiştirme ayrı eylemdir. Hareketli pusula ve ayrı yerel demo girişi korunur.
+
+`/account/security` mevcut oturuma ait sunucu step-up durumunu okur. Doğrulamadan sonra form yerine yeşil onay, beş dakikanın kalan süresi ve kullanıcı yönetimi bağlantısı görünür. Yenilemede sunucu durumu korunur; expiry'de form geri gelir. İstemci state'i yetkilendirme değildir.
+
+Kullanıcı yönetimi → yeni davet → gerekirse aynı ekran üzerinde parola/TOTP modalı → korunmuş davet formu → kullanıcının açık yeniden oluşturma onayı → Neon kayıt/taşıyıcı sonucu → yalnız created sonucunda kapanan drawer ve yenilenen liste. Otomatik replay/mail yoktur. Mevcut üye ve pending davet 409 ile açıklanır; hata paneli açık tutar. Yeni işlem başlangıcında eski başarı bildirimi temizlenir. API hata requestId'si destek kaydı için görünür; token/bağlantı gösterilmez.
+
+Davet lifecycle ve e-posta sonucu iki ayrı gösterimdir. UNKNOWN sonucu otomatik retry tetiklemez; kullanıcı önce sağlayıcıyı kontrol eder. Yeni üyeye başlangıçta rol/izin atanmaz; mevcut altı sekmeli rol/ALLOW/DENY yönetimi korunur. MFA yenileme uygulaması yerine güvenli operatör prosedürü belgelenmiştir.

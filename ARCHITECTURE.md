@@ -176,4 +176,4 @@ Bu tasarim gercek kullanima gecmeden uygulanir. localStorage yetkiler icin guven
 
 ## Sprint C — güncel geliştirme durumu
 
-Better Auth/TOTP, gerçek session, tenant Master kullanıcı/özel izin ekranı ve korumalı sınırlı cloud API'leri eklendi. [Güvenlik sözleşmesi](docs/security/AUTHORIZATION.md) ve [teslim raporu](LAST_REPORT.md) günceldir. Yukarıdaki v0.2.3 prototip açıklaması demo modüllerinin tarihsel kapsamıdır; gerçek satış/teklif/cloud import Sprint D, bağımsız yedek Sprint E'dir. Gerçek operatör bootstrap/MFA ve SMTP kurulumu henüz yapılmadı. Production dağıtımı/kabulü değildir.
+Better Auth/TOTP, gerçek session, tenant Master kullanıcı/özel izin ekranı ve korumalı sınırlı cloud API'leri eklendi. [Güvenlik sözleşmesi](docs/security/AUTHORIZATION.md) ve [teslim raporu](LAST_REPORT.md) günceldir. Yukarıdaki v0.2.3 prototip açıklaması demo modüllerinin tarihsel kapsamıdır; gerçek satış/teklif/cloud import Sprint D, bağımsız yedek Sprint E'dir. C6.1 salt okunur denetiminde development bootstrap/MFA mevcuttur; bu görevde yeniden kurulum yapılmadı. Resend canlı kabulü/domain ayrıca bekler. Production dağıtımı/kabulü değildir.
