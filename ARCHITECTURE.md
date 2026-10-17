@@ -169,3 +169,12 @@ Scope: own | activity | legal_entity | tenant; gerekirse department ve tutar tav
 - AuditEvent izin, kur, fiyat ve finans onay degisikliklerini icerir ve normal kullanici tarafindan degistirilemez.
 
 Bu tasarim gercek kullanima gecmeden uygulanir. localStorage yetkiler icin guvenilir kaynak degildir.
+
+
+## URETIM ANALITIGI VERI VE RAPOR MIMARISI (2026-10-17)
+- Temel nesneler: ProductCategory (tenant-scoped, parent/alias destekli), ProductOrService, WorkOrder, WorkOrderLine, ProductionEvent, ProductionOutput, MaterialConsumption, ProductionExpense, Machine, ProductionStatusHistory; mevcut SaleLine, CostSnapshot, FXRateSnapshot ve Customer ile ID/FK iliskileri.
+- Plan/gercek farki ve durum semantigi zorunlu: tamamlanan fiziksel cikti sayimi ProductionOutput'tan; satis tutari SaleLine'dan; tahsilat Payment'tan; malzeme fire/stok hareketleri MaterialConsumption'dan. Cift sayimi engelleyecek event/line uniqueness ve transaction sinirlari.
+- ProductCategory ve olcu birimi tarihsel snapshot'a yazilir; kategori yeniden adlandirilinca rapor gecmisi yanlis donusturulmez. Urun basina adet, m2, metretul ve diger birimler ayridir; fiziksel olarak anlamsiz toplam birim birlestirmesi yapma.
+- Raporlar: PostgreSQL tenant+legalEntity+activity scope ile tarih bazli aggregate; performans icin uygun indeks, gerekirse materialized view/periodik ozet. Baslangicta sorgular source-of-truth satirlariyla reconcile edilir, cache invalidation ve zaman dilimi Europe/Istanbul tanimlanir.
+- Yetki anahtarlari: production.analytics.view, production.analytics.export, production.analytics.financials.view, production.categories.manage; Master Admin kullanici bazinda ve kapsamli ALLOW/DENY atar. Parasal karlilik ve USD maliyet alanlari izin olmadan API response'a cikmaz.
+- v0.5 capture, v0.6 analitik API/UI, v0.7 gerçek firma kabul ve verilerin Neon + sifreli yedeklerde korunmasi. Demo ve gercek uretim/finans verileri ayri tutulur.
