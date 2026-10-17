@@ -250,7 +250,24 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
   await expect(
     dialog.getByRole("button", { name: "Daveti yeniden gönder", exact: true }),
   ).toBeVisible();
+  await page.route("**/api/cloud/users/*/resend-invite", (route) =>
+    route.fulfill({
+      status: 502,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "MAIL_SEND_FAILED",
+        requestId: "00000000-0000-4000-8000-000000000062",
+      }),
+    }),
+  );
+  await dialog
+    .getByRole("button", { name: "Daveti yeniden gönder", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toHaveCount(0);
+  await expect(dialog.getByRole("alert")).toBeVisible();
+  await page.unroute("**/api/cloud/users/*/resend-invite");
   await page.getByRole("button", { name: "Kullanıcı panelini kapat" }).click();
+
   // Existing pending invitations are conflicts; never trigger another send.
   await page.getByRole("button", { name: "Kullanıcı davet et" }).click();
   await dialog.getByLabel("Ad soyad").fill(invitationName);
@@ -266,7 +283,15 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
   await expect(dialog.getByLabel("E-posta", { exact: true })).toHaveValue(
     invitationEmail,
   );
-  await page.getByRole("button", { name: "Davet panelini kapat" }).click();
+  await dialog
+    .getByRole("button", { name: "Mevcut daveti yönet", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Daveti yeniden gönder", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Kullanıcı panelini kapat", exact: true })
+    .click();
   // Exercise provider failure UX without contacting a real mail service.
   await page.route("**/api/cloud/users/invite", (route) =>
     route.fulfill({

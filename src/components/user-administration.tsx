@@ -7,7 +7,6 @@ import {
   Compass,
   Users,
   ShieldCheck,
-  Search,
   UserPlus,
   X,
   KeyRound,
@@ -21,6 +20,7 @@ import {
 import { Button } from "./ui/button";
 import { SignOut } from "./auth-form";
 import { StepUpVerification } from "./step-up-verification";
+import { SearchField } from "./ui/search-field";
 import {
   permissions,
   roleTemplates,
@@ -156,6 +156,7 @@ export function UserAdministration() {
     [busy, setBusy] = useState(false),
     [invite, setInvite] = useState(false);
   const [stepUp, setStepUp] = useState(false);
+  const [invitationTarget, setInvitationTarget] = useState<Member | null>(null);
   const invitationInFlight = useRef(false);
   const load = useCallback(async () => {
     try {
@@ -328,6 +329,7 @@ export function UserAdministration() {
               disabled={!data?.canManage}
               onClick={() => {
                 setInvite(true);
+                setInvitationTarget(null);
                 setError("");
                 setNotice("");
               }}
@@ -382,15 +384,12 @@ export function UserAdministration() {
           <section className="cloud-panel">
             <div className="cloud-toolbar">
               <h2>Ekip üyeleri</h2>
-              <label className="cloud-search">
-                <Search size={17} />
-                <input
-                  aria-label="Kullanıcı ara"
-                  placeholder="Ad veya e-posta ara…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </label>
+              <SearchField
+                label="Kullanıcı ara"
+                placeholder="Ad veya e-posta ara…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
               <Button variant="outline" onClick={() => void load()}>
                 Yenile
               </Button>
@@ -591,6 +590,8 @@ export function UserAdministration() {
                         disabled={busy}
                         onClick={async () => {
                           setBusy(true);
+                          setNotice("");
+                          setError("");
                           try {
                             const result = await api(
                               `users/${selected.id}/resend-invite`,
@@ -952,6 +953,7 @@ export function UserAdministration() {
                 const fields = new FormData(e.currentTarget);
                 setBusy(true);
                 setError("");
+                setInvitationTarget(null);
                 try {
                   const r = await api(
                     "users/invite",
@@ -968,7 +970,15 @@ export function UserAdministration() {
                   if (e instanceof Error && e.message === "STEP_UP_REQUIRED") {
                     setStepUp(true);
                   } else {
-                    await load();
+                    const fresh = await load();
+                    setInvitationTarget(
+                      fresh?.members.find(
+                        (m) =>
+                          m.status === "INVITED" &&
+                          m.user?.email?.toLowerCase() ===
+                            String(fields.get("email")).trim().toLowerCase(),
+                      ) ?? null,
+                    );
                   }
                   setError(errorText(e));
                 } finally {
@@ -990,6 +1000,21 @@ export function UserAdministration() {
                 gönderim durumu kullanıcı listesinde gösterilir.
               </div>
               {error && <p role="alert">{error}</p>}
+              {error && invitationTarget && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => {
+                    setInvite(false);
+                    setError("");
+                    setSearch(invitationTarget.user?.email ?? "");
+                    void open(invitationTarget);
+                  }}
+                >
+                  Mevcut daveti yönet
+                </Button>
+              )}
               <Button disabled={busy}>
                 {busy ? "Davet işleniyor…" : "Davet oluştur"}
               </Button>

@@ -22,3 +22,8 @@ Gerçek `/login` parola aşamasından sonra ayrı salt okunur hesap + odaklanan 
 Kullanıcı yönetimi → yeni davet → gerekirse aynı ekran üzerinde parola/TOTP modalı → korunmuş davet formu → kullanıcının açık yeniden oluşturma onayı → Neon kayıt/taşıyıcı sonucu → yalnız created sonucunda kapanan drawer ve yenilenen liste. Otomatik replay/mail yoktur. Mevcut üye ve pending davet 409 ile açıklanır; hata paneli açık tutar. Yeni işlem başlangıcında eski başarı bildirimi temizlenir. API hata requestId'si destek kaydı için görünür; token/bağlantı gösterilmez.
 
 Davet lifecycle ve e-posta sonucu iki ayrı gösterimdir. UNKNOWN sonucu otomatik retry tetiklemez; kullanıcı önce sağlayıcıyı kontrol eder. Yeni üyeye başlangıçta rol/izin atanmaz; mevcut altı sekmeli rol/ALLOW/DENY yönetimi korunur. MFA yenileme uygulaması yerine güvenli operatör prosedürü belgelenmiştir.
+# D7 — arama ve davet etkileşimleri
+
+Bulut müşteri ve kullanıcı araması ortak `SearchField` kullanır: solda dekoratif ikon, erişilebilir ad, tek dış border ve dış focus halkası. İç input ek border/outline/shadow çizmez; mobilde daralabilir ve araç çubuğunda tam satıra geçer. Mevcut arama filtreleri değişmez. Demo müşteri/ürün ve üst aramada mevcut dış focus korunup iç focus gölgesi kaldırılır.
+
+Bekleyen davette form bilgileri korunur; **Mevcut daveti yönet** ilgili kullanıcı panelini açar. Bu geçiş e-posta göndermez. Yeniden gönderme açık kullanıcı eylemidir; önceki başarı/hata bildirimi yeni istek başlarken temizlenir. Başarısızlık başarı bildirimi üretmez. Davet oluşturulması, taşıyıcı kabulü ve teslim ayrı durumlardır. C6.1 TOTP ve sunucu step-up kuralları aynen korunur.

@@ -1,0 +1,35 @@
+[
+  {
+    "state": "normal",
+    "inputBorder": "0px",
+    "inputOutline": "none",
+    "inputShadow": "none",
+    "wrapperBorder": "1px",
+    "wrapperOutline": "none",
+    "wrapperShadow": "none",
+    "inputWidth": 200,
+    "wrapperWidth": 958
+  },
+  {
+    "state": "focus",
+    "inputBorder": "0px",
+    "inputOutline": "none",
+    "inputShadow": "none",
+    "wrapperBorder": "1px",
+    "wrapperOutline": "none",
+    "wrapperShadow": "none",
+    "inputWidth": 200,
+    "wrapperWidth": 958
+  },
+  {
+    "state": "filled",
+    "inputBorder": "0px",
+    "inputOutline": "none",
+    "inputShadow": "none",
+    "wrapperBorder": "1px",
+    "wrapperOutline": "none",
+    "wrapperShadow": "none",
+    "inputWidth": 200,
+    "wrapperWidth": 958
+  }
+]

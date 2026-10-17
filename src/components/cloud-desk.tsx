@@ -25,6 +25,7 @@ import { SignOut } from "./auth-form";
 import { StepUpVerification } from "./step-up-verification";
 import { createId } from "@/lib/runtime";
 import { numericValue } from "@/lib/numeric";
+import { SearchField } from "./ui/search-field";
 import { money } from "@/lib/finance";
 import type { Customer } from "@/lib/types";
 import type {
@@ -1048,14 +1049,12 @@ export function CloudDesk() {
               )}
               {tab === "customers" && can("customers.view") && (
                 <>
-                  <label className="cloud-search">
-                    Müşteri ara
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Ad, e-posta veya VKN"
-                    />
-                  </label>
+                  <SearchField
+                    label="Müşteri ara"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Ad, e-posta veya VKN"
+                  />
                   <div className="table-scroll">
                     <table className="cloud-table">
                       <thead>
