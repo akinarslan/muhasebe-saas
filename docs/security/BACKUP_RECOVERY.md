@@ -1,5 +1,7 @@
 # v0.3 yedek ve kurtarma — tasarım / henüz çalışmıyor
 
+18.10.2026 E1: [Denetim](../../research/PUSULA_V030_SPRINT_E_AUDIT.md), [R2 kurulumu](../operations/R2_BACKUP_SETUP.md), [restore](../operations/DISASTER_RECOVERY.md), [retention](../operations/BACKUP_RETENTION.md). Hedef Cloudflare R2 Standard private bucket; günlük30/haftalık12/aylık36 taslağı aşağıdaki eski günlük35 önerisinin yerini alır. R2 erişimi ve boş restore hedefi eksik; dump/upload/scheduler/restore çalıştırılmadı. Age aşağıdaki tarihsel öneridir; motor uygulanmadı.
+
 16.10.2026. Sprint B'de Neon development bağlantısı kuruldu; bağımsız bucket, scheduler veya restore kanıtı **yoktur**. Bu prosedürün varlığı yedek alınmış olduğu anlamına gelmez. Yedek/restore uygulaması Sprint E kapsamındadır.
 
 Neon instant restore kısa geri dönüş içindir; uzun arşiv değildir. [Neon yedek stratejisi](https://neon.com/docs/postgres/backup-restore/backups) PostgreSQL dump/restore ve bağımsız saklamayı destekler. [Güncel Free fiyat tablosunda](https://neon.com/pricing) restore 6 saat/1GB değişim ile sınırlı gösterilir; farklı genel kılavuzlardaki daha uzun süre Free için garanti sayılmaz. Gerçek projenin Console ayarı kurulumda doğrulanacak.

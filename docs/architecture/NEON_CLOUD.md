@@ -2,6 +2,10 @@
 
 16.10.2026. **Sprint B/C gerçek Neon bağlantısı, auth/TOTP, izin ve RLS kontrolleriyle doğrulandı.** Gerçek operatör hesabı production kabulünden ayrıdır; Resend C6 taşıyıcısı eklendi, canlı gönderim/domain koşulları [kurulum belgesindedir](../security/RESEND_SETUP.md); işletme ekranlarının buluta taşınması Sprint D, bağımsız yedek Sprint E kapsamındadır. v0.3 bütünü/production kabulü tamamlanmış değildir. [Denetim](../../research/PUSULA_V030_AUDIT.md), [ana mimari](../../ARCHITECTURE.md).
 
+## Sprint E / E1 — 18.10.2026
+
+Salt okunur kontrolde development/test PostgreSQL18.6; ikisinde public35 tablo/21 FORCE RLS. Auth ve işletme aynı development DB'sinde ayrı rollerde; tek tam dump planlanır. R2 kimliği, backup rolü ve boş restore hedefi hazır değil. [E1 kanıt/maliyet](../../research/PUSULA_V030_SPRINT_E_AUDIT.md). Bağımsız yedek/scheduler/restore kabulü tamamlanmadı.
+
 ## Sprint B — gerçek kurulum
 
 - Organizasyon `org-wild-forest-12594477`: CLI üzerinden **Free** doğrulandı. Proje `icy-queen-44442204` / `pusula-development`, Frankfurt `aws-eu-central-1`, PostgreSQL18.
