@@ -1,4 +1,14 @@
-# PUSULA v0.3 — Sprint E2.2a / backup hesabı güvenlik hazırlığı
+# PUSULA v0.3 — Sprint E2.2b / yetki etki analizi ve uygulama planı
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **Yalnız salt okunur denetim ve plan; yetki değişikliği yok.**
+
+Development katalogları yeniden doğrulandı: 24 rol/16 üyelik; 24 rolün tamamında efektif TEMP açık. Dört Pusula rolünün TEMP'ini açık grant ile koruyup PUBLIC TEMP'i kaldıracak SQL, önce/sonra matrisi, provider etki koşulları ve rollback taslağı hazırlandı; çalıştırılmadı.
+
+**Uygulama kapısı BLOCKED:** neondb/postgres PUBLIC CONNECT nedeniyle yalnız development ACL değişikliğiyle backup LOGIN'i sadece development'a sınırlamak mümkün değil. Ayrıca provider/builtin TEMP etkisi karara bağlanmalı. Geniş admin fallback yok. SQL taslağı bunlar çözülmeden duracak şekilde planlandı. Rol/ACL/RLS/migration/dump/R2 işlemi, test DB veya production bağlantısı yapılmadı. Uygulama için yeni açık onay gerekir.
+
+[Tam plan ve kabul/geri alma kapıları](research/PUSULA_V030_SPRINT_E22B_PLAN.md). 35 tablo ve 24 rol plan kapsamı statik doğrulandı; uygulama kodu değişmedi, regresyon suite'leri yeniden çalıştırılmadı.
+
+## Önceki E2.2a hazırlığı
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **CA hazır; yeni preflight kontrolleri teslim edildi.**
 
