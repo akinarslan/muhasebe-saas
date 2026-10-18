@@ -473,7 +473,7 @@ async function main() {
     }
     await seed(admin);
     await admin.query(
-      "GRANT CONNECT ON DATABASE pusula_backup_fixture TO pusula_fixture_backup,fixture_rls_reader; GRANT USAGE ON SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL TABLES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader",
+      "REVOKE TEMPORARY ON DATABASE pusula_backup_fixture FROM PUBLIC; GRANT CONNECT ON DATABASE pusula_backup_fixture TO pusula_fixture_backup,fixture_rls_reader; GRANT USAGE ON SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL TABLES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader",
     );
     pass("isolated-scram-cluster-13-migrations-and-synthetic-records");
     const counts: Record<string, number> = {};

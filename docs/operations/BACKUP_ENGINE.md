@@ -2,7 +2,7 @@
 
 18.10.2026. Kod geliştirildi; E2.1b gerçek yerel fixture pg_dump/list/kripto testi 14/14 geçti. Gerçek development dump/upload yapılmadı. Restore/E3 otomasyon bu modülde bulunmaz. Normal uygulama API'si veya browser bu kodu import etmez.
 
-[E2.2 güncel yetki/TLS denetimi](../../research/PUSULA_V030_SPRINT_E22_AUDIT.md): gerçek backup rolü henüz yok; dar SQL-created BYPASSRLS modelinin provider kabulü ayrıca doğrulanmalı. Gerçek psql verify-full bağlantısı LIBPQ_ROOT_CERT_MISSING ile engellendi. Node CA deposu libpq hazırlığı değildir. PUBLIC TEMP, katı DDL yasağı açısından açık kapıdır; mevcut preflight bunu denetlemez. İlgili ACL/guard ve üyelik/fonksiyon yolları için ayrı onaylı iş gerekir; bu sprint motor değişmedi.
+[E2.2a güncel güvenlik hazırlığı](../validation/SPRINT_E22A_VERIFICATION.md): gerçek backup rolü henüz yok; dar SQL-created BYPASSRLS modelinin provider kabulü ayrıca doğrulanmalı. Resmî ISRG Root X1 yerel CA hazırlığı sonrası gerçek psql verify-full READ ONLY PASS. Preflight artık PUBLIC kaynaklı dahil efektif TEMP, bütün backup rol üyelikleri, sahiplik, column yazma ve incelenmemiş nesne/fonksiyonları reddeder. PUBLIC TEMP hâlâ mevcut; kaldırılması/diğer rollerin haklarının korunması ayrı onaylı iştir.
 
 ## Güvenli başlangıç
 
@@ -11,6 +11,8 @@ Node24 ve `npm ci` gerekir. Windows PostgreSQL18 istemcilerini [resmî Windows i
 Gerçek env değerleri Git dışı `.env.local`/operatör secret manager içindir. CLI `@next/env` ile yükler; mevcut dosyayı yazmaz. Node'un sistem CA deposu kullanılır, TLS doğrulaması kapatılmaz. `BACKUP_SOURCE_DATABASE_URL` sabit development endpoint/DB, `pusula_backup` rolü ve `sslmode=verify-full` ile direct bağlantıdır. Runtime/auth/owner ve pooled bağlantı kabul edilmez. `NODE_ENV=production` bütün komutları engeller.
 
 Node sistem CA ayarı libpq için otomatik CA kurulumu değildir. pg_dump/psql için gerekiyorsa güvenilir CA PEM yolunu `BACKUP_PG_SSLROOTCERT` ile verin; `PGSSLMODE=verify-full` korunur. [Libpq TLS rehberi](https://www.postgresql.org/docs/18/libpq-ssl.html). Trust dosyası hazırlanmadan TLS'yi kapatmak çözüm değildir.
+
+Bu makinede BACKUP_PG_SSLROOTCERT Git dışı `.data/certificates/isrg-root-x1.pem` dosyasının yerel mutlak yoludur. [Neon'un resmî CA kaynağı](https://neon.com/docs/connect/connect-securely) esas alınmıştır; sertifika geçerliliği ve parmak izi doğrulandı. Secret/CA dosyasını depoya eklemeyin. Yeni makine/runner'da güvenilir CA ayrı hazırlanmalıdır; bu env ayarı diğer makinelere taşınmaz.
 
 ```powershell
 npm.cmd run backup:preflight
@@ -34,6 +36,8 @@ npm.cmd run backup:upload -- <backup-uuid> --approve-r2-write --confirm-r2-secur
 Bu bayraklar ayrı operatör onayının komut üzerindeki kanıtıdır; onay alınmadan kullanılmamalıdır. `create` upload yapmaz. `upload` yeni dump almaz; imzalı/şifreli arşivi doğruladıktan sonra yazar. `--confirm-r2-security-reviewed` Dashboard public kapalı/token yalnız bu bucket/Standard sınıf incelemesinin operatör beyanıdır, otomatik tespit değildir. İsteğe bağlı `CLOUDFLARE_API_TOKEN` salt okunur yönetim yetkisiyle managed/custom domain kontrollerine izin verir; S3 token kapsamını kanıtlamaz. Mevcut S3 tokenını genişletmek gerekmez.
 
 Kaynak denetimi NOSUPERUSER/NOCREATEDB/NOCREATEROLE/NOREPLICATION ve doğrudan BYPASSRLS ister; neon_superuser üyeliğini, tablo yazma/ownership, schema/database CREATE ve sequence UPDATE/USAGE yetkisini reddeder. Tüm35 tablo ve belirlenmiş21 FORCE RLS tablo adı tek tek karşılaştırılır. Aktif migration adları/checksum'ları repodaki SQL dosyalarıyla eşleşmelidir. Ek şema/tablo veya migration değişiminde allowlist gözden geçirilmeden devam etmez.
+
+E2.2a dedicated login için **hiç rol üyeliği olmamasını**, sahiplik ve TEMP yetkisinin bulunmamasını ister. Beş public fonksiyonun kimlik/tanım hash'i sabittir; SECURITY DEFINER/ek/eksik/değişmiş fonksiyon reddedilir. Yeni relation/type/extension/large object/event trigger kapsamı inceleme gerektirir. Fonksiyon migration değişikliklerinde hash'leri otomatik güncellemeyin; gövde/ACL ve etkiyi inceleyin. Yerel fixture runner yalnız kendi yeni DB'sinde TEMP'i kapatacak şekilde güncellendi; bu sprint tekrar dump çalıştırılmadı.
 
 Kaynak bağlantı REPEATABLE READ READ ONLY ve `row_security=off` kullanır. Aynı transaction bütün tablolarda count yapar, migration/kapsam hash üretir ve snapshot export eder; `pg_dump -Fc --snapshot=...` bitene kadar bağlantı açık tutulur. Default row_security davranışı değiştirilmez, `--enable-row-security` kullanılmaz. `pg_restore --list` tam TABLE DATA listesini, policy/index/FK/trigger türlerini ve D6 child sealing trigger'larını doğrular. Bu kontroller restore edilmiş satır hash/ilişki testi yerine geçmez; E4 zorunludur.
 

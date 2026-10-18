@@ -1,0 +1,27 @@
+[
+  {
+    "identity": "pusula_can(text,uuid,uuid,uuid,text)",
+    "definition": "CREATE OR REPLACE FUNCTION public.pusula_can(action text, target_tenant uuid, target_entity uuid, target_activity uuid, target_owner text)\n RETURNS boolean\n LANGUAGE sql\n STABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n WITH grants AS (\n  SELECT rp.\"permissionId\" AS permission, 'ALLOW' AS effect, s.* FROM \"Membership\" m\n  JOIN \"RoleAssignment\" r ON r.\"membershipId\"=m.id AND r.\"tenantId\"=m.\"tenantId\"\n  JOIN \"RolePermission\" rp ON rp.\"roleId\"=r.\"roleId\" JOIN \"PermissionScope\" s ON s.id=r.\"scopeId\" AND s.\"tenantId\"=m.\"tenantId\"\n  WHERE m.\"userId\"=current_setting('app.user_id',true) AND m.status='ACTIVE' AND m.\"tenantId\"=target_tenant\n  UNION ALL\n  SELECT o.\"permissionId\",o.effect::text,s.* FROM \"Membership\" m\n  JOIN \"UserPermissionOverride\" o ON o.\"membershipId\"=m.id AND o.\"tenantId\"=m.\"tenantId\"\n  JOIN \"PermissionScope\" s ON s.id=o.\"scopeId\" AND s.\"tenantId\"=m.\"tenantId\"\n  WHERE m.\"userId\"=current_setting('app.user_id',true) AND m.status='ACTIVE' AND m.\"tenantId\"=target_tenant\n ), matching AS (\n  SELECT effect FROM grants g WHERE permission=action AND g.\"tenantId\"=target_tenant\n  AND (g.\"legalEntityId\" IS NULL OR g.\"legalEntityId\"=target_entity)\n  AND (g.kind<>'ACTIVITY' OR g.\"activityId\"=target_activity)\n  AND (g.kind<>'OWN' OR target_owner=current_setting('app.user_id',true))\n  AND (effect='DENY' OR (g.department IS NULL AND g.\"amountLimit\" IS NULL AND NOT g.\"requiresApproval\"))\n ) SELECT COALESCE(bool_or(effect='ALLOW'),false) AND NOT COALESCE(bool_or(effect='DENY'),false) FROM matching;\n$function$\n",
+    "security_definer": false
+  },
+  {
+    "identity": "pusula_sale_child_same_transaction()",
+    "definition": "CREATE OR REPLACE FUNCTION public.pusula_sale_child_same_transaction()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n IF NOT EXISTS (\n  SELECT 1 FROM \"CloudSale\" s\n  WHERE s.id=NEW.\"saleId\" AND s.\"tenantId\"=NEW.\"tenantId\"\n    AND s.\"legalEntityId\"=NEW.\"legalEntityId\"\n    AND s.xmin::text::bigint=mod(pg_current_xact_id()::text::numeric,4294967296)::bigint\n ) THEN\n  RAISE EXCEPTION 'Sale child set is sealed' USING ERRCODE='23514';\n END IF;\n RETURN NEW;\nEND;\n$function$\n",
+    "security_definer": false
+  },
+  {
+    "identity": "reject_audit_event_change()",
+    "definition": "CREATE OR REPLACE FUNCTION public.reject_audit_event_change()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$ BEGIN RAISE EXCEPTION 'Audit is append-only'; END $function$\n",
+    "security_definer": false
+  },
+  {
+    "identity": "reject_auth_security_event_change()",
+    "definition": "CREATE OR REPLACE FUNCTION public.reject_auth_security_event_change()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$ BEGIN RAISE EXCEPTION 'Security audit is append-only'; END $function$\n",
+    "security_definer": false
+  },
+  {
+    "identity": "reject_price_history_change()",
+    "definition": "CREATE OR REPLACE FUNCTION public.reject_price_history_change()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n  RAISE EXCEPTION 'Price history is append-only' USING ERRCODE = '23514';\nEND $function$\n",
+    "security_definer": false
+  }
+]

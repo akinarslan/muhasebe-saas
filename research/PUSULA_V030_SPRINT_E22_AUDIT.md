@@ -1,5 +1,7 @@
 # Sprint E2.2 — Neon backup hesabı salt okunur denetimi
 
+> E2.2a takip: [CA ve preflight güvenlik hazırlığı](../docs/validation/SPRINT_E22A_VERIFICATION.md) teslim edildi. Libpq verify-full READ ONLY artık PASS; TEMP/üyelik/sahiplik/fonksiyon/yeni nesne guard'ları eklendi. Aşağıdaki CA/kod eksikleri tarihsel E2.2 durumudur. PUBLIC TEMP ve gerçek rol oluşturma/okuma kabulü hâlâ açıktır; ACL değişikliği yapılmadı.
+
 18.10.2026 · `feat/pusula-v030-neon-cloud` · başlangıç `ec330a2`; fetch sonrası upstream 0/0, başlangıç çalışma ağacı temiz.
 
 ## Karar ve kanıt sınırı

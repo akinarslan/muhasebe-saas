@@ -1,4 +1,12 @@
-# PUSULA v0.3 — Sprint E2.2 / salt okunur Neon yetki denetimi
+# PUSULA v0.3 — Sprint E2.2a / backup hesabı güvenlik hazırlığı
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **CA hazır; yeni preflight kontrolleri teslim edildi.**
+
+Resmî ISRG Root X1 doğrulanıp Git dışı yerel CA/env yapılandırıldı. PostgreSQL 18.6 `psql` direct development bağlantısında `verify-full` ve READ ONLY geçti; dump alınmadı. Preflight efektif TEMP, bütün backup rol üyelikleri, sahiplik, column yazma/grant option, yeni şema/nesne ve fonksiyon tanım değişimlerini reddeder. Canlı doğrulama yalnız development kataloglarında yapıldı.
+
+Vitest **195/195** (E2 91), TypeScript, lint ve build PASS. PUBLIC TEMP kaldırılmadı, rol oluşturulmadı/yetki değiştirilmedi. Seçici açık TEMP grant + PUBLIC revoke seçeneği ayrı onay bekler; bunun uygulanmasına kadar katı backup kabulü kapalıdır. Neon gerçek verileri, test DB, production, Master/MFA ve R2 korunur. [Kanıt, seçenek karşılaştırması ve sınırlar](docs/validation/SPRINT_E22A_VERIFICATION.md).
+
+## Önceki E2.2 denetimi
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Denetim tamamlandı; gerçek backup hesabı oluşturulmadı.**
 

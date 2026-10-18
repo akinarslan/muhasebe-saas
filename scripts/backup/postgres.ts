@@ -6,6 +6,12 @@ import { Client } from "pg";
 import { developmentTarget } from "../../src/server/db/target";
 import { BackupError, canonical, requireCheck } from "./core";
 import { createHash } from "node:crypto";
+import {
+  securitySql,
+  functionSql,
+  validateSourceSecurity,
+  validateFunctions,
+} from "./source-security";
 
 export const expectedTables = [
   "Tenant",
@@ -220,6 +226,9 @@ export async function inspectSource(u: URL) {
       FROM pg_roles r WHERE r.rolname=current_user`)
     ).rows[0];
     validateRole(role);
+    await db.query("SET LOCAL search_path = pg_catalog, public");
+    validateSourceSecurity((await db.query(securitySql)).rows[0]);
+    validateFunctions((await db.query(functionSql)).rows);
     const elevated = (
       await db.query(`SELECT
       has_database_privilege(current_database(),'CREATE') AS database_create,
