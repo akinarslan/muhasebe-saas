@@ -157,6 +157,10 @@ export class R2Storage {
       m.sourceEnvironment === "development",
       "FIXTURE_UPLOAD_FORBIDDEN",
     );
+    requireCheck(
+      m.securityPolicy !== "managed-neon-candidate-v1",
+      "MANAGED_REMOTE_UPLOAD_NOT_APPROVED",
+    );
     await verifyFile(archive, m, key, keyId);
     // Conditional creation is the overwrite guard; HEAD alone is insufficient.
     const archiveBody = createReadStream(archive);

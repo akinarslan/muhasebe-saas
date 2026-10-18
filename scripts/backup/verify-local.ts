@@ -32,6 +32,7 @@ import {
   expectedTables,
   validateToc,
 } from "./postgres";
+import { STRICT, MANAGED } from "./policy";
 
 const serverBin = resolve(".data/tools/postgresql18-fixture-server/bin");
 const clientBin = resolve(".data/tools/postgresql18-client");
@@ -272,6 +273,8 @@ async function identity(data: string) {
   return { pid, created: processInfo.CreationDate };
 }
 async function main() {
+  const managed = process.argv.includes("--managed-neon-fixture");
+  const securityPolicy = managed ? MANAGED : STRICT;
   requireCheck(
     process.argv.includes("--approve-local-fixture"),
     "LOCAL_FIXTURE_APPROVAL_REQUIRED",
@@ -292,7 +295,7 @@ async function main() {
     !(await lstat(root)).isSymbolicLink() && (await realpath(root)) === root,
     "FIXTURE_ROOT_REJECTED",
   );
-  const dir = join(root, `e21b-${randomUUID()}`);
+  const dir = join(root, `${managed ? "e22d" : "e21b"}-${randomUUID()}`);
   await mkdir(dir, { mode: 0o700 });
   await restrict(dir);
   const data = join(dir, "data"),
@@ -317,6 +320,7 @@ async function main() {
     realNeonConnection: false,
     r2Operations: false,
     auth: "scram-sha-256",
+    securityPolicy,
     versions: {},
     results,
   };
@@ -428,6 +432,8 @@ async function main() {
       "AUTH_RULES_REJECTED",
     );
     await admin.query("CREATE DATABASE pusula_backup_fixture");
+    if (managed)
+      await admin.query("CREATE DATABASE pusula_backup_fixture_other");
     await admin.end();
     admin = connect("pusula_backup_fixture");
     await admin.connect();
@@ -473,8 +479,27 @@ async function main() {
     }
     await seed(admin);
     await admin.query(
-      "REVOKE TEMPORARY ON DATABASE pusula_backup_fixture FROM PUBLIC; GRANT CONNECT ON DATABASE pusula_backup_fixture TO pusula_fixture_backup,fixture_rls_reader; GRANT USAGE ON SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL TABLES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader",
+      (managed
+        ? ""
+        : "REVOKE TEMPORARY ON DATABASE pusula_backup_fixture FROM PUBLIC; ") +
+        "GRANT CONNECT ON DATABASE pusula_backup_fixture TO pusula_fixture_backup,fixture_rls_reader; GRANT USAGE ON SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL TABLES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader; GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO pusula_fixture_backup,fixture_rls_reader",
     );
+    if (!managed) {
+      const others = (
+        await admin.query(
+          "SELECT datname FROM pg_database WHERE datallowconn AND datname<>current_database() ORDER BY datname",
+        )
+      ).rows;
+      for (const other of others) {
+        requireCheck(
+          ["postgres", "template1"].includes(other.datname),
+          "UNEXPECTED_FIXTURE_DATABASE",
+        );
+        await admin.query(
+          `REVOKE CONNECT ON DATABASE "${other.datname}" FROM PUBLIC`,
+        );
+      }
+    }
     pass("isolated-scram-cluster-13-migrations-and-synthetic-records");
     const counts: Record<string, number> = {};
     for (const table of expectedTables)
@@ -503,7 +528,267 @@ async function main() {
       `postgresql://pusula_fixture_backup:${backupPassword}@127.0.0.1:${port}/pusula_backup_fixture?sslmode=disable`,
       true,
     );
-    snapshot = await inspectSource(u);
+    if (managed) {
+      const blocked = async (name: string, code: string) => {
+        let opened: Awaited<ReturnType<typeof inspectSource>> | undefined;
+        try {
+          opened = await inspectSource(u, MANAGED);
+        } catch (e) {
+          requireCheck(
+            e instanceof BackupError && e.code === code,
+            "PREFLIGHT_NEGATIVE_UNEXPECTED_ERROR",
+          );
+          pass(name);
+          return;
+        } finally {
+          if (opened) {
+            await opened.db.query("ROLLBACK");
+            await opened.db.end();
+          }
+        }
+        throw new BackupError("PREFLIGHT_DRIFT_NOT_BLOCKED");
+      };
+      await admin.query("ALTER ROLE pusula_fixture_backup CREATEROLE");
+      try {
+        await blocked(
+          "managed-role-attribute-drift-blocked",
+          "BACKUP_ROLE_REJECTED",
+        );
+      } finally {
+        await admin.query("ALTER ROLE pusula_fixture_backup NOCREATEROLE");
+      }
+      await admin.query(
+        "CREATE ROLE fixture_escalation NOLOGIN; GRANT fixture_escalation TO pusula_fixture_backup",
+      );
+      try {
+        await blocked(
+          "managed-role-membership-drift-blocked",
+          "SOURCE_ROLE_MEMBERSHIP_REJECTED",
+        );
+      } finally {
+        await admin.query(
+          "REVOKE fixture_escalation FROM pusula_fixture_backup; DROP ROLE fixture_escalation",
+        );
+      }
+      await admin.query('GRANT UPDATE ON "Tenant" TO pusula_fixture_backup');
+      try {
+        await blocked(
+          "managed-source-write-grant-drift-blocked",
+          "SOURCE_OBJECT_OR_PRIVILEGE_REJECTED",
+        );
+      } finally {
+        await admin.query(
+          'REVOKE UPDATE ON "Tenant" FROM pusula_fixture_backup',
+        );
+      }
+      await admin.query("CREATE SEQUENCE fixture_sequence");
+      const b = connect(
+        "pusula_backup_fixture",
+        "pusula_fixture_backup",
+        backupPassword,
+      );
+      await b.connect();
+      const denied = async (name: string, sql: string, code = "42501") => {
+        try {
+          await b.query(sql);
+        } catch (e) {
+          requireCheck(
+            (e as { code: string }).code === code,
+            "PERMISSION_TEST_UNEXPECTED_ERROR",
+          );
+          pass(name);
+          return;
+        }
+        throw new BackupError("PERMISSION_TEST_DID_NOT_FAIL");
+      };
+      try {
+        const lo = Number(
+          (await b.query("SELECT lo_create(0) AS oid")).rows[0].oid,
+        );
+        requireCheck(
+          Number.isInteger(lo) && lo > 0,
+          "LARGE_OBJECT_RISK_NOT_OBSERVED",
+        );
+        try {
+          requireCheck(
+            (
+              await b.query(
+                "SELECT lomowner=(SELECT oid FROM pg_roles WHERE rolname=current_user) AS owned FROM pg_largeobject_metadata WHERE oid=$1",
+                [lo],
+              )
+            ).rows[0].owned === true,
+            "LARGE_OBJECT_OWNERSHIP_NOT_OBSERVED",
+          );
+          pass("managed-public-builtin-can-create-owned-large-object");
+          await blocked(
+            "managed-large-object-ownership-preflight-blocked",
+            "SOURCE_OBJECT_OWNER_REJECTED",
+          );
+        } finally {
+          requireCheck(
+            (await b.query("SELECT lo_unlink($1) AS removed", [lo])).rows[0]
+              .removed === 1,
+            "FIXTURE_LARGE_OBJECT_CLEANUP_FAILED",
+          );
+        }
+        await denied(
+          "managed-sequence-nextval-denied",
+          "SELECT nextval('fixture_sequence')",
+        );
+        await admin.query("DROP SEQUENCE fixture_sequence");
+        requireCheck(
+          Number(
+            (await b.query('SELECT count(*) FROM "Tenant"')).rows[0].count,
+          ) === 2,
+          "FORCE_RLS_FILTERED",
+        );
+        pass("managed-bypass-select-both-tenants");
+        for (const [name, sql] of [
+          [
+            "insert",
+            "INSERT INTO \"Tenant\"(id,name) VALUES(gen_random_uuid(),'imaginary denied')",
+          ],
+          ["update", "UPDATE \"Tenant\" SET name='denied'"],
+          ["delete", 'DELETE FROM "Tenant"'],
+          ["create", "CREATE TABLE public.denied(id int)"],
+          ["alter", 'ALTER TABLE "Tenant" ADD COLUMN denied int'],
+          ["drop", 'DROP TABLE "Tenant"'],
+          ["set-role", "SET ROLE fixture_admin"],
+          ["grant-role", "GRANT fixture_admin TO pusula_fixture_backup"],
+          ["create-role", "CREATE ROLE denied_role"],
+          ["auth-function", "SELECT pusula_can('read',NULL,NULL,NULL,NULL)"],
+        ])
+          await denied("managed-" + name + "-denied", sql);
+        requireCheck(
+          (
+            await b.query(
+              "SELECT count(*)::int AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relowner=(SELECT oid FROM pg_roles WHERE rolname=current_user)",
+            )
+          ).rows[0].n === 0,
+          "APP_OWNERSHIP",
+        );
+        pass("managed-no-application-ownership");
+        requireCheck(
+          (
+            await b.query(
+              "SELECT has_function_privilege('reject_audit_event_change()','EXECUTE') AS allowed",
+            )
+          ).rows[0].allowed === true,
+          "PUBLIC_EXECUTE_NOT_OBSERVED",
+        );
+        await denied(
+          "managed-public-trigger-not-directly-callable",
+          "SELECT reject_audit_event_change()",
+          "0A000",
+        );
+        await b.query("CREATE TEMP TABLE ephemeral_owned(id int)");
+        await b.query("INSERT INTO ephemeral_owned VALUES(1)");
+        await b.query("ALTER TABLE ephemeral_owned ADD COLUMN label text");
+        await b.query("DROP TABLE ephemeral_owned");
+        pass("managed-public-temp-allows-own-temp-ddl-dml");
+      } finally {
+        await b.end();
+      }
+      const otherAdmin = connect("pusula_backup_fixture_other");
+      await otherAdmin.connect();
+      try {
+        await otherAdmin.query(
+          "CREATE TABLE private_data(secret text); INSERT INTO private_data VALUES('imaginary-only')",
+        );
+        const other = connect(
+          "pusula_backup_fixture_other",
+          "pusula_fixture_backup",
+          backupPassword,
+        );
+        await other.connect();
+        try {
+          pass("managed-public-connect-opens-other-database");
+          try {
+            await other.query("SELECT * FROM private_data");
+            throw new BackupError("OTHER_DATA_UNEXPECTEDLY_READABLE");
+          } catch (e) {
+            requireCheck(
+              (e as { code: string }).code === "42501",
+              "OTHER_DATA_NOT_DENIED",
+            );
+          }
+          pass("managed-other-private-select-denied");
+          await otherAdmin.query(
+            "CREATE FUNCTION public.leak_demo() RETURNS text LANGUAGE sql SECURITY DEFINER AS 'SELECT secret FROM public.private_data LIMIT 1'",
+          );
+          requireCheck(
+            (await other.query("SELECT public.leak_demo() AS value")).rows[0]
+              .value === "imaginary-only",
+            "DEFINER_RISK_NOT_REPRODUCED",
+          );
+          pass("managed-public-definer-can-leak-other-db-data");
+          try {
+            await inspectSource(u, MANAGED);
+            throw new BackupError("DRIFT_NOT_BLOCKED");
+          } catch (e) {
+            requireCheck(
+              e instanceof BackupError &&
+                e.code === "MANAGED_OTHER_DATABASE_OBJECT_ACCESS_REJECTED",
+              "WRONG_DRIFT_ERROR",
+            );
+          }
+          pass("managed-definer-drift-preflight-blocked");
+          await otherAdmin.query("DROP FUNCTION public.leak_demo()");
+          await otherAdmin.query("GRANT SELECT ON private_data TO PUBLIC");
+          requireCheck(
+            (await other.query("SELECT secret FROM private_data")).rowCount ===
+              1,
+            "FUTURE_PUBLIC_SELECT_NOT_OBSERVED",
+          );
+          pass("managed-future-public-select-can-leak-other-db-data");
+          try {
+            await inspectSource(u, MANAGED);
+            throw new BackupError("DRIFT_NOT_BLOCKED");
+          } catch (e) {
+            requireCheck(
+              e instanceof BackupError &&
+                e.code === "MANAGED_OTHER_DATABASE_OBJECT_ACCESS_REJECTED",
+              "WRONG_DRIFT_ERROR",
+            );
+          }
+          pass("managed-public-select-drift-preflight-blocked");
+          await otherAdmin.query("REVOKE SELECT ON private_data FROM PUBLIC");
+          await otherAdmin.query(
+            "GRANT SELECT(secret) ON private_data TO PUBLIC",
+          );
+          requireCheck(
+            (await other.query("SELECT secret FROM private_data")).rowCount ===
+              1,
+            "PUBLIC_COLUMN_SELECT_NOT_OBSERVED",
+          );
+          pass("managed-public-column-select-can-leak-other-db-data");
+          await blocked(
+            "managed-column-select-drift-preflight-blocked",
+            "MANAGED_OTHER_DATABASE_OBJECT_ACCESS_REJECTED",
+          );
+          await otherAdmin.query(
+            "REVOKE SELECT(secret) ON private_data FROM PUBLIC",
+          );
+        } finally {
+          await other.end();
+        }
+      } finally {
+        await otherAdmin.end();
+      }
+      try {
+        await inspectSource(u);
+        throw new BackupError("STRICT_ACCEPTED_TEMP");
+      } catch (e) {
+        requireCheck(
+          e instanceof BackupError &&
+            e.code === "SOURCE_TEMP_PRIVILEGE_REJECTED",
+          "STRICT_DEFAULT_WRONG_ERROR",
+        );
+      }
+      pass("strict-default-still-blocks-public-temp");
+    }
+    snapshot = await inspectSource(u, securityPolicy);
+    report.databaseAccess = snapshot.databaseAccess;
     pass("real-backup-role-35-tables-21-forced-rls-and-snapshot");
     const dump = join(dir, "fixture.dump"),
       env = { ...pgEnvironment(u), NODE_ENV: "test" as const };
@@ -589,6 +874,7 @@ async function main() {
       schemaVersion: snapshot.schemaVersion,
       coverageSha256: snapshot.coverageSha256,
       keyId,
+      securityPolicy,
     });
     const cipher = join(dir, "archive.gcm"),
       manifest = await sealFile(dump, cipher, ctx, key);
@@ -741,7 +1027,7 @@ async function main() {
     report.status = failure ? "FAIL" : "PASS";
     const rel = relative(root, dir);
     requireCheck(
-      !isAbsolute(rel) && /^e21b-[a-f0-9-]{36}$/.test(rel),
+      !isAbsolute(rel) && /^e(?:21b|22d)-[a-f0-9-]{36}$/.test(rel),
       "REPORT_TARGET_REJECTED",
     );
     await writeFile(

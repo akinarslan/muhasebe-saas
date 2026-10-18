@@ -11,6 +11,7 @@ import {
   pgEnvironment,
 } from "../scripts/backup/postgres";
 import { developmentTarget } from "../src/server/db/target";
+import { databaseAccessSql } from "../scripts/backup/policy";
 import functionFixtures from "./fixtures/backup-functions.json";
 import {
   securitySql,
@@ -97,6 +98,17 @@ beforeEach(async () => {
       })),
   );
   mock.query.mockImplementation(async (sql: string) => {
+    if (sql === databaseAccessSql)
+      return {
+        rows: [
+          {
+            datname: "pusula_development",
+            is_current: true,
+            can_connect: true,
+            public_connect: false,
+          },
+        ],
+      };
     if (sql === securitySql) return { rows: [security] };
     if (sql === functionSql) return { rows: functions };
     if (sql.includes("FROM pg_roles r")) return { rows: [role] };

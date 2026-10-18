@@ -1,5 +1,19 @@
 # E2 operatör CLI'si
 
+18.10.2026 E2.2d: [politika/risk değerlendirmesi](../../research/PUSULA_V030_SPRINT_E22D_RISK_ASSESSMENT.md). Varsayılan strict-v1; Strict artık template dahil diğer connectable DB'lerde CONNECT'i reddeder. Managed aday yalnız yerel fixture'da denenebilir; gerçek Neon kaynak ve Managed upload kapıları kapalıdır. PUBLIC TEMP/CONNECT değişmedi; bunların dışında builtin large object oluşturma/sahiplik yeteneği de fixture'da kanıtlandı. Aşağıdaki eski kabul kapıları tarihsel bağlamıyla okunmalıdır.
+
+## Güvenlik politikası seçimi
+
+BACKUP_SECURITY_POLICY tanımsızsa strict-v1 kullanılır. managed-neon-candidate-v1 değeri **ayrıca** `--select-managed-neon-candidate` ister; bilinmeyen değer veya uyuşmayan seçim reddedilir. Bu iki seçim gerçek Neon için risk kabulü/onay değildir: remote source MANAGED_REMOTE_OBJECT_AUDIT_REQUIRED ile, Managed upload MANAGED_REMOTE_UPLOAD_NOT_APPROVED ile engellidir. Bu sprint gerçek env'e Managed policy yazılmadı. Production host/DB/rol istisnası yoktur; NODE_ENV=production reddedilir. Genel skipSecurityChecks seçeneği yoktur.
+
+Gerçek yerel risk koşusu: `npm run backup:test:local -- --approve-local-fixture --managed-neon-fixture`. Strict regresyonu: `npm run backup:test:local -- --approve-local-fixture`. Bu komutlar yalnız açık yerel fixture onayıyla kullanılmalı; yeni loopback/SCRAM cluster ve yalnız hayalî veriler oluşturur. Managed test kaynakta PUBLIC TEMP/CONNECT'i korur; Strict testi yalnız kendi yeni cluster'ında bunları kapatır. Neon/test DB/production veya R2'ye bağlanmaz.
+
+Yeni manifest securityPolicy alanını HMAC/AAD ile korur. Eski v1 alanı olmayan manifest yeni okuyucuda doğrulanır ve legacy-unrecorded raporlanır; yeniden Strict diye etiketlenmez. Operatör seçimi selectedSecurityPolicy, arşiv politikası securityPolicy olarak ayrı raporlanır. Yeni arşivler için bu alanı tanıyan verify/restore aracı kullanılmalıdır.
+
+DB raporu CONNECT/PUBLIC/direkt grant ve nesne denetimini ayırır. Başka gerçek DB'lere bağlanmadan bütün tablo/kolon/fonksiyon yetkileri kanıtlanamaz; UNKNOWN durumuna onay verilmiş sayılmaz. Yerel fixture denetimi bütün gelecekteki PUBLIC/builtin yan etkilerinin sandbox ispatı değildir. TEMP ve lo_create nedeniyle credential sahibinin hiç nesne oluşturamayacağı söylenemez; mevcut ownership'i reddetmek gelecekteki yaratmayı sunucuda engellemez.
+
+Web build output trace'leri `.data/**/*` dosyalarını dışlar; fixture/dump/anahtar/araçları deployment'a dahil etmeyin. Yerel runtime kur cache'i Git dışı deployment alanında yönetilir; operatör dosyaları web paketi olarak taşınmaz.
+
 18.10.2026. Kod geliştirildi; E2.1b gerçek yerel fixture pg_dump/list/kripto testi 14/14 geçti. Gerçek development dump/upload yapılmadı. Restore/E3 otomasyon bu modülde bulunmaz. Normal uygulama API'si veya browser bu kodu import etmez.
 
 [E2.2a güncel güvenlik hazırlığı](../validation/SPRINT_E22A_VERIFICATION.md): gerçek backup rolü henüz yok; dar SQL-created BYPASSRLS modelinin provider kabulü ayrıca doğrulanmalı. Resmî ISRG Root X1 yerel CA hazırlığı sonrası gerçek psql verify-full READ ONLY PASS. Preflight artık PUBLIC kaynaklı dahil efektif TEMP, bütün backup rol üyelikleri, sahiplik, column yazma ve incelenmemiş nesne/fonksiyonları reddeder. PUBLIC TEMP hâlâ mevcut; kaldırılması/diğer rollerin haklarının korunması ayrı onaylı iştir.

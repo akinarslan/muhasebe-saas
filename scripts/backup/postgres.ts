@@ -12,6 +12,15 @@ import {
   validateSourceSecurity,
   validateFunctions,
 } from "./source-security";
+import {
+  STRICT,
+  MANAGED,
+  type SecurityPolicy,
+  requireKnownPolicy,
+  databaseAccessSql,
+  validateDatabaseAccess,
+  auditManagedFixtureDatabases,
+} from "./policy";
 
 export const expectedTables = [
   "Tenant",
@@ -210,7 +219,14 @@ export async function checkLibpqConnection(u: URL) {
   );
   requireCheck(output.trim() === "on", "LIBPQ_READONLY_CONNECTION_FAILED");
 }
-export async function inspectSource(u: URL) {
+export async function inspectSource(u: URL, policy: SecurityPolicy = STRICT) {
+  requireKnownPolicy(policy);
+  sourceTarget(u.toString(), u.hostname === "127.0.0.1");
+  requireCheck(process.env.NODE_ENV !== "production", "PRODUCTION_FORBIDDEN");
+  requireCheck(
+    policy !== MANAGED || u.hostname === "127.0.0.1",
+    "MANAGED_REMOTE_OBJECT_AUDIT_REQUIRED",
+  );
   const db = new Client({
     connectionString: u.toString(),
     connectionTimeoutMillis: 15000,
@@ -227,7 +243,11 @@ export async function inspectSource(u: URL) {
     ).rows[0];
     validateRole(role);
     await db.query("SET LOCAL search_path = pg_catalog, public");
-    validateSourceSecurity((await db.query(securitySql)).rows[0]);
+    validateSourceSecurity((await db.query(securitySql)).rows[0], policy);
+    const databaseAccess = (await db.query(databaseAccessSql)).rows;
+    validateDatabaseAccess(databaseAccess, policy);
+    if (policy === MANAGED)
+      await auditManagedFixtureDatabases(u, databaseAccess);
     validateFunctions((await db.query(functionSql)).rows);
     const elevated = (
       await db.query(`SELECT
@@ -327,6 +347,17 @@ export async function inspectSource(u: URL) {
       schemaVersion,
       coverageSha256,
       tables: rows.length,
+      securityPolicy: policy,
+      databaseAccess: databaseAccess.map((r) => ({
+        ...r,
+        objectAccess:
+          r.objectAccess ??
+          (r.is_current
+            ? "source-audited-separately"
+            : r.can_connect
+              ? "unverified"
+              : "not-connectable-at-audit-time"),
+      })),
     };
   } catch (e) {
     await db.end().catch(() => {});

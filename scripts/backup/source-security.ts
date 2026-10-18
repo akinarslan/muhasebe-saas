@@ -1,5 +1,11 @@
 import { createHash } from "node:crypto";
 import { canonical, requireCheck } from "./core";
+import {
+  STRICT,
+  MANAGED,
+  type SecurityPolicy,
+  requireKnownPolicy,
+} from "./policy";
 
 // Reviewed PG18 function definitions from the 13 checked-in migrations.
 // Any definition/signature change requires a fresh source review, not automatic enrollment.
@@ -20,6 +26,8 @@ export const expectedFunctions: Record<string, string> = {
 // rejects even benign grants: SET/INHERIT/ADMIN chains cannot become an escape.
 export const securitySql = `SELECT
  has_database_privilege(current_database(),'TEMP') AS database_temp,
+ EXISTS(SELECT 1 FROM pg_database d CROSS JOIN LATERAL aclexplode(coalesce(d.datacl,acldefault('d',d.datdba))) a WHERE d.datname=current_database() AND a.grantee=0 AND a.privilege_type='TEMPORARY') AS public_temp,
+ EXISTS(SELECT 1 FROM pg_database d CROSS JOIN LATERAL aclexplode(coalesce(d.datacl,acldefault('d',d.datdba))) a WHERE d.datname=current_database() AND a.grantee=(SELECT oid FROM pg_roles WHERE rolname=current_user) AND a.privilege_type='TEMPORARY') AS direct_temp,
  EXISTS(SELECT 1 FROM pg_auth_members WHERE member=(SELECT oid FROM pg_roles WHERE rolname=current_user)) AS role_membership,
  EXISTS(SELECT 1 FROM pg_shdepend WHERE refclassid='pg_authid'::regclass AND refobjid=(SELECT oid FROM pg_roles WHERE rolname=current_user) AND deptype='o') AS object_owner,
  EXISTS(SELECT 1 FROM pg_namespace WHERE nspname<>'public' AND nspname<>'information_schema' AND nspname !~ '^pg_') AS extra_schema,
@@ -38,9 +46,16 @@ export const functionSql = `SELECT p.oid::regprocedure::text AS identity,
 
 export function validateSourceSecurity(
   row: Record<string, unknown> | undefined,
+  policy: SecurityPolicy = STRICT,
 ) {
+  requireKnownPolicy(policy);
   requireCheck(
-    row && row.database_temp === false,
+    row &&
+      (row.database_temp === false ||
+        (policy === MANAGED &&
+          row.database_temp === true &&
+          row.public_temp === true &&
+          row.direct_temp === false)),
     "SOURCE_TEMP_PRIVILEGE_REJECTED",
   );
   requireCheck(

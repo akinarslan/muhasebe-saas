@@ -25,6 +25,7 @@ import {
 } from "./postgres";
 import { createStorage, publicAccessReview } from "./storage";
 import { privateRoot, scratch, removeScratch, lock } from "./workspace";
+import { selectPolicy, MANAGED } from "./policy";
 
 loadEnvConfig(process.cwd(), false, { info() {}, error() {} });
 const args = process.argv.slice(2),
@@ -32,6 +33,12 @@ const args = process.argv.slice(2),
   started = Date.now(),
   jobId = randomUUID();
 const emit = (data: object) => console.log(JSON.stringify({ jobId, ...data }));
+const policy = () =>
+  selectPolicy(
+    process.env.BACKUP_SECURITY_POLICY,
+    args.includes("--select-managed-neon-candidate"),
+    process.env.NODE_ENV === "production",
+  );
 const key = () => keyFromEnv(process.env.BACKUP_ENCRYPTION_KEY);
 const keyId = () => {
   const id = process.env.BACKUP_KEY_ID;
@@ -109,13 +116,16 @@ async function preflight() {
   await check("postgres-tools", checkTools);
   await check("source-role-and-coverage", async () => {
     const u = sourceTarget(process.env.BACKUP_SOURCE_DATABASE_URL);
+    requireCheck(policy() !== MANAGED, "MANAGED_REMOTE_OBJECT_AUDIT_REQUIRED");
     await checkLibpqConnection(u);
-    const source = await inspectSource(u);
+    const source = await inspectSource(u, policy());
     try {
       return {
         version: source.version,
         tables: source.tables,
         schemaVersion: source.schemaVersion,
+        securityPolicy: source.securityPolicy,
+        databaseAccess: source.databaseAccess,
       };
     } finally {
       await source.db.query("ROLLBACK").catch(() => {});
@@ -163,6 +173,7 @@ async function main() {
     "TLS_VERIFICATION_REQUIRED",
   );
   requireCheck(process.env.NODE_ENV !== "production", "PRODUCTION_FORBIDDEN");
+  emit({ selectedSecurityPolicy: policy() });
   if (command === "preflight") return preflight();
   requireCheck(
     ["create", "upload", "verify", "list"].includes(command),
@@ -184,6 +195,7 @@ async function main() {
           createdAt: m.createdAt,
           ciphertextSize: m.ciphertextSize,
           status: "authenticated-manifest-only",
+          securityPolicy: m.securityPolicy ?? "legacy-unrecorded",
         });
       }
     }
@@ -228,6 +240,10 @@ async function main() {
         ],
         fixture,
       );
+      requireCheck(
+        policy() !== MANAGED || fixture,
+        "MANAGED_REMOTE_OBJECT_AUDIT_REQUIRED",
+      );
       await checkLibpqConnection(u);
       if (!fixture) {
         const storage = createStorage();
@@ -239,7 +255,7 @@ async function main() {
           "R2_SECURITY_REVIEW_REQUIRED",
         );
       }
-      const source = await inspectSource(u);
+      const source = await inspectSource(u, policy());
       try {
         const dump = join(dir, "source.dump");
         await runTool(
@@ -261,6 +277,7 @@ async function main() {
           schemaVersion: source.schemaVersion,
           coverageSha256: source.coverageSha256,
           keyId: kid,
+          securityPolicy: source.securityPolicy,
         });
         const archive = join(dir, "archive.gcm");
         const m = await sealFile(dump, archive, ctx, secret);
@@ -274,6 +291,7 @@ async function main() {
           ciphertextSize: m.ciphertextSize,
           databaseVersion: m.databaseVersion,
           objectKey: m.objectKey,
+          securityPolicy: m.securityPolicy,
         });
       } finally {
         await source.db.query("ROLLBACK").catch(() => {});
@@ -297,7 +315,11 @@ async function main() {
         );
         requireCheck(m.backupId === id, "BACKUP_ID_MISMATCH");
         await storage.downloadVerify(m, dir, secret, kid);
-        emit({ backupId: id, status: "remote-verified" });
+        emit({
+          backupId: id,
+          status: "remote-verified",
+          securityPolicy: m.securityPolicy ?? "legacy-unrecorded",
+        });
       } else {
         const m = authenticateManifest(
           await readManifest(manifestPath),
@@ -307,12 +329,16 @@ async function main() {
         requireCheck(m.backupId === id, "BACKUP_ID_MISMATCH");
         await verifyFile(archive, m, secret, kid);
         if (command === "upload")
-          emit(await createStorage().upload(archive, m, secret, kid, dir));
+          emit({
+            ...(await createStorage().upload(archive, m, secret, kid, dir)),
+            securityPolicy: m.securityPolicy ?? "legacy-unrecorded",
+          });
         else
           emit({
             backupId: id,
             status: "encrypted-local-verified",
             ciphertextSize: (await stat(archive)).size,
+            securityPolicy: m.securityPolicy ?? "legacy-unrecorded",
           });
       }
     }

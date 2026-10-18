@@ -8,7 +8,7 @@
     "backup:upload": "node --use-system-ca --import tsx scripts/backup/cli.ts upload",
     "backup:verify": "node --use-system-ca --import tsx scripts/backup/cli.ts verify",
     "backup:list": "node --use-system-ca --import tsx scripts/backup/cli.ts list",
-    "backup:test": "vitest run tests/backup.test.ts tests/backup-source.test.ts",
+    "backup:test": "vitest run tests/backup.test.ts tests/backup-source.test.ts tests/backup-policy.test.ts",
     "backup:test:local": "node --import tsx scripts/backup/verify-local.ts",
     "dev": "next dev --hostname 127.0.0.1",
     "predev": "npm run db:generate",

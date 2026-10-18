@@ -28,6 +28,9 @@ export const manifestSchema = z
     backupId: z.uuid(),
     createdAt: z.iso.datetime(),
     sourceEnvironment: z.enum(["development", "fixture"]),
+    securityPolicy: z
+      .enum(["strict-v1", "managed-neon-candidate-v1"])
+      .optional(),
     databaseVersion: z.string().regex(/^18\.\d+$/),
     schemaVersion: z.string().regex(/^[a-f0-9]{64}$/),
     coverageSha256: z.string().regex(/^[a-f0-9]{64}$/),
@@ -50,6 +53,7 @@ export type Context = Pick<
   | "backupId"
   | "createdAt"
   | "sourceEnvironment"
+  | "securityPolicy"
   | "databaseVersion"
   | "schemaVersion"
   | "coverageSha256"
@@ -109,6 +113,7 @@ function context(m: Manifest): Context {
     objectKey,
   } = m;
   return {
+    ...(m.securityPolicy ? { securityPolicy: m.securityPolicy } : {}),
     backupId,
     createdAt,
     sourceEnvironment,
@@ -131,11 +136,13 @@ export function newContext(
     | "schemaVersion"
     | "coverageSha256"
     | "keyId"
-  >,
+  > &
+    Pick<Context, "securityPolicy">,
 ): Context {
   const backupId = randomUUID();
   return {
     ...input,
+    securityPolicy: input.securityPolicy ?? "strict-v1",
     backupId,
     createdAt: new Date().toISOString(),
     formatVersion: 1,

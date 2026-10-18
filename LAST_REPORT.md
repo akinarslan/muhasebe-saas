@@ -1,4 +1,14 @@
-# PUSULA v0.3 — Sprint E2.2c / yönetilen rol izolasyonu ve seçenekler
+# PUSULA v0.3 — Sprint E2.2d / kontrollü aday risk kanıtı
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **Varsayılan Strict korundu; gerçek Neon Managed kullanımı kapalı.**
+
+Managed aday yerel PostgreSQL18.6 fixture'da **43/43**, Strict gerçek dump/şifreleme regresyonu **14/14** geçti. Uygulama DML/kalıcı DDL, rol yükseltme ve drift'ler reddedildi. PUBLIC TEMP geçici DDL/DML'ye, CONNECT diğer DB oturumuna izin verdi; sonradan PUBLIC SELECT/kolon SELECT/SECURITY DEFINER ile veri sızıntısı ve builtin lo_create ile kalıcı sahiplik riski hayalî verilerle kanıtlandı. Aday Strict'e eşdeğer veya production için uygun kabul edilmedi.
+
+Yeni politika adı manifest HMAC/AAD içinde korunur; eski manifestler legacy-unrecorded olarak doğrulanabilir. Gerçek diğer DB nesne hakları bilinmediğinden Managed remote preflight/upload engelli. Varsayılan strict-v1 artık template dahil diğer DB CONNECT haklarını da reddeder. Vitest222/222, TypeScript/lint/build PASS; geniş pattern build uyarısı sürer, .data dağıtım trace girdisi16 dosyada0 olarak doğrulandı. Bütün geçici sunucular kendi PID/data dizinleriyle güvenli kapandı.
+
+[Ayrıntılı kanıt, sınırlar ve 10 kabul yanıtı](research/PUSULA_V030_SPRINT_E22D_RISK_ASSESSMENT.md). Gerçek Neon bağlantısı/rol/ACL değişikliği, kalıcı key, gerçek dump veya R2 işlemi yapılmadı. Bunlar için yeniden ayrı açık kullanıcı onayı gerekir.
+
+## Önceki E2.2c araştırması
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Yalnız resmî belge araştırması; yeni Neon bağlantısı yok.**
 

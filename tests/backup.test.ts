@@ -476,6 +476,28 @@ describe("R2 adapter with in-memory S3 fixture (no cloud writes)", () => {
     ).rejects.toThrow("FIXTURE_UPLOAD_FORBIDDEN");
     expect(r2.send).not.toHaveBeenCalled();
   });
+  it("blocks managed development-labelled manifests before any S3 command", async () => {
+    const f = await fixture("development"),
+      r2 = fakeStore(),
+      path = join(f.dir, "managed.gcm");
+    const m = await sealFile(
+      f.input,
+      path,
+      newContext({
+        sourceEnvironment: "development",
+        databaseVersion: "18.6",
+        schemaVersion: "a".repeat(64),
+        coverageSha256: "b".repeat(64),
+        keyId: "fixture-v1",
+        securityPolicy: "managed-neon-candidate-v1",
+      }),
+      f.key,
+    );
+    await expect(
+      r2.store.upload(path, m, f.key, "fixture-v1", await temp()),
+    ).rejects.toThrow("MANAGED_REMOTE_UPLOAD_NOT_APPROVED");
+    expect(r2.send).not.toHaveBeenCalled();
+  });
   it("conditionally uploads ciphertext then verifies downloaded archive and signed manifest", async () => {
     const f = await fixture("development"),
       r2 = fakeStore();
@@ -518,7 +540,10 @@ describe("R2 adapter with in-memory S3 fixture (no cloud writes)", () => {
     expect(r2.objects).toEqual(before);
     expect(r2.objects.size).toBe(2);
     for (const [cmd] of r2.send.mock.calls) {
-      if (cmd instanceof PutObjectCommand && typeof cmd.input.Body !== "string") {
+      if (
+        cmd instanceof PutObjectCommand &&
+        typeof cmd.input.Body !== "string"
+      ) {
         expect((cmd.input.Body as { destroyed: boolean }).destroyed).toBe(true);
       }
     }
