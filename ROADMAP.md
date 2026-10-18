@@ -279,3 +279,41 @@ Asagidaki liste desteklenebilecek makine/urun kategorileridir; ZY Reklam'in dogr
 - Fiyatlar oncelikle kaydedilen manuel USD birim maliyetlerden hesaplanir; stok alis partilerinin gercek tarihsel maliyeti ayri izlenir. Yeni teklifin referans maliyeti ile fiilen tuketilen stok lotunun muhasebesel maliyeti karistirilmaz. Eksik maliyet/fiyat/birim varsa kesin rakam uretilmez.
 - Master Admin materials.cost.view/edit, products.manage, recipes.manage, pricing.override, supplier.purchase, inventory.receive/adjust gibi izinleri kisiye ozel verir. Gelisime acik SaaS kiraci/firmalar kendi kataloglarini, tedarikci ve fiyatlarini yonetir.
 - v0.4: birbiriyle bagli dinamik urun/malzeme/tedarikci katalogu, alis ve hammadde stogu, fiyat guncelleme ekranlari; v0.5: BOM/uretim emriyle malzeme sarfi, fire ve mamul stogu; v0.6: satis-tuketim-stok-kar raporlari; v0.7: ZY Reklam icin canli bulut kaydi ve yetkiyle uctan uca kabul.
+
+
+
+## v0.4 UYGULAMA SOZLESMESI — TEDARIK, SATIN ALMA, STOK VE MAKINE KATALOGU (2026-10-18)
+
+Bu bolum onceki v0.4 tasarimlarini **somut teslim sirasi** haline getirir; eski fazlarda gecen "satis/uretim sonrasi stok dusumu" ifadesi v0.5 is emri/gercek tuketim kapisina tabidir. v0.3 Sprint D bulut musteri/malzeme/urun/teklif/satis kayitlari korunur. Sprint E'nin gercek Neon backup rolu, otomasyon ve R2 yukleme kapilari ACIKTIR; yerel sentetik restore basarisi canli yedek yerine gecmez. v0.4 development, production/go-live onayi degildir.
+
+### Kullanici akislari ve modul sinirlari
+
+1. **Tedarikciler:** tedarikci karti (ticari ad/unvan, irtibat, vergi ve adres, para birimleri, termin, durum), tedarikcinin birden fazla malzeme varyantina baglanmasi, ayni varyantin birden fazla tedarikciden alinabilmesi. Teklifler tarih, para birimi, orijinal fiyat, miktar esigi, gecerlik araligi ve tedarikci SKU ile surumlenir. Tedarikci teklifini kaydetmek Pusula'nin kullanici tarafindan belirlenen otoritatif USD malzeme maliyetini otomatik degistirmez.
+2. **Satin alma:** taslak -> onayli siparis -> kismi/tam teslim alinmis -> kapandi/iptal durumlari; PurchaseOrder/Line ile GoodsReceipt/Line ayrilir. Bir siparis birden cok parcali teslim alabilir. Teslim almadan stok artmaz; sadece v0.6 finans modulu gercek borc/odeme olusturur. Tekrarlanan teslim istekleri cift stok yaratmaz; kismi teslim toplam siparis miktarini asamaz (acik over-receipt karari olmadan).
+3. **Depo ve stok:** StockLocation (depo/raf), StockLot (rulo/levha/parti), append-only StockMovement. Giris, depolar arasi transfer, tedarikciye iade ve sayim duzeltmesi v0.4; uretim sarfi/fire/yeniden kullanilabilir parca v0.5; tahsilat-kasa/cari v0.6. Fiziksel stok, hareketlerden hesaplanir. Satis/teklif kaydi ve tahmini BOM miktari tek basina stok dusmez.
+4. **Olcu ve fiziksel iz:** satin alma birimi ile stok temel birimi ayridir; donusum tanimli ve Decimal hassasiyetindedir. m2, metretul, adet, plaka, kg, litre asla birbiriyle otomatik toplanmaz. Ruloda en (cm), ilk uzunluk (m), kalan uzunluk, alan ve lot kimligi; levhada en/boy/kalinlik, adet ve kesim sonrasi izlenebilir parca icin v0.5'e uzanan model. Olcusu bilinmeyen ruloda hayali m2 uretme.
+5. **Maliyet:** Material/Variant'taki yetkili kullanici kaynakli guncel **USD birim maliyet** ile PurchaseReceipt lotunun fiili orijinal doviz/kur/tarihli USD alis maliyeti ayri saklanir. Teklif ve satisin onceki USD/TRY/kur snapshot'i dokunulmazdir. Fiziksel giris USD maliyeti kur snapshot'i ve birim donusumu ile dondurulur; tedarikci teklifindeki fiyat tek basina fiili alim sayilmaz. Degerleme yontemi (FIFO veya hareketli ortalama) uygulamadan once belgeli secim karari; sessizce ikisi birden kullanilmaz.
+6. **Urun/recete ve makineler:** ProductOrService, ProductCategory, MaterialVariant, Recipe/RecipeVersion/RecipeLine, PrintProcess, Machine, MachineCapability, MachineProductOption, MachineCostRateVersion ayridir. Coktan-coga uyumluluk, malzeme eni/kalinligi, baski/kesim alani, teknoloji ve modla dogrulanir. Marka/model/capability kullanici tanimli; seed, ZY Reklam'da bu makinenin mevcut oldugu iddiasi tasimaz. BOM maliyet onizlemesi v0.4; is emri/sarf/gercek fire/uretim cikisi v0.5.
+7. **UI:** Bulut `/app` icinde Tedarikciler, Satin Alma, Depolar-Stok, Makine/Proses ve Recete kataloglari; arama/filtre/siralama, bos/hata/yukleniyor, yetkiye gore maskeli maliyet alanlari, kismi teslimat ve stok hareket detaylari. Demo `/` ayri kalir; localStorage asla gercek stok otoritesi olmaz.
+
+
+### v0.4 sprint parcasi ve cikis kapilari
+
+- **V4.1 — Denetim ve sema:** Sprint D CloudMaterial/CloudProduct modelleri ve E2/Neon izinlerini incele; yeni tenant/legalEntity/activity anahtarlari, PK/FK/index/unique, olcu donusumu, migration+rollback plani; gercek development data korunur.
+- **V4.2 — Tedarikci ve teklif:** supplier CRUD, many-to-many supplier material ve tarihli coklu para birimli teklif surumleri; tedarikciyi pasife alma; fiyat yetkileri.
+- **V4.3 — Satin alma/teslim alma:** siparis, satirlar, kismi teslim, idempotent receipt, tedarikci iadesi; receipt + lot + hareket tek transaction; haksiz/tasitmaz duplicate engeli.
+- **V4.4 — Stok ledger ve sayim:** depo/raf, lot/rulo/levha, transferde iki bagli hareket, negatif stok ve concurrency kilidi, fiziksel sayim farki icin onayli duzeltme/ters hareket; lot miktari hareketten mutabik.
+- **V4.5 — Recete/makine uygunlugu:** versiyonlu BOM, uretilen urun ve hammadde ayrimi, makina yetenek ve USD tarife versiyonlari; satisa etkisi yalniz yeni hesap onizlemesi, eski belge degismez.
+- **V4.6 — UI/izin/test:** Master Admin action/field scope, RLS, hata ve timeout, Decimal/farkli birim/lot/satis ayrimi, mobil Playwright; build/lint/unit/DB/RLS/Auth/E2E ve migration belgeleri. Aksamayan akislari feature dalina commit/push; main merge ve production deployment ayrica onay.
+
+
+### Kesin veri ve operasyon invariants
+
+- Tenant ve legalEntity capraz kayit baglari composite FK ve sunucu oturumu/kapsam ile engellenir; activity ayrimi gerektiginde uygulanir. RLS + merkezi permission + explicit DENY birlikte kalir.
+- PurchaseOrder yalniz yetkili/onayli; teslim alan kullanici farkli olabilir. Receipt hareketi append-only'dir; silme yerine iptal/ters belge ve audit. `(tenantId, sourceType, sourceId, lineId, movementKind)` gibi is olayi tekilligi; HTTP retry iki stok artisi yaratmaz.
+- Depolar arasi transfer, ayni transaction'da kaynak cikisi ve hedef girisi; yarim transfer yok. Aynı lot/temel birimde stok eksiye inmez (acik backorder fiziksel eksi stok değildir). Rekabetli islemler DB lock/atomik kontrolle korunur.
+- Fiziksel en/uzunluk/kalinlik immutable lot niteligi, kalan stok hareketlerden hesaplanir; tekrar kullanilabilir kesim artigi v0.5'te ayrica kimliklenir. Stokta m2 ile metretul degerleri ancak bilinen sabit rulo eniyle tutarli donusturulur.
+- Aktif malzeme USD temel maliyetine degisim yalniz `materials.cost.edit` ile, tarih/aktor/version audit; SupplierOffer ya da GoodsReceipt otomatik fiyat override yapmaz. Kisisel maliyet goruntuleme izni yoksa API DTO'su USD birim, toplam, lot degerleme ve nested fiyatlari gondermez.
+- Satilabilir urun satisi, satin alma siparisi veya teklif = uretim sarfi degildir. v0.5'te tek kaynak hareketi fiziksel tuketimi dusurur, planli fire ve anormal fire iki kez yazilmaz. v0.6 borc-alacak/odeme event'leri receipt ile ayni sayilmaz.
+- Snapshot USD ve TRY / TCMB kur tarihi ve versiyonlar korunur; parasal hesap Decimal, acik yuvarlama kurali. Arayuz dusuk yetkili user'dan maliyet bilgisi sizdirmaz.
+- Kabul icin asgari senaryo: bir varyant iki tedarikci, farkli tarihli teklifler; 152 cm x 50 m rulo parcali teslim; depolar arasi transfer; kismi tedarikci iadesi; ayni receipt'in yeniden gonderilmesi; iki eszamanli stok cikisi; sinirli izinli kullanicida fiyat gizleme; fiyat degisimiyle eski teklif degismez; yeniden giriste Neon kaliciligi. Gercek R2 otomatik yedek ve production go-live tamamlandi iddiasi yok.
