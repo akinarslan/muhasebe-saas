@@ -1,4 +1,14 @@
-# PUSULA v0.3 — Sprint E2.2b / yetki etki analizi ve uygulama planı
+# PUSULA v0.3 — Sprint E2.2c / yönetilen rol izolasyonu ve seçenekler
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **Yalnız resmî belge araştırması; yeni Neon bağlantısı yok.**
+
+Tek öneri: mevcut development branch'inde Neon destek teyitli seçici ACL ve doğrudan BYPASSRLS taşıyan dar SQL-created backup hesabı. Provider/internal TEMP ve postgres PUBLIC CONNECT değişikliklerinin bu özel ortamda destek durumu açık belgelerden kesinleşmedi; uygulama BLOCKED kalır. Yeni branch/proje varsayılan PUBLIC izinlerini kendiliğinden çözmez. Native restore/snapshot bağımsız E2/R2 arşivinin yerini tutmaz; geniş admin dump hedefe uymaz.
+
+Maliyet/güvenlik/operasyon karşılaştırması ve sır içermeyen, **gönderilmemiş** destek talebi hazır. Template DB'ler önceki envanter dışında kaldığından tam bağlantı izolasyonu ayrıca denetlenmeli; diğer DB CONNECT guard'ı ayrı E2 kod işi gerektirir. [Seçenekler, tek öneri ve ayrı onaylar](research/PUSULA_V030_SPRINT_E22C_OPTIONS.md).
+
+Rol/ACL/RLS/migration/dump/R2/production/test DB işlemi yapılmadı. Destek gönderimi ve gerçek SQL uygulaması için yeniden açık onay gerekir; bugünkü teslim uygulama izni değildir.
+
+## Önceki E2.2b planı
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Yalnız salt okunur denetim ve plan; yetki değişikliği yok.**
 
