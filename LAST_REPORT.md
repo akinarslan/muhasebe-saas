@@ -1,4 +1,12 @@
-# PUSULA v0.3 — Sprint E2 / şifreli yedekleme motoru
+# PUSULA v0.3 — Sprint E2.1b / gerçek yerel fixture testi
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **Yerel sentetik kabul: 14/14 PASS.**
+
+PostgreSQL 18.6 taşınabilir sunucu yalnız 127.0.0.1:55432 üzerinde SCRAM ile çalıştırıldı. Gerçek `pg_dump -Fc`, `pg_restore --list`, 35 tablo satır sayımı, 43 FK/43 policy/11 trigger kapsamı ve E2 AES-256-GCM şifreleme/şifre çözme/SHA-256/manifest kontrolleri geçti. Yanlış anahtar, bozuk veri ve gerçek araç hata senaryoları reddedildi. PID 11944 ve yeni veri dizini doğrulanıp yalnız fixture süreci durduruldu.
+
+Gerçek koşuda bulunan sequence yetki sorgusu hatası düzeltildi. E2 birim testleri 61/61; TypeScript ve lint geçti. Neon/R2 veya mevcut uygulama verilerine işlem yapılmadı. Gerçek backup hesabı/direct TLS URL, gerçek key ve ayrı gerçek dump/R2 onayı hâlâ gerekir. Restore/E3/E4 kabulü verilmedi. [Ayrıntılı kanıt ve deneme sınırları](docs/validation/SPRINT_E21B_VERIFICATION.md).
+
+## Önceki Sprint E2 teslim kaydı
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Kod geliştirildi; E2 kabulü ve production kabulü açık.**
 

@@ -224,7 +224,7 @@ export async function inspectSource(u: URL) {
       await db.query(`SELECT
       has_database_privilege(current_database(),'CREATE') AS database_create,
       EXISTS(SELECT 1 FROM pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname<>'information_schema' AND has_schema_privilege(oid,'CREATE')) AS schema_create,
-      EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='S' AND n.nspname='public' AND has_sequence_privilege(c.oid,'UPDATE,USAGE')) AS sequence_write`)
+      EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE CASE WHEN c.relkind='S' AND n.nspname='public' THEN has_sequence_privilege(c.oid,'UPDATE,USAGE') ELSE false END) AS sequence_write`)
     ).rows[0];
     requireCheck(
       elevated &&

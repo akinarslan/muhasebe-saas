@@ -47,6 +47,12 @@ npm.cmd run backup:create -- --fixture --approve-fixture-dump
 
 Fixture manifesti `sourceEnvironment=fixture` taşır ve upload modülü bunu reddeder. `backup:test` Node/bellek içi S3 ve taklit PG bağlantısıyla çalışır; başarılı gerçek pg_dump veya restore testi diye sunulmaz.
 
+## Gerçek yerel fixture testi
+
+Windows üzerinde önceden doğrulanmış PostgreSQL 18.6 istemcileri `.data/tools/postgresql18-client`, taşınabilir sunucu ise `.data/tools/postgresql18-fixture-server/bin` altında hazır olmalıdır. Yeni yerel cluster oluşturma/başlatma için açık operatör onayıyla `npm run backup:test:local -- --approve-local-fixture` çalıştırılır. Komut `.env` yüklemez; Neon veya R2 kullanmaz. Yeni UUID dizini, loopback portu, SCRAM, geçici RAM anahtarı ve süreç kimliğiyle sınırlı kapanış kullanır. Test bittiğinde sentetik dosyalar ACL korumalı Git dışı dizinde kalır; kalıcı test anahtarı saklanmaz.
+
+Bu test gerçek custom dump, TOC/nesne kapsamı, tüm tablo satır sayıları, E2 şifreleme ve negatif araç/kripto senaryolarını doğrular. Veritabanına restore etmez; Neon rol uygulanabilirliği, gerçek backup veya E4 kurtarma kabulü değildir. [Son sonuçlar](../validation/SPRINT_E21B_VERIFICATION.md).
+
 ## Format, anahtar ve yerel güvenlik
 
 Node/OpenSSL AES-256-GCM kullanılır; kripto algoritması yeniden yazılmadı. V1 arşiv dosyası ciphertext'tir; IV/salt/tag ve metadata ayrı manifesttedir. Her yedekte32-byte rastgele salt ve12-byte rastgele IV; HKDF-SHA256 ile ayrı encryption ve manifest-MAC anahtarları. Metadata GCM AAD'ye, tüm manifest HMAC-SHA256'ya bağlıdır. Manifest strict şema, sabit format ve UUID/object-key ilişkisiyle doğrulanır. JSON anahtarları ASCII artan sırada kanonikleştirilir. SHA-256 ciphertext özeti + GCM tag + manifest MAC birlikte doğrulanır; sadece ETag'e güvenilmez.

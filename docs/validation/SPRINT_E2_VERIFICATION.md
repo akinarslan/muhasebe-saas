@@ -1,5 +1,7 @@
 # Sprint E2 — doğrulama ve açık kabul kapıları
 
+> 18.10.2026 E2.1b güncellemesi: aşağıdaki kayıt ilk E2 tesliminin tarihsel durumudur. PostgreSQL 18.6 ile gerçek yerel sentetik dump/list ve şifreleme kabulü sonradan **14/14 PASS** oldu. [E2.1b kanıtı](SPRINT_E21B_VERIFICATION.md). Gerçek Neon dump/R2 ve restore kapıları hâlâ açıktır.
+
 18.10.2026 · `feat/pusula-v030-neon-cloud` · başlangıç `c570f7b`.
 
 ## Sonuç
