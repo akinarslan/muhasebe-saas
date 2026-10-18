@@ -3,6 +3,12 @@
   "version": "0.2.3",
   "private": true,
   "scripts": {
+    "backup:preflight": "node --use-system-ca --import tsx scripts/backup/cli.ts preflight",
+    "backup:create": "node --use-system-ca --import tsx scripts/backup/cli.ts create",
+    "backup:upload": "node --use-system-ca --import tsx scripts/backup/cli.ts upload",
+    "backup:verify": "node --use-system-ca --import tsx scripts/backup/cli.ts verify",
+    "backup:list": "node --use-system-ca --import tsx scripts/backup/cli.ts list",
+    "backup:test": "vitest run tests/backup.test.ts tests/backup-source.test.ts",
     "dev": "next dev --hostname 127.0.0.1",
     "predev": "npm run db:generate",
     "build": "npm run db:generate && next build",
@@ -60,6 +66,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "3.1152.0",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.1.14",
     "@testing-library/react": "^16.3.0",
