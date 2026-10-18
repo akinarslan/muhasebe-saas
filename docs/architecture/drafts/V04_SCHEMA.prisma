@@ -1,0 +1,1461 @@
+// DESIGN ONLY. NOT wired to Prisma config. DO NOT migrate/generate/deploy.
+// SQL invariants and RLS are mandatory: see V04_MIGRATION_PLAN.md.
+// Snapshot of baseline 3bcbe9e; existing relation backrefs are draft-only additions.
+generator client {
+  provider = "prisma-client"
+  output   = "../../../.data/v41-design/DO_NOT_GENERATE"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CostUnit {
+  square_meter
+  linear_meter
+  piece
+  sheet
+}
+
+model Tenant {
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String        @db.VarChar(200)
+  memberships Membership[]
+  entities    LegalEntity[]
+}
+
+model LegalEntity {
+  id         String     @id @default(uuid()) @db.Uuid
+  tenantId   String     @db.Uuid
+  name       String     @db.VarChar(200)
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  activities Activity[]
+  customers  Customer[]
+  materials  Material[]
+
+  v41r1Children Supplier[] @relation("v41r1")
+
+  v41r3Children SupplierMaterial[] @relation("v41r3")
+
+  v41r7Children SupplierOfferVersion[] @relation("v41r7")
+
+  v41r10Children PurchaseOrder[] @relation("v41r10")
+
+  v41r14Children PurchaseOrderLine[] @relation("v41r14")
+
+  v41r20Children GoodsReceipt[] @relation("v41r20")
+
+  v41r24Children GoodsReceiptLine[] @relation("v41r24")
+
+  v41r28Children SupplierReturn[] @relation("v41r28")
+
+  v41r32Children SupplierReturnLine[] @relation("v41r32")
+
+  v41r37Children StockLocation[] @relation("v41r37")
+
+  v41r40Children StockLot[] @relation("v41r40")
+
+  v41r44Children StockMovement[] @relation("v41r44")
+
+  v41r55Children InventoryCount[] @relation("v41r55")
+
+  v41r58Children InventoryCountLine[] @relation("v41r58")
+
+  v41r62Children StockTransfer[] @relation("v41r62")
+
+  v41r67Children ProductRecipeVersion[] @relation("v41r67")
+
+  v41r70Children RecipeLine[] @relation("v41r70")
+
+  v41r75Children PrintProcess[] @relation("v41r75")
+
+  v41r77Children Machine[] @relation("v41r77")
+
+  v41r79Children MachineCapability[] @relation("v41r79")
+
+  v41r84Children MachineProductOption[] @relation("v41r84")
+
+  v41r89Children MachineCostRateVersion[] @relation("v41r89")
+
+  v41r92Children StockPostingBatch[] @relation("v41r92")
+
+  v41r99Children StockBalance[] @relation("v41r99")
+
+  @@unique([tenantId, id])
+}
+
+model Activity {
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  legalEntityId String      @db.Uuid
+  name          String      @db.VarChar(100)
+  entity        LegalEntity @relation(fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict)
+
+  v41r2Children Supplier[] @relation("v41r2")
+
+  v41r4Children SupplierMaterial[] @relation("v41r4")
+
+  v41r8Children SupplierOfferVersion[] @relation("v41r8")
+
+  v41r11Children PurchaseOrder[] @relation("v41r11")
+
+  v41r15Children PurchaseOrderLine[] @relation("v41r15")
+
+  v41r21Children GoodsReceipt[] @relation("v41r21")
+
+  v41r25Children GoodsReceiptLine[] @relation("v41r25")
+
+  v41r29Children SupplierReturn[] @relation("v41r29")
+
+  v41r33Children SupplierReturnLine[] @relation("v41r33")
+
+  v41r38Children StockLocation[] @relation("v41r38")
+
+  v41r41Children StockLot[] @relation("v41r41")
+
+  v41r45Children StockMovement[] @relation("v41r45")
+
+  v41r56Children InventoryCount[] @relation("v41r56")
+
+  v41r59Children InventoryCountLine[] @relation("v41r59")
+
+  v41r63Children StockTransfer[] @relation("v41r63")
+
+  v41r68Children ProductRecipeVersion[] @relation("v41r68")
+
+  v41r71Children RecipeLine[] @relation("v41r71")
+
+  v41r76Children PrintProcess[] @relation("v41r76")
+
+  v41r78Children Machine[] @relation("v41r78")
+
+  v41r80Children MachineCapability[] @relation("v41r80")
+
+  v41r85Children MachineProductOption[] @relation("v41r85")
+
+  v41r90Children MachineCostRateVersion[] @relation("v41r90")
+
+  v41r93Children StockPostingBatch[] @relation("v41r93")
+
+  v41r100Children StockBalance[] @relation("v41r100")
+
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model Customer {
+  payloadHash   String?
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  legalEntityId String      @db.Uuid
+  activityId    String?     @db.Uuid
+  createdById   String?
+  sourceId      String      @db.VarChar(200)
+  name          String      @db.VarChar(200)
+  email         String?     @db.VarChar(320)
+  active        Boolean     @default(true)
+  segment       String      @default("Mağaza-İşyeri")
+  city          String      @default("")
+  district      String      @default("")
+  phone         String      @default("")
+  taxOffice     String      @default("")
+  taxId         String      @default("")
+  contact       String      @default("")
+  address       String      @default("")
+  notes         String      @default("")
+  term          Int         @default(30)
+  version       Int         @default(1)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  entity        LegalEntity @relation(fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, legalEntityId, id])
+  @@unique([tenantId, legalEntityId, sourceId])
+  @@index([tenantId, legalEntityId, name])
+}
+
+model Material {
+  payloadHash       String?
+  id                String            @id @default(uuid()) @db.Uuid
+  tenantId          String            @db.Uuid
+  legalEntityId     String            @db.Uuid
+  name              String            @db.VarChar(200)
+  sourceId          String?
+  category          String            @default("")
+  brand             String            @default("")
+  supplierReference String            @default("")
+  sku               String            @default("")
+  description       String            @default("")
+  active            Boolean           @default(true)
+  vat               Decimal           @default(20) @db.Decimal(8, 4)
+  margins           Json              @default("{}")
+  version           Int               @default(1)
+  unit              CostUnit
+  activityId        String?           @db.Uuid
+  createdById       String?
+  roll              Boolean           @default(false)
+  entity            LegalEntity       @relation(fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict)
+  variants          MaterialVariant[]
+
+  @@unique([tenantId, legalEntityId, sourceId])
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model MaterialVariant {
+  inventoryBaseUnit StockUnit?
+  inventoryForm     StockForm?
+  id                String                 @id @default(uuid()) @db.Uuid
+  tenantId          String                 @db.Uuid
+  legalEntityId     String                 @db.Uuid
+  materialId        String                 @db.Uuid
+  name              String                 @db.VarChar(200)
+  widthCm           Decimal                @db.Decimal(12, 4)
+  lengthCm          Decimal?               @db.Decimal(12, 4)
+  usdCost           Decimal?               @db.Decimal(18, 6)
+  active            Boolean                @default(true)
+  priceVersion      Int                    @default(1)
+  inStock           Boolean                @default(false)
+  material          Material               @relation(fields: [tenantId, legalEntityId, materialId], references: [tenantId, legalEntityId, id], onDelete: Restrict)
+  history           MaterialPriceHistory[]
+
+  v41r6Children SupplierMaterial[] @relation("v41r6")
+
+  v41r19Children PurchaseOrderLine[] @relation("v41r19")
+
+  v41r42Children StockLot[] @relation("v41r42")
+
+  v41r49Children StockMovement[] @relation("v41r49")
+
+  v41r73Children RecipeLine[] @relation("v41r73")
+
+  v41r83Children MachineCapability[] @relation("v41r83")
+
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model MaterialPriceHistory {
+  id            String          @id @default(uuid()) @db.Uuid
+  tenantId      String          @db.Uuid
+  legalEntityId String          @db.Uuid
+  variantId     String          @db.Uuid
+  previousUsd   Decimal?        @db.Decimal(18, 6)
+  nextUsd       Decimal         @db.Decimal(18, 6)
+  actorId       String          @db.VarChar(200)
+  recordedAt    DateTime        @default(now()) @db.Timestamptz(3)
+  variant       MaterialVariant @relation(fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict)
+
+  @@index([tenantId, legalEntityId, variantId, recordedAt])
+}
+
+// Authentication storage is isolated from business runtime grants.
+model AuthUser {
+  id               String         @id
+  name             String
+  email            String         @unique
+  emailVerified    Boolean        @default(false)
+  image            String?
+  status           String         @default("ACTIVE")
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
+  lastLoginAt      DateTime?      @db.Timestamptz(3)
+  twoFactorEnabled Boolean        @default(false)
+  memberships      Membership[]
+  twoFactor        AuthTwoFactor?
+  sessions         AuthSession[]
+  accounts         AuthAccount[]
+}
+
+model AuthSession {
+  id            String    @id
+  mfaVerifiedAt DateTime? @db.Timestamptz(3)
+  stepUpAt      DateTime? @db.Timestamptz(3)
+  token         String    @unique
+  userId        String
+  expiresAt     DateTime  @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+  ipAddress     String?
+  userAgent     String?
+  user          AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  user                  AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model AuthVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+}
+
+model AuthRateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+}
+
+model AuthTwoFactor {
+  id                      String    @id
+  userId                  String    @unique
+  secret                  String
+  backupCodes             String
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime? @db.Timestamptz(3)
+  user                    AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuthBootstrap {
+  id            String   @id
+  userId        String   @unique
+  tenantId      String   @db.Uuid
+  legalEntityId String   @db.Uuid
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model AuthSecurityEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+
+enum ScopeKind {
+  OWN
+  ACTIVITY
+  LEGAL_ENTITY
+  TENANT
+}
+
+enum PermissionEffect {
+  ALLOW
+  DENY
+}
+
+model Membership {
+  id        String                   @id @default(uuid()) @db.Uuid
+  tenantId  String                   @db.Uuid
+  userId    String
+  status    String                   @default("ACTIVE")
+  isMaster  Boolean                  @default(false)
+  version   Int                      @default(1)
+  createdAt DateTime                 @default(now()) @db.Timestamptz(3)
+  tenant    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user      AuthUser                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  roles     RoleAssignment[]
+  overrides UserPermissionOverride[]
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, id])
+  @@index([userId, status])
+}
+
+model Role {
+  id          String           @id
+  name        String
+  permissions RolePermission[]
+  assignments RoleAssignment[]
+}
+
+model Permission {
+  id        String                   @id
+  label     String
+  module    String
+  roles     RolePermission[]
+  overrides UserPermissionOverride[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+
+  @@id([roleId, permissionId])
+}
+
+model PermissionScope {
+  id               String                   @id @default(uuid()) @db.Uuid
+  tenantId         String                   @db.Uuid
+  kind             ScopeKind
+  legalEntityId    String?                  @db.Uuid
+  activityId       String?                  @db.Uuid
+  department       String?
+  amountLimit      Decimal?                 @db.Decimal(18, 6)
+  requiresApproval Boolean                  @default(false)
+  roles            RoleAssignment[]
+  overrides        UserPermissionOverride[]
+
+  @@unique([tenantId, id])
+}
+
+model RoleAssignment {
+  id           String          @id @default(uuid()) @db.Uuid
+  tenantId     String          @db.Uuid
+  membershipId String          @db.Uuid
+  roleId       String
+  scopeId      String          @db.Uuid
+  member       Membership      @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+  role         Role            @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  scope        PermissionScope @relation(fields: [tenantId, scopeId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([membershipId, roleId, scopeId])
+  @@index([tenantId, membershipId])
+}
+
+model UserPermissionOverride {
+  id           String           @id @default(uuid()) @db.Uuid
+  tenantId     String           @db.Uuid
+  membershipId String           @db.Uuid
+  permissionId String
+  scopeId      String           @db.Uuid
+  effect       PermissionEffect
+  member       Membership       @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+  permission   Permission       @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+  scope        PermissionScope  @relation(fields: [tenantId, scopeId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([membershipId, permissionId, scopeId])
+  @@index([tenantId, membershipId])
+}
+
+model AuditEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  legalEntityId String?  @db.Uuid
+  actorId       String
+  targetId      String
+  action        String
+  summary       Json
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([tenantId, targetId, createdAt])
+}
+
+model AuthInvitation {
+  id           String    @id @default(uuid())
+  tokenHash    String    @unique
+  userId       String
+  membershipId String    @db.Uuid
+  tenantId     String    @db.Uuid
+  expiresAt    DateTime  @db.Timestamptz(3)
+  revokedAt    DateTime? @db.Timestamptz(3)
+  acceptedAt   DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId])
+}
+
+model TenantExchangeRate {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  actorId     String
+  usdTry      Decimal  @db.Decimal(18, 6)
+  reason      String   @db.VarChar(500)
+  publishedAt DateTime @db.Date
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([tenantId, createdAt])
+}
+
+model AuthMailDelivery {
+  id                String   @id @default(uuid())
+  userId            String
+  membershipId      String?  @db.Uuid
+  kind              String
+  provider          String
+  status            String
+  errorCode         String?
+  providerMessageId String?
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+}
+
+model CloudProduct {
+  payloadHash   String?
+  id            String  @id @default(uuid()) @db.Uuid
+  tenantId      String  @db.Uuid
+  legalEntityId String  @db.Uuid
+  activityId    String? @db.Uuid
+  createdById   String
+  sourceId      String
+  name          String  @db.VarChar(200)
+  category      String  @default("")
+  unit          String
+  kind          String
+  active        Boolean @default(true)
+  version       Int     @default(1)
+
+  v41r69Children ProductRecipeVersion[] @relation("v41r69")
+
+  v41r87Children MachineProductOption[] @relation("v41r87")
+
+  @@unique([tenantId, legalEntityId, id])
+  @@unique([tenantId, legalEntityId, sourceId])
+}
+
+model CloudExpenseType {
+  sourceId      String?
+  payloadHash   String?
+  id            String  @id @default(uuid()) @db.Uuid
+  tenantId      String  @db.Uuid
+  legalEntityId String  @db.Uuid
+  activityId    String? @db.Uuid
+  createdById   String
+  name          String
+  unit          String
+  usdAmount     Decimal @db.Decimal(18, 6)
+  active        Boolean @default(true)
+  version       Int     @default(1)
+
+  @@unique([tenantId, legalEntityId, sourceId])
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model CloudQuote {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  legalEntityId  String   @db.Uuid
+  activityId     String?  @db.Uuid
+  createdById    String
+  customerId     String   @db.Uuid
+  groupId        String   @db.Uuid
+  revision       Int
+  title          String
+  idempotencyKey String   @db.Uuid
+  payloadHash    String
+  snapshot       Json
+  netUsd         Decimal  @db.Decimal(18, 6)
+  costUsd        Decimal  @db.Decimal(18, 6)
+  netTry         Decimal  @db.Decimal(18, 2)
+  vatTry         Decimal  @db.Decimal(18, 2)
+  totalTry       Decimal  @db.Decimal(18, 2)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([tenantId, legalEntityId, id])
+  @@unique([tenantId, legalEntityId, groupId, revision])
+  @@unique([tenantId, legalEntityId, idempotencyKey])
+  @@index([tenantId, legalEntityId, createdAt])
+}
+
+model CloudSale {
+  id             String             @id @default(uuid()) @db.Uuid
+  tenantId       String             @db.Uuid
+  legalEntityId  String             @db.Uuid
+  activityId     String?            @db.Uuid
+  createdById    String
+  customerId     String             @db.Uuid
+  idempotencyKey String             @db.Uuid
+  payloadHash    String
+  date           DateTime           @db.Date
+  dueDate        DateTime           @db.Date
+  currency       String
+  notes          String
+  rateSnapshot   Json
+  costUsd        Decimal            @db.Decimal(18, 6)
+  netUsd         Decimal            @db.Decimal(18, 6)
+  netTry         Decimal            @db.Decimal(18, 2)
+  vatTry         Decimal            @db.Decimal(18, 2)
+  totalTry       Decimal            @db.Decimal(18, 2)
+  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+  lines          CloudSaleLine[]
+  plans          CloudPaymentPlan[]
+
+  @@unique([tenantId, legalEntityId, id])
+  @@unique([tenantId, legalEntityId, idempotencyKey])
+  @@index([tenantId, legalEntityId, date])
+}
+
+model CloudSaleLine {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @db.Uuid
+  legalEntityId String    @db.Uuid
+  saleId        String    @db.Uuid
+  productId     String    @db.Uuid
+  description   String
+  quantity      Decimal   @db.Decimal(18, 6)
+  widthCm       Decimal   @db.Decimal(12, 4)
+  heightCm      Decimal   @db.Decimal(12, 4)
+  discount      Decimal   @db.Decimal(8, 4)
+  vat           Decimal   @db.Decimal(8, 4)
+  snapshot      Json
+  costUsd       Decimal   @db.Decimal(18, 6)
+  netUsd        Decimal   @db.Decimal(18, 6)
+  netTry        Decimal   @db.Decimal(18, 2)
+  vatTry        Decimal   @db.Decimal(18, 2)
+  totalTry      Decimal   @db.Decimal(18, 2)
+  sale          CloudSale @relation(fields: [tenantId, legalEntityId, saleId], references: [tenantId, legalEntityId, id], onDelete: Restrict)
+
+  @@index([tenantId, legalEntityId, saleId])
+}
+
+model CloudPaymentPlan {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @db.Uuid
+  legalEntityId String    @db.Uuid
+  saleId        String    @db.Uuid
+  dueDate       DateTime  @db.Date
+  method        String
+  amount        Decimal   @db.Decimal(18, 2)
+  sale          CloudSale @relation(fields: [tenantId, legalEntityId, saleId], references: [tenantId, legalEntityId, id], onDelete: Restrict)
+
+  @@index([tenantId, legalEntityId, saleId])
+}
+
+model CloudImportBatch {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  legalEntityId  String   @db.Uuid
+  activityId     String?  @db.Uuid
+  createdById    String
+  fileHash       String
+  status         String
+  preview        Json
+  reconciliation Json?
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([tenantId, legalEntityId, fileHash])
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model CloudImportRecord {
+  id            String  @id @default(uuid()) @db.Uuid
+  tenantId      String  @db.Uuid
+  legalEntityId String  @db.Uuid
+  activityId    String? @db.Uuid
+  createdById   String
+  batchId       String  @db.Uuid
+  kind          String
+  sourceId      String
+  targetId      String  @db.Uuid
+
+  @@unique([tenantId, legalEntityId, kind, sourceId])
+}
+
+enum StockUnit {
+  square_meter
+  linear_meter
+  piece
+  sheet
+  kilogram
+  litre
+}
+
+enum StockForm {
+  ROLL
+  SHEET
+  PIECE
+  BULK
+}
+
+model Supplier {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @db.Uuid
+  legalEntityId   String      @db.Uuid
+  activityId      String?     @db.Uuid
+  createdById     String
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  code            String      @db.VarChar(80)
+  name            String      @db.VarChar(200)
+  contact         Json
+  defaultCurrency String      @db.VarChar(3)
+  leadTimeDays    Int
+  active          Boolean     @default(true)
+  version         Int         @default(1)
+  entity          LegalEntity @relation("v41r1", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r1_fk")
+
+  activityIdRef Activity? @relation("v41r2", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r2_fk")
+
+  v41r5Children SupplierMaterial[] @relation("v41r5")
+
+  v41r12Children PurchaseOrder[] @relation("v41r12")
+
+  v41r30Children SupplierReturn[] @relation("v41r30")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_Supplier_scope")
+  @@unique([tenantId, legalEntityId, code], map: "v41_u_Supplier_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_Supplier_created")
+}
+
+model SupplierMaterial {
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  legalEntityId String      @db.Uuid
+  activityId    String?     @db.Uuid
+  createdById   String
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  supplierId    String      @db.Uuid
+  variantId     String      @db.Uuid
+  supplierSku   String
+  purchaseUnit  StockUnit
+  minOrderQty   Decimal     @db.Decimal(24, 9)
+  leadTimeDays  Int
+  active        Boolean     @default(true)
+  version       Int         @default(1)
+  entity        LegalEntity @relation("v41r3", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r3_fk")
+
+  activityIdRef Activity? @relation("v41r4", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r4_fk")
+
+  supplierIdRef Supplier @relation("v41r5", fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r5_fk")
+
+  variantIdRef MaterialVariant @relation("v41r6", fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r6_fk")
+
+  v41r9Children SupplierOfferVersion[] @relation("v41r9")
+
+  v41r17Children PurchaseOrderLine[] @relation("v41r17")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_SupplierMaterial_scope")
+  @@unique([tenantId, legalEntityId, supplierId, variantId], map: "v41_u_SupplierMaterial_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_SupplierMaterial_created")
+}
+
+model SupplierOfferVersion {
+  id                     String      @id @default(uuid()) @db.Uuid
+  tenantId               String      @db.Uuid
+  legalEntityId          String      @db.Uuid
+  activityId             String?     @db.Uuid
+  createdById            String
+  createdAt              DateTime    @default(now()) @db.Timestamptz(3)
+  supplierMaterialId     String      @db.Uuid
+  revision               Int
+  originalCurrency       String      @db.VarChar(3)
+  originalUnitPrice      Decimal     @db.Decimal(24, 9)
+  purchaseUnit           StockUnit
+  minQty                 Decimal     @db.Decimal(24, 9)
+  validFrom              DateTime    @db.Timestamptz(3)
+  validUntil             DateTime?   @db.Timestamptz(3)
+  normalizedUsdUnitPrice Decimal?    @db.Decimal(24, 9)
+  fxSnapshot             Json?
+  conversionSnapshot     Json
+  entity                 LegalEntity @relation("v41r7", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r7_fk")
+
+  activityIdRef Activity? @relation("v41r8", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r8_fk")
+
+  supplierMaterialIdRef SupplierMaterial @relation("v41r9", fields: [tenantId, legalEntityId, supplierMaterialId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r9_fk")
+
+  v41r18Children PurchaseOrderLine[] @relation("v41r18")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_SupplierOfferVersion_scope")
+  @@unique([tenantId, legalEntityId, supplierMaterialId, revision], map: "v41_u_SupplierOfferVersion_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_SupplierOfferVersion_created")
+}
+
+model PurchaseOrder {
+  id             String      @id @default(uuid()) @db.Uuid
+  tenantId       String      @db.Uuid
+  legalEntityId  String      @db.Uuid
+  activityId     String?     @db.Uuid
+  createdById    String
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  supplierId     String      @db.Uuid
+  businessNo     String
+  revision       Int
+  revisesOrderId String?     @db.Uuid
+  status         String
+  idempotencyKey String      @db.Uuid
+  payloadHash    String      @db.Char(64)
+  approvedAt     DateTime?   @db.Timestamptz(3)
+  approvedById   String?
+  version        Int         @default(1)
+  entity         LegalEntity @relation("v41r10", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r10_fk")
+
+  activityIdRef Activity? @relation("v41r11", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r11_fk")
+
+  supplierIdRef Supplier @relation("v41r12", fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r12_fk")
+
+  revisesOrderIdRef PurchaseOrder? @relation("v41r13", fields: [tenantId, legalEntityId, revisesOrderId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r13_fk")
+
+  v41r13Children PurchaseOrder[] @relation("v41r13")
+
+  v41r16Children PurchaseOrderLine[] @relation("v41r16")
+
+  v41r22Children GoodsReceipt[] @relation("v41r22")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_PurchaseOrder_scope")
+  @@unique([tenantId, legalEntityId, businessNo, revision], map: "v41_u_PurchaseOrder_1")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "v41_u_PurchaseOrder_2")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_PurchaseOrder_created")
+}
+
+model PurchaseOrderLine {
+  id                 String      @id @default(uuid()) @db.Uuid
+  tenantId           String      @db.Uuid
+  legalEntityId      String      @db.Uuid
+  activityId         String?     @db.Uuid
+  createdById        String
+  createdAt          DateTime    @default(now()) @db.Timestamptz(3)
+  orderId            String      @db.Uuid
+  lineNo             Int
+  supplierMaterialId String      @db.Uuid
+  offerVersionId     String?     @db.Uuid
+  variantId          String      @db.Uuid
+  orderedQty         Decimal     @db.Decimal(24, 9)
+  purchaseUnit       StockUnit
+  orderedBaseQty     Decimal     @db.Decimal(24, 9)
+  baseUnit           StockUnit
+  conversionSnapshot Json
+  priceSnapshot      Json
+  expectedDate       DateTime?   @db.Date
+  entity             LegalEntity @relation("v41r14", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r14_fk")
+
+  activityIdRef Activity? @relation("v41r15", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r15_fk")
+
+  orderIdRef PurchaseOrder @relation("v41r16", fields: [tenantId, legalEntityId, orderId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r16_fk")
+
+  supplierMaterialIdRef SupplierMaterial @relation("v41r17", fields: [tenantId, legalEntityId, supplierMaterialId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r17_fk")
+
+  offerVersionIdRef SupplierOfferVersion? @relation("v41r18", fields: [tenantId, legalEntityId, offerVersionId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r18_fk")
+
+  variantIdRef MaterialVariant @relation("v41r19", fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r19_fk")
+
+  v41r27Children GoodsReceiptLine[] @relation("v41r27")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_PurchaseOrderLine_scope")
+  @@unique([tenantId, legalEntityId, orderId, lineNo], map: "v41_u_PurchaseOrderLine_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_PurchaseOrderLine_created")
+}
+
+model GoodsReceipt {
+  id             String      @id @default(uuid()) @db.Uuid
+  tenantId       String      @db.Uuid
+  legalEntityId  String      @db.Uuid
+  activityId     String?     @db.Uuid
+  createdById    String
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  orderId        String      @db.Uuid
+  locationId     String      @db.Uuid
+  sourceRef      String
+  receivedAt     DateTime    @db.Timestamptz(3)
+  status         String
+  idempotencyKey String      @db.Uuid
+  payloadHash    String      @db.Char(64)
+  postedAt       DateTime?   @db.Timestamptz(3)
+  entity         LegalEntity @relation("v41r20", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r20_fk")
+
+  activityIdRef Activity? @relation("v41r21", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r21_fk")
+
+  orderIdRef PurchaseOrder @relation("v41r22", fields: [tenantId, legalEntityId, orderId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r22_fk")
+
+  locationIdRef StockLocation @relation("v41r23", fields: [tenantId, legalEntityId, locationId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r23_fk")
+
+  v41r26Children GoodsReceiptLine[] @relation("v41r26")
+
+  v41r31Children SupplierReturn[] @relation("v41r31")
+
+  v41r94Children StockPostingBatch[] @relation("v41r94")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_GoodsReceipt_scope")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "v41_u_GoodsReceipt_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_GoodsReceipt_created")
+}
+
+model GoodsReceiptLine {
+  id                  String      @id @default(uuid()) @db.Uuid
+  tenantId            String      @db.Uuid
+  legalEntityId       String      @db.Uuid
+  activityId          String?     @db.Uuid
+  createdById         String
+  createdAt           DateTime    @default(now()) @db.Timestamptz(3)
+  receiptId           String      @db.Uuid
+  orderLineId         String      @db.Uuid
+  lineNo              Int
+  receivedQty         Decimal     @db.Decimal(24, 9)
+  purchaseUnit        StockUnit
+  baseQty             Decimal     @db.Decimal(24, 9)
+  baseUnit            StockUnit
+  conversionSnapshot  Json
+  acquisitionSnapshot Json
+  entity              LegalEntity @relation("v41r24", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r24_fk")
+
+  activityIdRef Activity? @relation("v41r25", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r25_fk")
+
+  receiptIdRef GoodsReceipt @relation("v41r26", fields: [tenantId, legalEntityId, receiptId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r26_fk")
+
+  orderLineIdRef PurchaseOrderLine @relation("v41r27", fields: [tenantId, legalEntityId, orderLineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r27_fk")
+
+  v41r35Children SupplierReturnLine[] @relation("v41r35")
+
+  v41r43Children StockLot[] @relation("v41r43")
+
+  v41r50Children StockMovement[] @relation("v41r50")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_GoodsReceiptLine_scope")
+  @@unique([tenantId, legalEntityId, receiptId, lineNo], map: "v41_u_GoodsReceiptLine_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_GoodsReceiptLine_created")
+}
+
+model SupplierReturn {
+  id                String      @id @default(uuid()) @db.Uuid
+  tenantId          String      @db.Uuid
+  legalEntityId     String      @db.Uuid
+  activityId        String?     @db.Uuid
+  createdById       String
+  createdAt         DateTime    @default(now()) @db.Timestamptz(3)
+  supplierId        String      @db.Uuid
+  originalReceiptId String      @db.Uuid
+  reason            String
+  status            String
+  idempotencyKey    String      @db.Uuid
+  payloadHash       String      @db.Char(64)
+  postedAt          DateTime?   @db.Timestamptz(3)
+  entity            LegalEntity @relation("v41r28", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r28_fk")
+
+  activityIdRef Activity? @relation("v41r29", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r29_fk")
+
+  supplierIdRef Supplier @relation("v41r30", fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r30_fk")
+
+  originalReceiptIdRef GoodsReceipt @relation("v41r31", fields: [tenantId, legalEntityId, originalReceiptId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r31_fk")
+
+  v41r34Children SupplierReturnLine[] @relation("v41r34")
+
+  v41r95Children StockPostingBatch[] @relation("v41r95")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_SupplierReturn_scope")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "v41_u_SupplierReturn_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_SupplierReturn_created")
+}
+
+model SupplierReturnLine {
+  id                  String      @id @default(uuid()) @db.Uuid
+  tenantId            String      @db.Uuid
+  legalEntityId       String      @db.Uuid
+  activityId          String?     @db.Uuid
+  createdById         String
+  createdAt           DateTime    @default(now()) @db.Timestamptz(3)
+  returnId            String      @db.Uuid
+  receiptLineId       String      @db.Uuid
+  lotId               String      @db.Uuid
+  lineNo              Int
+  qtyBase             Decimal     @db.Decimal(24, 9)
+  acquisitionSnapshot Json
+  entity              LegalEntity @relation("v41r32", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r32_fk")
+
+  activityIdRef Activity? @relation("v41r33", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r33_fk")
+
+  returnIdRef SupplierReturn @relation("v41r34", fields: [tenantId, legalEntityId, returnId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r34_fk")
+
+  receiptLineIdRef GoodsReceiptLine @relation("v41r35", fields: [tenantId, legalEntityId, receiptLineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r35_fk")
+
+  lotIdRef StockLot @relation("v41r36", fields: [tenantId, legalEntityId, lotId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r36_fk")
+
+  v41r51Children StockMovement[] @relation("v41r51")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_SupplierReturnLine_scope")
+  @@unique([tenantId, legalEntityId, returnId, lineNo], map: "v41_u_SupplierReturnLine_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_SupplierReturnLine_created")
+}
+
+model StockLocation {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  legalEntityId String   @db.Uuid
+  activityId    String?  @db.Uuid
+  createdById   String
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  code          String
+  name          String
+  parentId      String?  @db.Uuid
+  active        Boolean  @default(true)
+  version       Int      @default(1)
+
+  v41r23Children GoodsReceipt[] @relation("v41r23")
+  entity         LegalEntity    @relation("v41r37", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r37_fk")
+
+  activityIdRef Activity? @relation("v41r38", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r38_fk")
+
+  parentIdRef StockLocation? @relation("v41r39", fields: [tenantId, legalEntityId, parentId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r39_fk")
+
+  v41r39Children StockLocation[] @relation("v41r39")
+
+  v41r48Children StockMovement[] @relation("v41r48")
+
+  v41r57Children InventoryCount[] @relation("v41r57")
+
+  v41r65Children StockTransfer[] @relation("v41r65")
+
+  v41r66Children StockTransfer[] @relation("v41r66")
+
+  v41r102Children StockBalance[] @relation("v41r102")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_StockLocation_scope")
+  @@unique([tenantId, legalEntityId, code], map: "v41_u_StockLocation_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_StockLocation_created")
+}
+
+model StockLot {
+  id                  String    @id @default(uuid()) @db.Uuid
+  tenantId            String    @db.Uuid
+  legalEntityId       String    @db.Uuid
+  activityId          String?   @db.Uuid
+  createdById         String
+  createdAt           DateTime  @default(now()) @db.Timestamptz(3)
+  variantId           String    @db.Uuid
+  originReceiptLineId String    @db.Uuid
+  lotCode             String
+  packageOrdinal      Int
+  form                StockForm
+  baseUnit            StockUnit
+  initialBaseQty      Decimal   @db.Decimal(24, 9)
+  widthCm             Decimal?  @db.Decimal(12, 4)
+  initialLengthM      Decimal?  @db.Decimal(24, 9)
+  sheetHeightCm       Decimal?  @db.Decimal(12, 4)
+  thicknessMm         Decimal?  @db.Decimal(12, 4)
+  acquisitionSnapshot Json
+
+  v41r36Children SupplierReturnLine[] @relation("v41r36")
+  entity         LegalEntity          @relation("v41r40", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r40_fk")
+
+  activityIdRef Activity? @relation("v41r41", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r41_fk")
+
+  variantIdRef MaterialVariant @relation("v41r42", fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r42_fk")
+
+  originReceiptLineIdRef GoodsReceiptLine @relation("v41r43", fields: [tenantId, legalEntityId, originReceiptLineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r43_fk")
+
+  v41r47Children StockMovement[] @relation("v41r47")
+
+  v41r61Children InventoryCountLine[] @relation("v41r61")
+
+  v41r64Children StockTransfer[] @relation("v41r64")
+
+  v41r101Children StockBalance[] @relation("v41r101")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_StockLot_scope")
+  @@unique([tenantId, legalEntityId, originReceiptLineId, packageOrdinal], map: "v41_u_StockLot_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_StockLot_created")
+}
+
+model StockMovement {
+  id                  String      @id @default(uuid()) @db.Uuid
+  tenantId            String      @db.Uuid
+  legalEntityId       String      @db.Uuid
+  activityId          String?     @db.Uuid
+  createdById         String
+  createdAt           DateTime    @default(now()) @db.Timestamptz(3)
+  batchId             String      @db.Uuid
+  lotId               String      @db.Uuid
+  locationId          String      @db.Uuid
+  variantId           String      @db.Uuid
+  lineOrdinal         Int
+  quantityDeltaBase   Decimal     @db.Decimal(24, 9)
+  baseUnit            StockUnit
+  kind                String
+  occurredAt          DateTime    @db.Timestamptz(3)
+  acquisitionSnapshot Json
+  receiptLineId       String?     @db.Uuid
+  returnLineId        String?     @db.Uuid
+  countLineId         String?     @db.Uuid
+  transferId          String?     @db.Uuid
+  reversesMovementId  String?     @db.Uuid
+  entity              LegalEntity @relation("v41r44", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r44_fk")
+
+  activityIdRef Activity? @relation("v41r45", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r45_fk")
+
+  batchIdRef StockPostingBatch @relation("v41r46", fields: [tenantId, legalEntityId, batchId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r46_fk")
+
+  lotIdRef StockLot @relation("v41r47", fields: [tenantId, legalEntityId, lotId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r47_fk")
+
+  locationIdRef StockLocation @relation("v41r48", fields: [tenantId, legalEntityId, locationId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r48_fk")
+
+  variantIdRef MaterialVariant @relation("v41r49", fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r49_fk")
+
+  receiptLineIdRef GoodsReceiptLine? @relation("v41r50", fields: [tenantId, legalEntityId, receiptLineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r50_fk")
+
+  returnLineIdRef SupplierReturnLine? @relation("v41r51", fields: [tenantId, legalEntityId, returnLineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r51_fk")
+
+  countLineIdRef InventoryCountLine? @relation("v41r52", fields: [tenantId, legalEntityId, countLineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r52_fk")
+
+  transferIdRef StockTransfer? @relation("v41r53", fields: [tenantId, legalEntityId, transferId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r53_fk")
+
+  reversesMovementIdRef StockMovement? @relation("v41r54", fields: [tenantId, legalEntityId, reversesMovementId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r54_fk")
+
+  v41r54Children StockMovement[] @relation("v41r54")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_StockMovement_scope")
+  @@unique([tenantId, legalEntityId, batchId, lineOrdinal], map: "v41_u_StockMovement_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_StockMovement_created")
+}
+
+model InventoryCount {
+  id             String      @id @default(uuid()) @db.Uuid
+  tenantId       String      @db.Uuid
+  legalEntityId  String      @db.Uuid
+  activityId     String?     @db.Uuid
+  createdById    String
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  locationId     String      @db.Uuid
+  status         String
+  cutoffAt       DateTime?   @db.Timestamptz(3)
+  idempotencyKey String      @db.Uuid
+  payloadHash    String      @db.Char(64)
+  approvedAt     DateTime?   @db.Timestamptz(3)
+  approvedById   String?
+  entity         LegalEntity @relation("v41r55", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r55_fk")
+
+  activityIdRef Activity? @relation("v41r56", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r56_fk")
+
+  locationIdRef StockLocation @relation("v41r57", fields: [tenantId, legalEntityId, locationId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r57_fk")
+
+  v41r60Children InventoryCountLine[] @relation("v41r60")
+
+  v41r97Children StockPostingBatch[] @relation("v41r97")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_InventoryCount_scope")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "v41_u_InventoryCount_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_InventoryCount_created")
+}
+
+model InventoryCountLine {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @db.Uuid
+  legalEntityId   String    @db.Uuid
+  activityId      String?   @db.Uuid
+  createdById     String
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  countId         String    @db.Uuid
+  lotId           String    @db.Uuid
+  expectedBaseQty Decimal   @db.Decimal(24, 9)
+  observedBaseQty Decimal   @db.Decimal(24, 9)
+  baseUnit        StockUnit
+  note            String
+
+  v41r52Children StockMovement[] @relation("v41r52")
+  entity         LegalEntity     @relation("v41r58", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r58_fk")
+
+  activityIdRef Activity? @relation("v41r59", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r59_fk")
+
+  countIdRef InventoryCount @relation("v41r60", fields: [tenantId, legalEntityId, countId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r60_fk")
+
+  lotIdRef StockLot @relation("v41r61", fields: [tenantId, legalEntityId, lotId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r61_fk")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_InventoryCountLine_scope")
+  @@unique([tenantId, legalEntityId, countId, lotId], map: "v41_u_InventoryCountLine_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_InventoryCountLine_created")
+}
+
+model StockTransfer {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @db.Uuid
+  legalEntityId  String    @db.Uuid
+  activityId     String?   @db.Uuid
+  createdById    String
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  lotId          String    @db.Uuid
+  fromLocationId String    @db.Uuid
+  toLocationId   String    @db.Uuid
+  qtyBase        Decimal   @db.Decimal(24, 9)
+  baseUnit       StockUnit
+  status         String
+  idempotencyKey String    @db.Uuid
+  payloadHash    String    @db.Char(64)
+  postedAt       DateTime? @db.Timestamptz(3)
+
+  v41r53Children StockMovement[] @relation("v41r53")
+  entity         LegalEntity     @relation("v41r62", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r62_fk")
+
+  activityIdRef Activity? @relation("v41r63", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r63_fk")
+
+  lotIdRef StockLot @relation("v41r64", fields: [tenantId, legalEntityId, lotId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r64_fk")
+
+  fromLocationIdRef StockLocation @relation("v41r65", fields: [tenantId, legalEntityId, fromLocationId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r65_fk")
+
+  toLocationIdRef StockLocation @relation("v41r66", fields: [tenantId, legalEntityId, toLocationId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r66_fk")
+
+  v41r96Children StockPostingBatch[] @relation("v41r96")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_StockTransfer_scope")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "v41_u_StockTransfer_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_StockTransfer_created")
+}
+
+model ProductRecipeVersion {
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  legalEntityId String      @db.Uuid
+  activityId    String?     @db.Uuid
+  createdById   String
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  productId     String      @db.Uuid
+  revision      Int
+  status        String
+  validFrom     DateTime    @db.Timestamptz(3)
+  outputQty     Decimal     @db.Decimal(24, 9)
+  outputUnit    StockUnit
+  entity        LegalEntity @relation("v41r67", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r67_fk")
+
+  activityIdRef Activity? @relation("v41r68", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r68_fk")
+
+  productIdRef CloudProduct @relation("v41r69", fields: [tenantId, legalEntityId, productId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r69_fk")
+
+  v41r72Children RecipeLine[] @relation("v41r72")
+
+  v41r88Children MachineProductOption[] @relation("v41r88")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_ProductRecipeVersion_scope")
+  @@unique([tenantId, legalEntityId, productId, revision], map: "v41_u_ProductRecipeVersion_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_ProductRecipeVersion_created")
+}
+
+model RecipeLine {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @db.Uuid
+  legalEntityId   String      @db.Uuid
+  activityId      String?     @db.Uuid
+  createdById     String
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  recipeVersionId String      @db.Uuid
+  variantId       String      @db.Uuid
+  processId       String?     @db.Uuid
+  lineNo          Int
+  quantityRule    Json
+  unit            StockUnit
+  allowanceRatio  Decimal     @db.Decimal(12, 9)
+  optionalFlag    Boolean     @default(false)
+  entity          LegalEntity @relation("v41r70", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r70_fk")
+
+  activityIdRef Activity? @relation("v41r71", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r71_fk")
+
+  recipeVersionIdRef ProductRecipeVersion @relation("v41r72", fields: [tenantId, legalEntityId, recipeVersionId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r72_fk")
+
+  variantIdRef MaterialVariant @relation("v41r73", fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r73_fk")
+
+  processIdRef PrintProcess? @relation("v41r74", fields: [tenantId, legalEntityId, processId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r74_fk")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_RecipeLine_scope")
+  @@unique([tenantId, legalEntityId, recipeVersionId, lineNo], map: "v41_u_RecipeLine_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_RecipeLine_created")
+}
+
+model PrintProcess {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  legalEntityId String   @db.Uuid
+  activityId    String?  @db.Uuid
+  createdById   String
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  code          String
+  name          String
+  technology    String
+  mode          String
+  active        Boolean  @default(true)
+  version       Int      @default(1)
+
+  v41r74Children RecipeLine[] @relation("v41r74")
+  entity         LegalEntity  @relation("v41r75", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r75_fk")
+
+  activityIdRef Activity? @relation("v41r76", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r76_fk")
+
+  v41r82Children MachineCapability[] @relation("v41r82")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_PrintProcess_scope")
+  @@unique([tenantId, legalEntityId, code], map: "v41_u_PrintProcess_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_PrintProcess_created")
+}
+
+model Machine {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @db.Uuid
+  legalEntityId   String      @db.Uuid
+  activityId      String?     @db.Uuid
+  createdById     String
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  code            String
+  name            String
+  brand           String
+  model           String
+  machineType     String
+  technicalLimits Json
+  active          Boolean     @default(true)
+  version         Int         @default(1)
+  entity          LegalEntity @relation("v41r77", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r77_fk")
+
+  activityIdRef Activity? @relation("v41r78", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r78_fk")
+
+  v41r81Children MachineCapability[] @relation("v41r81")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_Machine_scope")
+  @@unique([tenantId, legalEntityId, code], map: "v41_u_Machine_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_Machine_created")
+}
+
+model MachineCapability {
+  id             String      @id @default(uuid()) @db.Uuid
+  tenantId       String      @db.Uuid
+  legalEntityId  String      @db.Uuid
+  activityId     String?     @db.Uuid
+  createdById    String
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  machineId      String      @db.Uuid
+  processId      String      @db.Uuid
+  variantId      String      @db.Uuid
+  mode           String
+  revision       Int
+  maxWidthCm     Decimal     @db.Decimal(12, 4)
+  maxHeightCm    Decimal?    @db.Decimal(12, 4)
+  minThicknessMm Decimal?    @db.Decimal(12, 4)
+  maxThicknessMm Decimal?    @db.Decimal(12, 4)
+  settings       Json
+  verifiedAt     DateTime?   @db.Timestamptz(3)
+  verifiedById   String?
+  validFrom      DateTime    @db.Timestamptz(3)
+  validUntil     DateTime?   @db.Timestamptz(3)
+  entity         LegalEntity @relation("v41r79", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r79_fk")
+
+  activityIdRef Activity? @relation("v41r80", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r80_fk")
+
+  machineIdRef Machine @relation("v41r81", fields: [tenantId, legalEntityId, machineId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r81_fk")
+
+  processIdRef PrintProcess @relation("v41r82", fields: [tenantId, legalEntityId, processId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r82_fk")
+
+  variantIdRef MaterialVariant @relation("v41r83", fields: [tenantId, legalEntityId, variantId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r83_fk")
+
+  v41r86Children MachineProductOption[] @relation("v41r86")
+
+  v41r91Children MachineCostRateVersion[] @relation("v41r91")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_MachineCapability_scope")
+  @@unique([tenantId, legalEntityId, machineId, processId, variantId, mode, revision], map: "v41_u_MachineCapability_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_MachineCapability_created")
+}
+
+model MachineProductOption {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @db.Uuid
+  legalEntityId   String      @db.Uuid
+  activityId      String?     @db.Uuid
+  createdById     String
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  capabilityId    String      @db.Uuid
+  productId       String      @db.Uuid
+  recipeVersionId String      @db.Uuid
+  optionCode      String
+  settings        Json
+  active          Boolean     @default(true)
+  version         Int         @default(1)
+  entity          LegalEntity @relation("v41r84", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r84_fk")
+
+  activityIdRef Activity? @relation("v41r85", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r85_fk")
+
+  capabilityIdRef MachineCapability @relation("v41r86", fields: [tenantId, legalEntityId, capabilityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r86_fk")
+
+  productIdRef CloudProduct @relation("v41r87", fields: [tenantId, legalEntityId, productId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r87_fk")
+
+  recipeVersionIdRef ProductRecipeVersion @relation("v41r88", fields: [tenantId, legalEntityId, recipeVersionId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r88_fk")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_MachineProductOption_scope")
+  @@unique([tenantId, legalEntityId, capabilityId, productId, recipeVersionId, optionCode], map: "v41_u_MachineProductOption_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_MachineProductOption_created")
+}
+
+model MachineCostRateVersion {
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  legalEntityId String      @db.Uuid
+  activityId    String?     @db.Uuid
+  createdById   String
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  capabilityId  String      @db.Uuid
+  revision      Int
+  validFrom     DateTime    @db.Timestamptz(3)
+  basisUnit     String
+  components    Json
+  usdRate       Decimal     @db.Decimal(24, 9)
+  setupUsd      Decimal     @db.Decimal(24, 9)
+  currency      String      @default("USD")
+  entity        LegalEntity @relation("v41r89", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r89_fk")
+
+  activityIdRef Activity? @relation("v41r90", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r90_fk")
+
+  capabilityIdRef MachineCapability @relation("v41r91", fields: [tenantId, legalEntityId, capabilityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r91_fk")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_MachineCostRateVersion_scope")
+  @@unique([tenantId, legalEntityId, capabilityId, revision], map: "v41_u_MachineCostRateVersion_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_MachineCostRateVersion_created")
+}
+
+model StockPostingBatch {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @db.Uuid
+  legalEntityId     String   @db.Uuid
+  activityId        String?  @db.Uuid
+  createdById       String
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  operationKind     String
+  idempotencyKey    String   @db.Uuid
+  payloadHash       String   @db.Char(64)
+  status            String
+  postedAt          DateTime @db.Timestamptz(3)
+  receiptId         String?  @db.Uuid
+  returnId          String?  @db.Uuid
+  transferId        String?  @db.Uuid
+  countId           String?  @db.Uuid
+  reversalOfBatchId String?  @db.Uuid
+
+  v41r46Children StockMovement[] @relation("v41r46")
+  entity         LegalEntity     @relation("v41r92", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r92_fk")
+
+  activityIdRef Activity? @relation("v41r93", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r93_fk")
+
+  receiptIdRef GoodsReceipt? @relation("v41r94", fields: [tenantId, legalEntityId, receiptId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r94_fk")
+
+  returnIdRef SupplierReturn? @relation("v41r95", fields: [tenantId, legalEntityId, returnId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r95_fk")
+
+  transferIdRef StockTransfer? @relation("v41r96", fields: [tenantId, legalEntityId, transferId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r96_fk")
+
+  countIdRef InventoryCount? @relation("v41r97", fields: [tenantId, legalEntityId, countId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r97_fk")
+
+  reversalOfBatchIdRef StockPostingBatch? @relation("v41r98", fields: [tenantId, legalEntityId, reversalOfBatchId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r98_fk")
+
+  v41r98Children StockPostingBatch[] @relation("v41r98")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_StockPostingBatch_scope")
+  @@unique([tenantId, legalEntityId, operationKind, idempotencyKey], map: "v41_u_StockPostingBatch_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_StockPostingBatch_created")
+}
+
+model StockBalance {
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  legalEntityId String      @db.Uuid
+  activityId    String?     @db.Uuid
+  createdById   String
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  lotId         String      @db.Uuid
+  locationId    String      @db.Uuid
+  quantityBase  Decimal     @default(0) @db.Decimal(24, 9)
+  version       Int         @default(1)
+  entity        LegalEntity @relation("v41r99", fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r99_fk")
+
+  activityIdRef Activity? @relation("v41r100", fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r100_fk")
+
+  lotIdRef StockLot @relation("v41r101", fields: [tenantId, legalEntityId, lotId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r101_fk")
+
+  locationIdRef StockLocation @relation("v41r102", fields: [tenantId, legalEntityId, locationId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict, map: "v41r102_fk")
+
+  @@unique([tenantId, legalEntityId, id], map: "v41_StockBalance_scope")
+  @@unique([tenantId, legalEntityId, lotId, locationId], map: "v41_u_StockBalance_1")
+  @@index([tenantId, legalEntityId, createdAt], map: "v41_StockBalance_created")
+}

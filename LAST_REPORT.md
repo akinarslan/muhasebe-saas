@@ -1,4 +1,18 @@
-# PUSULA v0.3 — Sprint E2.3 / anahtar yönetimi ve gerçek fixture restore
+# PUSULA v0.4 — Sprint V4.1 / veri modeli ve mimari tasarım
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · **Yalnız analiz ve uygulanmamış taslak; yeni modül veya migration uygulanmadı.**
+
+Uzak `39c6001` ROADMAP ve `3bcbe9e` ARCHITECTURE kararları fast-forward ile korundu. Kaynak denetiminde34 uygulama modeli, metadata dahil35 tablo ve21 FORCE RLS doğrulandı; canlı DB bağlantısı yapılmadı.22 domain modeli ve ledger tutarlılığı için2 yardımcı (StockPostingBatch/StockBalance) tasarlandı. Ayrı58 modellik Prisma taslağı yerel validate kontrolünden geçti; aktif şema/migration/app/package dosyaları değişmedi.
+
+Supplier/PO/receipt/iade, tek fiziksel eksenli rulo/levha stok, atomik transfer/negatif stok/idempotency, sayım freeze, composite FK/RLS/explicit DENY ve maliyet DTO'ları tanımlandı. Reçete/makine/capability ve immutable tarifeler mevcut MaterialVariant/CloudProduct'a bağlanır; manuel USD maliyeti ve eski teklif/satış snapshot'ları korunur. Model tercihi özgül lot edinim maliyeti + FIFO aday sırası; gerçek sarf/fire v0.5, cari/ödeme v0.6. SQL guard/role/grant planı uygulanmadı; gerçek concurrency/RLS/Neon kalıcılık testleri için33 senaryolu kabul matrisi hazırlandı, çalıştırılmadı.
+
+[Model](docs/architecture/V04_DATA_MODEL.md) · [Servisler/izinler](docs/architecture/V04_DOMAIN_SERVICES.md) · [UX akışları](docs/design/V04_UX_FLOWS.md) · [Migration planı](docs/architecture/drafts/V04_MIGRATION_PLAN.md) · [Denetim ve kabul kapıları](research/PUSULA_V04_SPRINT_V41_AUDIT.md).
+
+Neon/test/production bağlantısı, tablo/rol/izin değişikliği, dump/restore/R2 veya kalıcı key işlemi yapılmadı. Sprint E'nin yeni tablo/function/enum incelemesi ve gerçek Neon backup sorunları production önkoşulu olarak açık; otomatik backup allowlist genişletmesi yok. Gerçek migration, tablo oluşturma ve uygulama geliştirmesi için ayrı açık onay gerekir. Aşağıdaki E2.3 test sonuçları önceki sprintin kaydıdır.
+
+---
+
+# Önceki teslim: PUSULA v0.3 — Sprint E2.3 / anahtar yönetimi ve gerçek fixture restore
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Gerçek yerel dump/decrypt/restore31/31 PASS; production kabulü yok.**
 
