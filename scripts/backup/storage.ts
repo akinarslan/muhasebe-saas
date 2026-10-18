@@ -68,6 +68,22 @@ export function r2Config(
   };
 }
 type Sender = Pick<S3Client, "send">;
+export function publicAccessReview(
+  observed: string,
+  operatorAttested: boolean,
+) {
+  requireCheck(
+    ["not-verified", "managed-and-custom-disabled"].includes(observed),
+    "R2_SECURITY_STATUS_INVALID",
+  );
+  requireCheck(
+    observed === "managed-and-custom-disabled" || operatorAttested,
+    "R2_SECURITY_REVIEW_REQUIRED",
+  );
+  return observed === "managed-and-custom-disabled"
+    ? observed
+    : "operator-attested-disabled";
+}
 export class R2Storage {
   constructor(
     readonly client: Sender,

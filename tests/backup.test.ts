@@ -34,7 +34,11 @@ import {
   validateToc,
 } from "../scripts/backup/postgres";
 import { developmentTarget } from "../src/server/db/target";
-import { R2Storage, r2Config } from "../scripts/backup/storage";
+import {
+  R2Storage,
+  r2Config,
+  publicAccessReview,
+} from "../scripts/backup/storage";
 import {
   lock,
   restrict,
@@ -436,6 +440,20 @@ function fakeStore(
   };
 }
 describe("R2 adapter with in-memory S3 fixture (no cloud writes)", () => {
+  it("distinguishes operator attestation from independent public access verification", () => {
+    expect(publicAccessReview("not-verified", true)).toBe(
+      "operator-attested-disabled",
+    );
+    expect(publicAccessReview("managed-and-custom-disabled", false)).toBe(
+      "managed-and-custom-disabled",
+    );
+    expect(() => publicAccessReview("not-verified", false)).toThrow(
+      "R2_SECURITY_REVIEW_REQUIRED",
+    );
+    expect(() => publicAccessReview("enabled", true)).toThrow(
+      "R2_SECURITY_STATUS_INVALID",
+    );
+  });
   it("rejects hostile endpoints and wrong bucket", () => {
     const env = {
       R2_ACCOUNT_ID: "a".repeat(32),

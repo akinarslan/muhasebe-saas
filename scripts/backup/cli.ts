@@ -23,7 +23,7 @@ import {
   pgEnvironment,
   validateToc,
 } from "./postgres";
-import { createStorage } from "./storage";
+import { createStorage, publicAccessReview } from "./storage";
 import { privateRoot, scratch, removeScratch, lock } from "./workspace";
 
 loadEnvConfig(process.cwd(), false, { info() {}, error() {} });
@@ -133,11 +133,16 @@ async function preflight() {
   });
   await check("r2-public-and-token-policy", async () => {
     const result = await r2Security();
-    requireCheck(
-      result.publicAccess !== "not-verified",
-      "R2_SECURITY_REVIEW_REQUIRED",
-    );
-    return result;
+    return {
+      ...result,
+      tokenScope: args.includes("--confirm-r2-security-reviewed")
+        ? "operator-attested-bucket-only"
+        : result.tokenScope,
+      publicAccess: publicAccessReview(
+        result.publicAccess,
+        args.includes("--confirm-r2-security-reviewed"),
+      ),
+    };
   });
   // Token scope needs an operator review even if public settings were observable.
   await check("r2-token-scope", async () => {
