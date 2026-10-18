@@ -1,6 +1,8 @@
 # v0.3 yedek ve kurtarma — tasarım / henüz çalışmıyor
 
-18.10.2026 E1: [Denetim](../../research/PUSULA_V030_SPRINT_E_AUDIT.md), [R2 kurulumu](../operations/R2_BACKUP_SETUP.md), [restore](../operations/DISASTER_RECOVERY.md), [retention](../operations/BACKUP_RETENTION.md). Hedef Cloudflare R2 Standard private bucket; günlük30/haftalık12/aylık36 taslağı aşağıdaki eski günlük35 önerisinin yerini alır. R2 erişimi ve boş restore hedefi eksik; dump/upload/scheduler/restore çalıştırılmadı. Age aşağıdaki tarihsel öneridir; motor uygulanmadı.
+18.10.2026 E2 güncellemesi: operatör CLI, Node/OpenSSL AES-256-GCM streaming, HKDF ile ayrı encryption/MAC anahtarları, authenticated manifest, snapshot/rol/kapsam guard'ları ve koşullu R2 upload/readback kodu eklendi. [CLI/format ve sınırlamalar](../operations/BACKUP_ENGINE.md), [E2 denetimi](../../research/PUSULA_V030_SPRINT_E2_AUDIT.md), [doğrulama](../validation/SPRINT_E2_VERIFICATION.md). R2 HeadBucket geçti. Gerçek development dump/upload ve gerçek PostgreSQL fixture dump kanıtı yok; E2 kabulü açık. Özel backup rolü/direct URL, PG18 araçları, key eksik. R2 public kapalı/domain yok/bucket-scope ayarları hesap sahibinin panel beyanıyla doğrulandı; bağımsız API kontrolü yapılmadı. Gerçek key üretilmedi. Scheduler/retention/alarm E3, restore E4 kapsamındadır. Aşağıdaki age/S3/günlük35 ifadeleri tarihsel tasarım; uygulanan format AES-GCM v1 ve hedef R2 Standard'dır. Saklama önerisi günlük30/haftalık12/aylık36 ay; silme yok.
+
+18.10.2026 E1 tarihsel: [Denetim](../../research/PUSULA_V030_SPRINT_E_AUDIT.md), [R2 kurulumu](../operations/R2_BACKUP_SETUP.md), [restore](../operations/DISASTER_RECOVERY.md), [retention](../operations/BACKUP_RETENTION.md).
 
 16.10.2026. Sprint B'de Neon development bağlantısı kuruldu; bağımsız bucket, scheduler veya restore kanıtı **yoktur**. Bu prosedürün varlığı yedek alınmış olduğu anlamına gelmez. Yedek/restore uygulaması Sprint E kapsamındadır.
 
