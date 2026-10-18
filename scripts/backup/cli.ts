@@ -26,6 +26,7 @@ import {
 import { createStorage, publicAccessReview } from "./storage";
 import { privateRoot, scratch, removeScratch, lock } from "./workspace";
 import { selectPolicy, MANAGED } from "./policy";
+import { loadVaultKey, readPassphrase } from "./key-vault";
 
 loadEnvConfig(process.cwd(), false, { info() {}, error() {} });
 const args = process.argv.slice(2),
@@ -39,7 +40,29 @@ const policy = () =>
     args.includes("--select-managed-neon-candidate"),
     process.env.NODE_ENV === "production",
   );
-const key = () => keyFromEnv(process.env.BACKUP_ENCRYPTION_KEY);
+const heldKeys: Buffer[] = [];
+let passphrase: Promise<Buffer> | undefined;
+const key = async () => {
+  requireCheck(
+    !process.env.BACKUP_KEY_STORAGE ||
+      process.env.BACKUP_KEY_STORAGE === "encrypted-vault-v1",
+    "KEY_STORAGE_INVALID",
+  );
+  if (process.env.BACKUP_KEY_STORAGE === "encrypted-vault-v1") {
+    passphrase ??= readPassphrase();
+    const stored = await loadVaultKey(keyId(), await passphrase);
+    try {
+      const copy = stored.use((k) => Buffer.from(k));
+      heldKeys.push(copy);
+      return copy;
+    } finally {
+      stored.dispose();
+    }
+  }
+  const value = keyFromEnv(process.env.BACKUP_ENCRYPTION_KEY);
+  heldKeys.push(value);
+  return value;
+};
 const keyId = () => {
   const id = process.env.BACKUP_KEY_ID;
   requireCheck(id && /^[A-Za-z0-9_-]{1,64}$/.test(id), "KEY_ID_MISSING");
@@ -109,7 +132,7 @@ async function preflight() {
     }
   }
   await check("encryption", async () => {
-    key();
+    await key();
     keyId();
     return "configured";
   });
@@ -189,7 +212,7 @@ async function main() {
       for (const id of await readdir(root)) {
         if (!/^[a-f0-9-]{36}$/.test(id)) continue;
         const value = await readManifest(join(root, id, "manifest.json"));
-        const m = authenticateManifest(value, key(), keyId());
+        const m = authenticateManifest(value, await key(), keyId());
         emit({
           backupId: m.backupId,
           createdAt: m.createdAt,
@@ -230,7 +253,7 @@ async function main() {
     throw e;
   }
   try {
-    const secret = key(),
+    const secret = await key(),
       kid = keyId();
     if (command === "create") {
       await checkTools();
@@ -364,4 +387,12 @@ main()
       durationMs: Date.now() - started,
     });
     process.exitCode = 1;
+  })
+  .finally(async () => {
+    for (const secret of heldKeys) secret.fill(0);
+    if (passphrase) {
+      try {
+        (await passphrase).fill(0);
+      } catch {}
+    }
   });

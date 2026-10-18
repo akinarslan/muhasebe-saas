@@ -233,6 +233,16 @@ export async function sealFile(
   return m;
 }
 // Verification drains plaintext into a private sink; never writes unauthenticated plaintext.
+export function archiveDecipher(m: Manifest, key: Buffer) {
+  const decipher = createDecipheriv(
+    "aes-256-gcm",
+    derive(key, m.salt, "encryption"),
+    Buffer.from(m.iv, "hex"),
+  );
+  decipher.setAAD(Buffer.from(canonical(context(m))));
+  decipher.setAuthTag(Buffer.from(m.authTag, "hex"));
+  return decipher;
+}
 export async function verifyFile(
   path: string,
   value: unknown,
@@ -245,13 +255,7 @@ export async function verifyFile(
     digest.size === m.ciphertextSize && digest.sha256 === m.ciphertextSha256,
     "CIPHERTEXT_MISMATCH",
   );
-  const decipher = createDecipheriv(
-    "aes-256-gcm",
-    derive(key, m.salt, "encryption"),
-    Buffer.from(m.iv, "hex"),
-  );
-  decipher.setAAD(Buffer.from(canonical(context(m))));
-  decipher.setAuthTag(Buffer.from(m.authTag, "hex"));
+  const decipher = archiveDecipher(m, key);
   const hash = createHash("sha256");
   let bytes = 0;
   try {

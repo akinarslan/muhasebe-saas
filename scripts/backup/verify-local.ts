@@ -20,6 +20,7 @@ import {
   newContext,
   sealFile,
   saveManifest,
+  readManifest,
   verifyFile,
   digestFile,
 } from "./core";
@@ -33,6 +34,9 @@ import {
   validateToc,
 } from "./postgres";
 import { STRICT, MANAGED } from "./policy";
+import { BackupKey, KeyRing } from "./keys";
+import { decryptToPrivateFile } from "./decrypt";
+import { restoreFixture } from "./restore-fixture";
 
 const serverBin = resolve(".data/tools/postgresql18-fixture-server/bin");
 const clientBin = resolve(".data/tools/postgresql18-client");
@@ -110,14 +114,15 @@ async function insert(
     Object.values(values),
   );
 }
-async function seed(db: Client) {
-  const actor = "e21b-fictional-user";
-  await insert(db, "AuthUser", {
-    id: actor,
-    name: "Imaginary E21b Operator",
-    email: "e21b@example.invalid",
-    updatedAt: new Date(),
-  });
+async function seed(db: Client, restoring = false) {
+  const defaultActor = "e21b-fictional-user";
+  if (!restoring)
+    await insert(db, "AuthUser", {
+      id: defaultActor,
+      name: "Imaginary E21b Operator",
+      email: "e21b@example.invalid",
+      updatedAt: new Date(),
+    });
   await db.query("BEGIN");
   try {
     for (let i = 0; i < 2; i++) {
@@ -129,6 +134,43 @@ async function seed(db: Client) {
         productId = randomUUID(),
         saleId = randomUUID();
       const scope = { tenantId, legalEntityId };
+      const actor = restoring ? "e23-fictional-user-" + i : defaultActor;
+      if (restoring) {
+        await insert(db, "AuthUser", {
+          id: actor,
+          name: "Imaginary Restore User " + i,
+          email: `e23-${i}@example.invalid`,
+          updatedAt: new Date(),
+          twoFactorEnabled: false,
+        });
+        await insert(db, "AuthAccount", {
+          id: randomUUID(),
+          accountId: actor,
+          providerId: "credential",
+          userId: actor,
+          password: "SYNTHETIC-NOT-A-REAL-HASH",
+          updatedAt: new Date(),
+        });
+        await insert(db, "AuthSession", {
+          id: randomUUID(),
+          token: "SYNTHETIC-EXPIRED-SESSION-" + i,
+          userId: actor,
+          expiresAt: new Date("2000-01-01T00:00:00Z"),
+          updatedAt: new Date(),
+        });
+        await insert(db, "AuthTwoFactor", {
+          id: randomUUID(),
+          userId: actor,
+          secret: "SYNTHETIC-NOT-A-REAL-TOTP",
+          backupCodes: "SYNTHETIC-NOT-RECOVERY-CODES",
+          verified: false,
+        });
+        await insert(db, "AuthSecurityEvent", {
+          id: randomUUID(),
+          userId: actor,
+          action: "SYNTHETIC_RESTORE_FIXTURE",
+        });
+      }
       await insert(db, "Tenant", {
         id: tenantId,
         name: `Imaginary Tenant ${i}`,
@@ -138,6 +180,22 @@ async function seed(db: Client) {
         id: legalEntityId,
         name: `Imaginary Company ${i}`,
       });
+      if (restoring) {
+        await insert(db, "Membership", {
+          id: randomUUID(),
+          tenantId,
+          userId: actor,
+        });
+        await insert(db, "AuditEvent", {
+          id: randomUUID(),
+          tenantId,
+          legalEntityId,
+          actorId: actor,
+          targetId: tenantId,
+          action: "SYNTHETIC_RESTORE_FIXTURE",
+          summary: { fixture: true },
+        });
+      }
       await insert(db, "Customer", {
         ...scope,
         id: customerId,
@@ -274,6 +332,8 @@ async function identity(data: string) {
 }
 async function main() {
   const managed = process.argv.includes("--managed-neon-fixture");
+  const restoring = process.argv.includes("--restore-fixture");
+  requireCheck(!managed || !restoring, "FIXTURE_MODE_CONFLICT");
   const securityPolicy = managed ? MANAGED : STRICT;
   requireCheck(
     process.argv.includes("--approve-local-fixture"),
@@ -295,7 +355,10 @@ async function main() {
     !(await lstat(root)).isSymbolicLink() && (await realpath(root)) === root,
     "FIXTURE_ROOT_REJECTED",
   );
-  const dir = join(root, `${managed ? "e22d" : "e21b"}-${randomUUID()}`);
+  const dir = join(
+    root,
+    `${restoring ? "e23" : managed ? "e22d" : "e21b"}-${randomUUID()}`,
+  );
   await mkdir(dir, { mode: 0o700 });
   await restrict(dir);
   const data = join(dir, "data"),
@@ -303,8 +366,10 @@ async function main() {
   const adminPassword = randomBytes(32).toString("hex"),
     backupPassword = randomBytes(32).toString("hex"),
     readerPassword = randomBytes(32).toString("hex");
-  const key = randomBytes(32),
-    keyId = "ephemeral-e21b";
+  const material = BackupKey.generate();
+  const key = material.use((k) => Buffer.from(k)),
+    keyId = material.keyId;
+  material.dispose();
   const port = await freePort(55432);
   let startAttempted = false,
     stopped = false,
@@ -477,7 +542,11 @@ async function main() {
         throw e;
       }
     }
-    await seed(admin);
+    await seed(admin, restoring);
+    if (restoring)
+      await admin.query(
+        'GRANT USAGE ON SCHEMA public TO pusula_runtime; GRANT SELECT ON "Tenant","LegalEntity","Activity","Customer","Material","MaterialVariant","MaterialPriceHistory" TO pusula_runtime',
+      );
     await admin.query(
       (managed
         ? ""
@@ -969,6 +1038,124 @@ async function main() {
         ),
       "TOOL_FAILED",
     );
+    if (restoring) {
+      const ring = new KeyRing();
+      ring.add(new BackupKey(keyId, key), true);
+      try {
+        const next = ring.rotate();
+        const rotated = await ring.active().use((k) =>
+          sealFile(
+            dump,
+            join(dir, "rotated.gcm"),
+            newContext({
+              sourceEnvironment: "fixture",
+              databaseVersion: snapshot!.version,
+              schemaVersion: snapshot!.schemaVersion,
+              coverageSha256: snapshot!.coverageSha256,
+              keyId: next,
+              securityPolicy,
+            }),
+            k,
+          ),
+        );
+        await ring
+          .get(keyId)
+          .use((k) => verifyFile(cipher, manifest, k, keyId));
+        await ring
+          .get(next)
+          .use((k) => verifyFile(join(dir, "rotated.gcm"), rotated, k, next));
+        pass("key-rotation-old-and-new-archive-readability");
+        await reject(
+          "rotated-key-cannot-decrypt-old-archive",
+          () =>
+            ring.get(next).use((k) => verifyFile(cipher, manifest, k, keyId)),
+          "MANIFEST_AUTH_FAILED",
+        );
+        await reject(
+          "old-key-cannot-decrypt-rotated-archive",
+          () =>
+            ring
+              .get(keyId)
+              .use((k) =>
+                verifyFile(join(dir, "rotated.gcm"), rotated, k, next),
+              ),
+          "MANIFEST_AUTH_FAILED",
+        );
+        await reject(
+          "missing-key-fails-closed",
+          async () => ring.get("missing-fixture-key"),
+          "BACKUP_KEY_NOT_FOUND",
+        );
+        await reject(
+          "missing-manifest-blocks-decrypt",
+          async () =>
+            decryptToPrivateFile(
+              cipher,
+              await readManifest(join(dir, "manifest-not-present.json")),
+              key,
+              keyId,
+              dir,
+            ),
+          "MANIFEST_MISSING_OR_INVALID",
+        );
+        const wrongRestoreKey = randomBytes(32);
+        try {
+          await reject(
+            "wrong-key-blocks-decrypt-before-restore",
+            () =>
+              decryptToPrivateFile(
+                cipher,
+                manifest,
+                wrongRestoreKey,
+                keyId,
+                dir,
+              ),
+            "MANIFEST_AUTH_FAILED",
+          );
+        } finally {
+          wrongRestoreKey.fill(0);
+        }
+        await reject(
+          "corrupt-archive-blocks-decrypt-before-restore",
+          () =>
+            decryptToPrivateFile(
+              join(dir, "corrupt.gcm"),
+              manifest,
+              key,
+              keyId,
+              dir,
+            ),
+          "CIPHERTEXT_MISMATCH",
+        );
+        const decrypted = await decryptToPrivateFile(
+          cipher,
+          manifest,
+          key,
+          keyId,
+          dir,
+        );
+        requireCheck(
+          (await digestFile(decrypted)).sha256 ===
+            (await digestFile(dump)).sha256,
+          "RESTORE_DECRYPT_HASH_MISMATCH",
+        );
+        pass("authenticated-decrypted-dump-written-to-private-fixture-only");
+        report.restore = await restoreFixture({
+          source: admin,
+          connect,
+          dataDirectory: data,
+          directory: dir,
+          decrypted,
+          pgRestore: clientTool("pg_restore"),
+          environment: { ...env, PGPASSWORD: adminPassword },
+          readerPassword,
+          backupPassword,
+          pass,
+        });
+      } finally {
+        ring.dispose();
+      }
+    }
   } catch (e) {
     failure = e instanceof BackupError ? e.code : "LOCAL_FIXTURE_FAILED";
     report.failureCode = failure;
@@ -1027,7 +1214,7 @@ async function main() {
     report.status = failure ? "FAIL" : "PASS";
     const rel = relative(root, dir);
     requireCheck(
-      !isAbsolute(rel) && /^e(?:21b|22d)-[a-f0-9-]{36}$/.test(rel),
+      !isAbsolute(rel) && /^e(?:21b|22d|23)-[a-f0-9-]{36}$/.test(rel),
       "REPORT_TARGET_REJECTED",
     );
     await writeFile(

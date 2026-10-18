@@ -1,4 +1,16 @@
-# PUSULA v0.3 — Sprint E2.2d / kontrollü aday risk kanıtı
+# PUSULA v0.3 — Sprint E2.3 / anahtar yönetimi ve gerçek fixture restore
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **Gerçek yerel dump/decrypt/restore31/31 PASS; production kabulü yok.**
+
+CSPRNG256 anahtar/benzersiz ID, redacted bellek nesnesi, passphrase ile şifreli taşınabilir vault, eski anahtarları koruyan rotasyon ve iki recovery zarfını yalnız RAM'de karşılaştırma kodu eklendi. Gerçek kalıcı key, C1/C2 kopyaları veya .env.local değişikliği yapılmadı; üretim ayrı onaylı ve aktif ID'yi değiştirmeyen komuttur.
+
+Yeni local PostgreSQL18.6 cluster'ında gerçek pg_dump -Fc arşivi şifrelendi, doğrulanıp private dosyaya çözüldü, yeni boş template0 DB'ye pg_restore --single-transaction ile yüklendi. İki tenant, müşteri/malzeme/satış/USD geçmişi/snapshot ve sentetik Auth ilişkileri; tüm35 tablonun içerik hash/sayımları, RLS/ACL ve FK/immutable/sealing davranışı eşleşti. Yalnız kendi fixture süreçleri güvenle kapandı. İlk iki doğrulama denemesi ayrı FAIL olarak korundu; başarılı sayılmadı.
+
+Vitest **258/258**, E2 alt kümesi154; TypeScript, lint ve build PASS. Mevcut geniş .data build pattern uyarısı sürer; operatör dosyalarının dağıtım trace dışlaması korunur. Gerçek key vault klasörü oluşmadı.
+
+[Anahtar runbook'u](docs/operations/BACKUP_KEY_MANAGEMENT.md) · [Gerçek restore kanıtı ve kabul sınırları](docs/validation/SPRINT_E23_VERIFICATION.md). Neon rol/PUBLIC/large-object sorunları production önkoşulu olarak açık; Strict/Managed gerçek kaynak/upload güvenlik kontrolleri korunur. Gerçek Neon/test DB/production/Master/MFA/R2 işlemi yok.
+
+## Önceki E2.2d teslimi
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Varsayılan Strict korundu; gerçek Neon Managed kullanımı kapalı.**
 

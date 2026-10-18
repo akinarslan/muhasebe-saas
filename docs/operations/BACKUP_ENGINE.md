@@ -1,5 +1,15 @@
 # E2 operatör CLI'si
 
+18.10.2026 E2.3: [anahtar üretim/saklama/rotasyon](BACKUP_KEY_MANAGEMENT.md) ve [31/31 gerçek restore kanıtı](../validation/SPRINT_E23_VERIFICATION.md). Gerçek kalıcı anahtar veya kurtarma kopyası oluşturulmadı. Legacy env anahtarı korunur; ayrı seçilen encrypted-vault-v1 modu, operatör KEY_ID ve gizli TTY/inherited FD passphrase ile şifreli yerel zarfı açar. Bilinmeyen storage modu, eksik/bozuk zarf veya yanlış passphrase güvenli hatayla durur; sessiz env fallback yoktur. Yeni key üretimi ayrı onay ister ve .env.local/aktif ID'yi yazmaz.
+
+## Yalnız hayalî yerel gerçek restore
+
+`npm run backup:test:restore -- --approve-local-fixture` yeni e23-UUID SCRAM/loopback cluster'ında iki tenant ve sentetik Auth/finans verisi yaratır; gerçek pg_dump -Fc, şifreleme, doğrulanmış private decrypt, yeni template0 DB'ye pg_restore --single-transaction çalıştırır. Hedef yeni UUID adı/OID/data directory/boş katalog ile doğrulanır; --clean veya mevcut DB restore yoktur. Source/target35 tablo içerikleri ve tanımlar/ACL/RLS/trigger/FK karşılaştırılır. Test sonunda yalnız kendi PID/data dizini kapanır; plaintext/dump yalnız Git dışı özel fixture'da kalır. Bu komut bir genel restore CLI'si veya Neon/R2 yetkisi değildir.
+
+Kurtarma DB'si aynı yeni yerel cluster'dadır; global roller cluster hazırlığında önceden yaratılmıştır. pg_dump'ın global rol/parola/veritabanı ACL'lerini geri getirdiği iddia edilmez. Farklı cluster/Neon restore için ayrı rol/grant runbook'u, boş hedef onayı, gerçek key kurtarma ve Auth session invalidasyonu gerekir. Fixture'da Auth kayıtları hayalî/oturumları süresi geçmiş/MFA içerikleri kullanılamaz placeholder'dır; gerçek login/TOTP akışı sertifikasyonu değildir.
+
+Aşağıdaki E2.2d ve önceki kayıtlar tarihsel durumdur; gerçek Neon Managed gate ve production kaynak reddi değişmedi.
+
 18.10.2026 E2.2d: [politika/risk değerlendirmesi](../../research/PUSULA_V030_SPRINT_E22D_RISK_ASSESSMENT.md). Varsayılan strict-v1; Strict artık template dahil diğer connectable DB'lerde CONNECT'i reddeder. Managed aday yalnız yerel fixture'da denenebilir; gerçek Neon kaynak ve Managed upload kapıları kapalıdır. PUBLIC TEMP/CONNECT değişmedi; bunların dışında builtin large object oluşturma/sahiplik yeteneği de fixture'da kanıtlandı. Aşağıdaki eski kabul kapıları tarihsel bağlamıyla okunmalıdır.
 
 ## Güvenlik politikası seçimi
