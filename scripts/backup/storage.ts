@@ -159,12 +159,13 @@ export class R2Storage {
     );
     await verifyFile(archive, m, key, keyId);
     // Conditional creation is the overwrite guard; HEAD alone is insufficient.
+    const archiveBody = createReadStream(archive);
     try {
       await this.client.send(
         new PutObjectCommand({
           Bucket: this.bucket,
           Key: m.objectKey,
-          Body: createReadStream(archive),
+          Body: archiveBody,
           ContentLength: m.ciphertextSize,
           ContentType: "application/octet-stream",
           StorageClass: "STANDARD",
@@ -174,6 +175,8 @@ export class R2Storage {
       );
     } catch (e) {
       requireCheck(status(e) === 412, "R2_UPLOAD_FAILED");
+    } finally {
+      archiveBody.destroy();
     }
     await this.downloadVerify(m, scratch, key, keyId);
     // Commit manifest only after remote bytes/hash/GCM were verified.

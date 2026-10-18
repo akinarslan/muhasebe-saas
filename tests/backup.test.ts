@@ -517,6 +517,11 @@ describe("R2 adapter with in-memory S3 fixture (no cloud writes)", () => {
     );
     expect(r2.objects).toEqual(before);
     expect(r2.objects.size).toBe(2);
+    for (const [cmd] of r2.send.mock.calls) {
+      if (cmd instanceof PutObjectCommand && typeof cmd.input.Body !== "string") {
+        expect((cmd.input.Body as { destroyed: boolean }).destroyed).toBe(true);
+      }
+    }
   });
   it("classifies access denial without including provider error text", async () => {
     const f = await fixture("development"),
