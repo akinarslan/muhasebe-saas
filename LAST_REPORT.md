@@ -1,4 +1,14 @@
-# PUSULA v0.3 — Sprint E2.1b / gerçek yerel fixture testi
+# PUSULA v0.3 — Sprint E2.2 / salt okunur Neon yetki denetimi
+
+18.10.2026 · `feat/pusula-v030-neon-cloud` · **Denetim tamamlandı; gerçek backup hesabı oluşturulmadı.**
+
+Yalnız development sistem katalogları READ ONLY incelendi: PostgreSQL 18.6, 35 tablo, 21 FORCE RLS, 43 policy/FK ve 11 trigger. Owner doğrudan BYPASSRLS ve CREATEROLE taşıyor; SQL ile dar backup rolü tasarımı sürüm belgelerine göre mümkün adaydır. Provider üzerinde CREATE/GRANT ve yeni rol ile okuma denenmedi; tam kabul verilmedi.
+
+İki açık kapı: libpq `psql` verify-full denemesi kök sertifika dosyası eksikliğiyle engellendi; ayrıca PUBLIC TEMP yeni backup rolüne geçici DDL yetkisi miras bırakır. CA hazırlığı ve katı DDL yasağı için ayrı onaylı ACL/guard işi gerekir. Node istemcisinde TLSv1.3, sertifika ve hostname doğrulandı. Gerçek dump/Neon değişikliği/R2 işlemi yok. Test DB ve production'a bağlanılmadı. Gerçek key/KEY_ID/offline kopyalar E2.3'te ayrı hazırlıktır.
+
+[Tam denetim, kaynaklar, alternatifler ve onay sınırları](research/PUSULA_V030_SPRINT_E22_AUDIT.md).
+
+## Önceki E2.1b teslimi
 
 18.10.2026 · `feat/pusula-v030-neon-cloud` · **Yerel sentetik kabul: 14/14 PASS.**
 

@@ -1,6 +1,8 @@
 # E2 operatör CLI'si
 
-18.10.2026. Kod geliştirildi; gerçek development dump/upload ve gerçek fixture pg_dump kanıtı yok. Restore/E3 otomasyon bu modülde bulunmaz. Normal uygulama API'si veya browser bu kodu import etmez.
+18.10.2026. Kod geliştirildi; E2.1b gerçek yerel fixture pg_dump/list/kripto testi 14/14 geçti. Gerçek development dump/upload yapılmadı. Restore/E3 otomasyon bu modülde bulunmaz. Normal uygulama API'si veya browser bu kodu import etmez.
+
+[E2.2 güncel yetki/TLS denetimi](../../research/PUSULA_V030_SPRINT_E22_AUDIT.md): gerçek backup rolü henüz yok; dar SQL-created BYPASSRLS modelinin provider kabulü ayrıca doğrulanmalı. Gerçek psql verify-full bağlantısı LIBPQ_ROOT_CERT_MISSING ile engellendi. Node CA deposu libpq hazırlığı değildir. PUBLIC TEMP, katı DDL yasağı açısından açık kapıdır; mevcut preflight bunu denetlemez. İlgili ACL/guard ve üyelik/fonksiyon yolları için ayrı onaylı iş gerekir; bu sprint motor değişmedi.
 
 ## Güvenli başlangıç
 
