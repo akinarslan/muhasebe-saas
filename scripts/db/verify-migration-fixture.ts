@@ -1,6 +1,6 @@
 import { Client } from "pg";
 import { randomUUID, createHash } from "node:crypto";
-import { readFile, writeFile, cp } from "node:fs/promises";
+import { readFile, writeFile, cp, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { main, runPrisma, inspectFailure } from "./migrate";
 import {
@@ -22,6 +22,13 @@ export async function verifyMigrationFixture(
 ) {
   const saved = { ...process.env };
   Object.assign(process.env, env);
+  const envDirectory = join(dir, "migration-env");
+  await mkdir(envDirectory);
+  await writeFile(
+    join(envDirectory, ".env.test.local"),
+    `PUSULA_MIGRATION_ENV_PROBE=${env.PUSULA_LOCAL_FIXTURE}\nTEST_DIRECT_DATABASE_URL=${env.TEST_DIRECT_DATABASE_URL}\n`,
+    { flag: "wx", mode: 0o600 },
+  );
   const passed: { name: string; ms: number }[] = [];
   const pinned = JSON.parse(
     await readFile("scripts/db/migration-baseline.json", "utf8"),
@@ -252,6 +259,14 @@ export async function verifyMigrationFixture(
       return map;
     };
     const before = await contents();
+    const preflight = await main(["--test"]);
+    check(
+      preflight?.status === "PREFLIGHT_PASS" &&
+        preflight.reference?.counts.length === 10 &&
+        preflight.reference.counts.every((row) => row.count === "2"),
+      "READONLY_REFERENCE_NOT_VERIFIED",
+    );
+    pass("shared-env-readonly-preflight-reference", Date.now());
     let partialReport: Awaited<ReturnType<typeof inspectFailure>> | null = null;
     if (!process.argv.includes("--migration-safety-fast")) {
       const blocker = await migrationClient(
@@ -389,6 +404,11 @@ export async function verifyMigrationFixture(
     );
     start = Date.now();
     await main(["--test", "--apply"]);
+    check(
+      process.env.PUSULA_MIGRATION_ENV_PROBE === env.PUSULA_LOCAL_FIXTURE,
+      "REAL_ENV_LOADER_NOT_EXECUTED",
+    );
+    pass("actual-next-env-loader-private-fixture", Date.now());
     pass("already-applied-no-replay", start);
     const rights = (
       await db.query(
@@ -409,10 +429,11 @@ export async function verifyMigrationFixture(
       "MASTER_PERMISSION_EFFECT_WRONG",
     );
     pass("eight-master-permissions-explicitly-observed", Date.now());
-    let tls:unknown=null;
-    if(process.argv.includes('--fixture-tls')){
-      const {verifyMigrationTls}=await import('./verify-migration-tls');
-      tls=await verifyMigrationTls(db,env,dir);pass('real-prisma-ca-and-hostname-tls',Date.now());
+    let tls: unknown = null;
+    if (process.argv.includes("--fixture-tls")) {
+      const { verifyMigrationTls } = await import("./verify-migration-tls");
+      tls = await verifyMigrationTls(db, env, dir);
+      pass("real-prisma-ca-and-hostname-tls", Date.now());
     }
     await writeFile(
       join(dir, "migration-safety.json"),

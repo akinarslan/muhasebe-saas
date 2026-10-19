@@ -1,4 +1,4 @@
-import nextEnv from "@next/env";
+import { loadMigrationEnvironment } from "./migration-env";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
@@ -128,9 +128,12 @@ export async function main(
     ),
     "UNKNOWN_ARGUMENT",
   );
-  if (!process.env.PUSULA_LOCAL_FIXTURE)
-    nextEnv.loadEnvConfig(process.cwd(), true, { info() {}, error() {} });
   const test = args.includes("--test");
+  loadMigrationEnvironment(test);
+  check(
+    !!process.env[test ? "TEST_DIRECT_DATABASE_URL" : "DIRECT_DATABASE_URL"],
+    "MIGRATION_ENV_MISSING",
+  );
   const u = migrationTarget(
     process.env[test ? "TEST_DIRECT_DATABASE_URL" : "DIRECT_DATABASE_URL"],
     test,
@@ -167,6 +170,7 @@ export async function main(
       files,
       pinned.schema,
       pinned.appliedSchema,
+      !args.includes("--apply"),
     );
     if (before.state === "ALREADY_APPLIED") {
       console.log(
@@ -175,8 +179,24 @@ export async function main(
       return;
     }
     if (!args.includes("--apply")) {
-      console.log(JSON.stringify({ status: "PREFLIGHT_PASS", applied: false }));
-      return;
+      const summary = {
+        status: "PREFLIGHT_PASS",
+        applied: false,
+        tables: before.current.tables.length,
+        forced: before.current.tables.filter(
+          (t) => t.relrowsecurity && t.relforcerowsecurity,
+        ).length,
+        successfulMigrations: before.history.filter(
+          (m) => m.finished && !m.rolled_back,
+        ).length,
+        resolvedRollbacks: before.history.filter((m) => m.rolled_back).length,
+        pending: "202610190014_supplier_catalog",
+        schemaDrift: false,
+        privilegeDrift: test ? null : false,
+        reference: before.reference,
+      };
+      console.log(JSON.stringify(summary));
+      return summary;
     }
     if (!test)
       check(

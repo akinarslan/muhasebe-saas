@@ -43,7 +43,7 @@ export async function verifyMigrationTls(
   }
   const conf = join(dir, "data", "postgresql.auto.conf");
   const initial = await readFile(conf, "utf8");
-  const use = async (name: string) => {
+  const configureCertificate = async (name: string) => {
     const path = (file: string) =>
       join(dir, file).replaceAll("\\", "/").replaceAll("'", "''");
     await writeFile(
@@ -66,15 +66,15 @@ export async function verifyMigrationTls(
     }
     check(result === "PRISMA_CHILD_FAILED", "TLS_NEGATIVE_NOT_REJECTED");
   };
-  await use("trusted");
+  await configureCertificate("trusted");
   await runPrisma(db, {
     ...env,
     PUSULA_FIXTURE_TLS_CA: join(dir, "trusted.pem"),
   });
   await reject("untrusted");
-  await use("wrong-host");
+  await configureCertificate("wrong-host");
   await reject("wrong-host");
-  await use("trusted");
+  await configureCertificate("trusted");
   return {
     openssl: version,
     trustedCa: "PASS",

@@ -1,3 +1,139 @@
+# PUSULA v0.4 — V4.2f / temel bulut kabulü ve kapanış
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · **V4.2 temel development bulut kabulü tamamlandı; ileri senaryolar açık.**
+
+Güncel Codex READ ONLY doğrulaması18:05:51Z: PostgreSQL18.6,014 applied,38 tablo/24 FORCE RLS/14 başarılı migration; sekiz yeni Supplier izni ve sekiz MASTER ilişkisi, MASTER toplam66 izin. Post-schema/rol/ACL pinleri uyumlu, beklenmeyen drift yok.18:06:16Z yalnız ad parametreli sayımda PUSULA TEST TEDARİKÇİSİ için1 aktif eşleşme doğrulandı; SupplierMaterial/SupplierOfferVersion0. Hassas Auth/MFA/session veya finansal içerik okunmadı.
+
+Kullanıcı MASTER giriş/TOTP,/app Tedarikçiler,Supplier API HTTP200,kayıt oluşturma,F5 kalıcılık ve ayrıntı ekranını başarılı bildirdi. Bunlar kullanıcı manuel kabulüdür; Codex'in bağımsız browser/HTTP testi değildir. Önceki gerçek runtime/Prisma smoke kanıtı tarihsel olarak korunur.
+
+Canlı açık maddeler: SupplierMaterial eşleştirme,SupplierOfferVersion oluşturma/tarihsel sürümler,iki tenant izolasyonu,explicit DENY/maliyet gizliliği ve bağımsız R2 backup. Yerel fixture kanıtları bu kapıları kapatmaz. Snapshot ve preview branch/endpoint metadata'sı korunuyor. Bu sprint yeni migration,DML/kayıt oluşturma veya silme,production/test SQL,R2,restore/finalize yok.
+
+[V4.2f kapanış raporu](research/PUSULA_V04_V42F_CLOUD_ACCEPTANCE.md) · [Güncellenmiş bulut kabulü](docs/validation/V04_V42E_CLOUD_ACCEPTANCE.md). Codex yalnız teknik doğrulama ve üç Markdown dosyasını hazırladı; önceki değişiklikler korundu, commit/push yapılmadı. Git teslimi Mimo'ya ait.
+
+---
+
+# Önceki V4.2e kaydı — manuel kabul öncesi tarihsel durum
+
+# PUSULA v0.4 — Sprint V4.2e / gerçek migration014 uygulandı
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · **V4.2e — MIGRATION_APPLIED / CLOUD_ACCEPTANCE_PENDING**
+
+Kullanıcı bakım penceresini ve başka development yazıcısı bilmediğini teyit etti. Son provider metadata ve15:49:57Z bayraksız preflight PASS;15:50:22Z faaliyet/DDL/sayım kapıları geçti. Migration014 yalnız pusula_development üzerinde güvenli runner ile bir kez uygulandı; exit0/APPLIED. DB started_at15:50:30.346Z, finished_at15:50:30.780Z (İstanbul18:50:30.780).014 hash ve ilk13 checksum korundu; retry/resolve/manuelSQL/restore yok.
+
+Bağımsız gerçek postflight:38 tablo/24 FORCE RLS/14 başarılı migration; eski1 resolved008 rollback korunur. Sekiz Supplier Permission ve sekiz MASTER ilişkisi eklendi; MASTER toplam66 izin. Üç Supplier tablosu mevcut ve0 kayıt. Post-schema/ACL pinleri ve test_runtime sınırı geçti. Eski35 tablonun32 toplamı aynı; yalnız Permission58→66,RolePermission92→100,history14→15 değişti. AuthUser2/Membership2 ve iş toplamları korundu; tam içerik eşitliği iddiası yok.
+
+Gerçek pusula_runtime/Prisma ile READ ONLY üç Supplier sorgusu PASS; istemci TLS socket CA/hostname/encrypted/authorized doğrulandı. İlk smoke backend pg_stat_ssl ölçümü yüzünden durmuştu; gerçek istemci socket ölçümüyle ayrıştırıldı, korumalar kapatılmadı. Oturum açılmış MASTER UI/HTTP API kabulü ve canlı yazmalı testler yapılmadı; tam NEON_MIGRATION_PASS verilmez. Yeni Auth session veya sahte Supplier/sipariş oluşturulmadı.
+
+Aynı sprintte yerel TypeScript/ESLint PASS,Vitest329/329,migration safety16/16,DB/RLS11/11,Auth/API62/62,Cloud/DB11/11,Supplier16/16 geçti; ayrı localhost fixture kapandı. Build/browser koşulmadı. Gerçek Neon test/production/preview SQL yok. Snapshot/preview/production ID ve endpoint bağları,ayarları korundu; R2/finalize/reset/delete/ücretli plan yok.
+
+[Gerçek migration raporu](research/PUSULA_V04_V42E_NEON_MIGRATION_REPORT.md) · [Bulut kabul durumu](docs/validation/V04_V42E_CLOUD_ACCEPTANCE.md). Development şeması V4.3 için kurulu; önce kalan gerçek MASTER salt okunur UI/API kabulü tamamlanmalı. Sprint E production engelleri sürer. Codex commit/push yapmadı; Mimo'ya iki belge ve LAST_REPORT sonucu devredilir.
+
+---
+
+# Önceki V4.2e bakım kapısı kaydı — apply öncesi tarihsel durum
+
+# PUSULA v0.4 — Sprint V4.2e / canlı preflight ve bakım kapısı
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · **V4.2e — BLOCKED / NO_APPLY**
+
+Migration uygulama onayı geçerli; eksik olan talimattaki zorunlu bakım penceresi ve development'a yazabilen uygulama/diğer kullanıcı/worker/scheduler işlemlerinin durdurulduğu teyididir. Bu bilgi soruldu; teyit gelmeden --apply kullanılmadı. Anlık başka istemci olmaması bakım teyidi yerine geçmez.
+
+Operatör henüz tüm yazıcıları doğrulamadığını bildirdi. Yeni15:44:34–45Z READ ONLY üç örneklemde başka development session/transaction,diğer oturum kilidi ve prepared transaction yok. Yerelde Pusula Next.js veya eşleşen görünür scheduler bulunmadı; worker adı taşıyan Codex araçları ayrıştırıldı. Vite4207'nin Pusula ilişkisi doğrulanmadı,kapattırılmadı. Uzak deployment/başka cihaz ihtimali açık: Pusula sekmeleri ve varsa haricî yazıcılar bakım boyunca operatörce duraklatılıp teyit edilmeli. Süreç/servis/oturum sonlandırılmadı; migration uygulanmadı.
+
+Gerçek bayraksız runner15:10:04.051Z: PREFLIGHT_PASS, applied=false, PostgreSQL18.6,35 tablo/21 FORCE RLS,13 başarılı migration,1 resolved008 rollback,014 pending. Şema/izin/checksum drift yok.15:11:15Z READ ONLY gözleminde diğer istemci,aktif transaction,çakışan DDL/bekleyen lock ve prepared transaction0. Eski35 tablo sayım referansı alındı: AuthUser2/Membership2; eski iş tabloları0. Supplier izinleri henüz0; gerçek014 uygulanmadı.
+
+TypeScript ve ESLint PASS; Vitest329/329,27 dosya,23.43 saniye. Yeni localhost fixture'da migration güvenliği16/16,DB/RLS11/11,Auth/API62/62,Cloud/DB11/11,Supplier16/16 PASS; serverStopped=true. Bunlar gerçek Neon Supplier kabulü değildir. Canlı MASTER UI/API ve browser smoke uygulanmadı.
+
+HEAD/uzak feature `a88fa0c`,fark0/0; önceki değişiklikler korunur.014 hash aynı. Provider metadata'da development/production/restore preview bağları ve snapshot korunuyor; yeni restore/branch/snapshot/finalize/delete yok. Production/Neon test SQL veya R2 işlemi yok.
+
+[Migration raporu](research/PUSULA_V04_V42E_NEON_MIGRATION_REPORT.md) · [Bulut kabul durumu](docs/validation/V04_V42E_CLOUD_ACCEPTANCE.md). Bakım teyidinden sonra taze preflight/lock kontrolü, tek onaylı apply ve gerçek38/24/14 postflight gerekir. Codex commit/push yapmadı; Mimo'ya bu iki belge ve LAST_REPORT V42E özeti devredilir.
+
+---
+
+# Önceki V4.2d.4 kaydı
+
+# PUSULA v0.4 — Sprint V4.2d.4 / restore PostgreSQL tanısı ve kabul
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `a88fa0c` korunur. **RESTORE_PASS — migration014 için ayrı kullanıcı onayı bekleniyor.**
+
+Gerçek neden, Git dışı doğrulayıcının FK katalog sorgusundaki array_agg(attname) sonucuydu: PostgreSQL name[] OID1003 kurulu pg parser'ında string dönüyor, doğrulayıcı .map() ile TypeError üretiyordu. Aşama FK_VIOLATION_COUNTS; SQLSTATE yok. TLS/bağlantı/READ ONLY/migration/şema/sayımlar daha önce geçiyordu. Yalnız SELECT aggregate girdileri ::text yapıldı; text[] OID1009 parser deneyi ve düzeltilmiş gerçek hedef koşusu geçti. Guard, CA veya allowlist gevşetilmedi.
+
+Mevcut `br-patient-block-bald8u59` / `ep-curly-base-ba5jc1c2` üzerinde14:16:33.676Z RESTORE_SQL_PASS: TLS encrypted/authorized/hostname PASS, PostgreSQL18.6,13 checksum uyumlu migration,1resolved008 rollback,014pending,35tablo/21FORCE RLS. Baseline schema/privilege hash'leri,82index,350constraint,43policy,11trigger ve5function eşleşti.43FK'de ihlal0. AuthUser2/Membership2; MASTER58/58izin ve üyelik/atama tutarsızlıkları0. İş/USD geçmişi/satış tabloları0; dolu finansal içerik eşitliği veya yazmalı davranış testi iddiası yok.
+
+Önce/sonra provider karşılaştırmasında development/production branch ve endpoint bağları/ayarları,kaynak DB listesi,snapshot metadata eşit. Yeni restore/snapshot/finalize/reset/rename/silme veya kaynak/test/production SQL yok. Migration014 uygulanmadı; hash korundu. Hedef branch ready ve son endpoint active,0.25CU; silinmedi. Temizlik ayrı onay gerektirir. Uygulama/env/rol değişikliği veya R2 yok; gerçek Auth oturumları açılmadı.
+
+[Tam tanı, doğrulama ve kanıt sınırları](research/PUSULA_V04_V42D4_RESTORE_SQL_DIAGNOSIS.md). Sonraki014 için taze guarded preflight ve ayrıca açık kullanıcı onayı gerekir. Mimo'ya bu yeni rapor ve LAST_REPORT D4 özeti devredilir; önceki değişiklikler korunur. Codex commit/push yapmadı.
+
+---
+
+# Önceki V4.2d.3 kaydı
+
+# PUSULA v0.4 — Sprint V4.2d.3 / gerçek preview restore denemesi
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · **BLOCKED — provider restore tamamlandı; PostgreSQL doğrulaması başarısız. RESTORE_PASS verilmez;014 uygulanmadı.**
+
+Free aboneliği API'de free_v3,2/10branch ve5478CU-saniye olarak doğrulandı; snapshot/kaynak/hedef ad/operation kontrolleri geçti. Tek snapshot restore POST'u finalize_restore=false ile gönderildi, retry yapılmadı. Yeni branch `pusula-v42-restore-verification` / `br-patient-block-bald8u59`; provider otomatik endpoint `ep-curly-base-ba5jc1c2`, min=max0.25CU. Beş operation finished, hedef ready oldu.
+
+Hedefe sabitlenmiş verify-full/CA yapılandırmalı salt okunur PostgreSQL denemesi13:59:52.300Z'de exit1/RESTORE_SQL_FAILED ile durdu. Geçici hata sınıflandırması asıl exception/SQLSTATE ve alt aşamayı korumadığı için kesin neden bilinmiyor. Başarılı TLS/PG18.6/35tablo/21FORCE RLS/13migration/Auth/sayım sonucu iddia edilmez. Talimattaki durma koşulu gereği SQL tekrarı, guard gevşetme veya otomatik kurtarma yapılmadı.
+
+14:00:40.902Z son provider GET: development/production ID,ad,endpoint bağları,ayarları,kaynak DB envanteri ve snapshot korundu. Kaynak/prod endpoint idle; yeni endpoint active ve branch ready kaldı, silinmedi. Free bütçesi tüketimi sürebilir; temizlik ayrı onay gerektirir. Kaynak/test/production SQL, migration014, finalize/reset/rename, rol değişikliği,dump/R2 yok. Normal.env.local değişmedi; hedef yapılandırması kullanıcı+SYSTEM ACL'li Git dışı dizinde tutuldu; gerçek Auth oturumları uygulamaya açılmadı.
+
+[Tam gerçek restore denemesi raporu](research/PUSULA_V04_V42D3_REAL_RESTORE_VERIFICATION.md). Önce mevcut preview hedefinde güvenli hata tanısı ve eksik salt okunur kabul kontrolleri gerekir; gerçek migration onayı henüz istenmez. Mimo'ya bu rapor ve LAST_REPORT D3 özeti devredilir. Önceki değişiklikler korundu; Codex commit/push/merge yapmadı.
+
+---
+
+# Önceki V4.2d.2 kaydı
+
+# PUSULA v0.4 — Sprint V4.2d.2 / izole snapshot kurtarma planı
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `a88fa0c` korunur. **Plan hazır; uygulama kapısı BLOCKED: güncel storage/restore kapasitesi teyidi ve ardından ayrı açık onay gerekir. Gerçek restore yapılmadı.**
+
+12:59:52.891Z salt okunur Neon GET/list: snapshot `snap-frosty-sky-bav0qeo6`, doğru development kaynak ID'si ve11:03:46Z zamanı eşleşti. İki branch/tek snapshot var; `pusula-v42-restore-verification` adı boş. Snapshot listesinde status/expiration yok; Never operatör beyanıdır. Snapshot varlığı başarılı kurtarma kanıtı değildir.
+
+Standart Free10 branch/1 snapshot kotası açısından hedef3/10 olur. Proje GET compute5164 saniye gösterdi; storage alanları deprecated olduğundan dönen0 değerleri boş kota diye yorumlanmadı. Güncel storage ve ödeme gerektirmeyen restore kapasitesi Console teyidi bekler. Yeni kaynak/ücretli işlem yapılmadı.
+
+[Tam plan, API sırası, Auth güvenliği ve kabul kapıları](research/PUSULA_V04_V42D2_RESTORE_PLAN.md). Restore API yeni branch döndürür; yeni ID yanıttan doğrulanacak. Explicit finalize_restore=false yanında ayrı endpoint/kimlik ve kaynak bağ kontrolleri gerekir. Finalize compute taşıma/rename yaptığı için tatbikatta yasak. Gerçek Auth oturumları uygulamaya açılmayacak; normal.env.local değişmez. Snapshot tüm branch kapsamındaki hassas veri kopyası sayılır; orijinal test DB'ye işlem yapılmaz.
+
+D1 gerçek PREFLIGHT_PASS/applied=false ve014 hash korundu; bu tur yeni SQL/test suite koşulmadı. Kod/env/migration değişmedi; branch/restore/finalize/delete/dump/R2 yok. Codex commit/push yapmadı. Mimo'ya bu yeni rapor ve LAST_REPORT D2 özeti devredilir; önceki D1 değişiklikleri korunur. Kota doğrulanınca yalnız ayrı geçici branch/ona ait gerekirse compute ve gerçek kurtarma tatbikatı için onay istenecek; migration için ayrıca onay gerekir.
+
+---
+
+# Önceki V4.2d.1 kaydı
+
+# PUSULA v0.4 — Sprint V4.2d.1 / env-loader düzeltmesi ve gerçek preflight
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `a88fa0c` korunur · **PREFLIGHT_PASS; migration014 uygulanmadı, ayrıca açık onay gerekir.**
+
+Gerçek neden: @next/env16.4.1 CommonJS export'u __esModule=true ve named loadEnvConfig içeriyor, default export içermiyor. Runner'ın .ts/tsx default import'u gerçek-env yolunda TypeError veriyordu. Kurulu Next rehberindeki named API'ye geçildi. Fixture artık loader'ı atlamıyor; aynı API'yi yalnız özel UUID sentetik env dizininde kullanıyor. Gerçek .env.local değiştirilmedi; guard/TLS/CA/approval/timeout/pin kontrolleri korunur.
+
+Vitest329/329,27 dosya;12 yeni gerçek env/CLI testi. TypeScript ve ESLint PASS. Yeni PG18.6 fixture'da env/migration/read-only referans16/16, DB/RLS11/11, Auth/API62/62, Cloud/DB11/11 ve Supplier16/16 PASS; kendi PID/data kimliğiyle kapandı. Lintte TLS test helper'ının use adı React Hook sayıldığı için yalnız yeniden adlandırıldı; kural kapatılmadı. Build/Playwright bu sprint çalıştırılmadı.
+
+Yerel testlerden sonra tek gerçek development preflight: exit0/PREFLIGHT_PASS, applied=false.2026-10-19T11:52:12.917Z (İstanbul14:52:12.917) READ ONLY snapshot'ında PostgreSQL18.6,35 tablo/21 FORCE RLS,13 başarılı checksum,1 resolved008 rollback ve014 pending doğrulandı. İncelenen schema/privilege pinlerinde drift yok. Aynı snapshot'ta AuthUser2/Membership2; Customer,Material,MaterialVariant,MaterialPriceHistory,CloudProduct,CloudQuote,CloudSale,CloudSaleLine0 sayıldı. Gerçek satır/MFA/fiyat içeriği görüntülenmedi; bu sayılar içerik eşitliği veya tüm DB'nin boş olduğu anlamına gelmez.
+
+014 hash değişmedi: `0950d8de6cc51930492491a91b1756c7cafb65c6ff05c4ee9310fd99cdfde1da`. Snapshot `snap-frosty-sky-bav0qeo6` üzerinde işlem yapılmadı; restore/delete/new branch/new snapshot, Neon test/production işlemi, gerçek dump/R2 yok. Snapshot'ın varlığı test edilmiş kurtarma kabiliyeti sayılmaz. Gerçek migration için kurtarma/bakım kabulü ve ayrıca açık kullanıcı onayı gerekir.
+
+[Rapor, gerçek preflight ve Mimo listesi](research/PUSULA_V04_V42D1_PREFLIGHT_FIX.md). Codex stage/commit/push yapmadı; bu sprint8 dosya Mimo incelemesine hazır. Önceki V42D untracked raporu korundu. .data/env/test credentials teslim dışıdır.
+
+---
+
+# Önceki V4.2d kaydı
+
+# PUSULA v0.4 — Sprint V4.2d / snapshot doğrulaması ve preflight
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `a88fa0c` Mimo teslimi korunur · **BLOCKED: snapshot mevcut, gerçek-env preflight TypeError ile durdu.**
+
+Mevcut Neon CLI kimliğiyle yalnız GET/list metadata kullanılarak snapshot bağımsız doğrulandı: `pusula-v42-before-supplier-migration`, ID `snap-frosty-sky-bav0qeo6`, manual=true, oluşturulma2026-10-19T11:03:46Z (İstanbul14:03:46). Kaynak branch ID'si onaylı `development`/`br-rough-darkness-ba6ow9zo` ile aynı; proje `pusula-development`. Listede1 snapshot,2 branch; development API DB listesinde neondb/pusula_development/pusula_sprint_b_test var. History ayarı21600 saniye. Never operatör teyididir; liste JSON'u expiration alanı döndürmedi. Snapshot oluşturulması test edilmiş kurtarma değildir.
+
+014 checksum `0950d8de6cc51930492491a91b1756c7cafb65c6ff05c4ee9310fd99cdfde1da` eşleşti. Flagsiz guarded preflight exit1/MIGRATION_SAFETY_FAILED verdi; güvenli tanı TypeError'ın `nextEnv.loadEnvConfig` yolunda, DB bağlantısından önce oluştuğunu gösterdi. Bu env-loader yolu önceki local fixture testlerinde atlanmıştı. Kaynak kod değiştirilmedi, env alternatif yoldan yüklenip runner aşılmadı. Güncel SQL35/21/13-checksum/ACL ve eski10 tablo sayımı bu tur alınamadı; eski06:00 referansı snapshot veya bugünkü DB sonucu diye kullanılmaz.
+
+[Snapshot kapsamı, maliyet ve38/24 kabul planı](research/PUSULA_V04_V42D_SNAPSHOT_READINESS.md). API belgeleri ayrı preview branch restore seçeneğini gösterir; gelecekte explicit finalize_restore=false ve ayrı kaynak/veri kopyası onayı gerekir. Yerinde restore aynı branch'teki test DB/Auth/MFA'yı etkileyebilir; bu görevde yasaktır. Yeni branch/snapshot/restore/delete/migration/grant/dump/R2 veya SQL veri işlemi yapılmadı. Free standart kotaları10 branch/1 snapshot; gerçek restore/erişim/fiilî kullanılabilirlik ve bağımsız R2 kabulü henüz kanıtlanmadı.
+
+Sonraki adım dar env-loader düzeltmesi ve gerçek giriş yolu regresyonu; ardından yeni salt okunur SQL baseline'ı ve kurtarma kapısı. Bu engeller çözülmeden gerçek migration onayı istenmez. Codex commit/push yapmadı; Mimo'ya yalnız yeni V42D raporu ve bu dosya devredilir. Mevcut uygulama/migration/env dosyaları korundu.
+
+---
+
+# Önceki V4.2c.1 kaydı
+
 # PUSULA v0.4 — Sprint V4.2c.1 / güvenli migration runner
 
 19.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `225cd7a` korunur · **Yerel geliştirme/kabul PASS; gerçek Neon migration BLOCKED ve onaysız.**

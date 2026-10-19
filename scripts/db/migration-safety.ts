@@ -182,6 +182,7 @@ export async function inspect(
   files: Awaited<ReturnType<typeof migrationFiles>>,
   pinned: Record<string, string>,
   appliedPin?: Record<string, string>,
+  includeCounts = false,
 ) {
   await db.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   try {
@@ -258,7 +259,37 @@ export async function inspect(
       )
     ).rows[0];
     check(!extra.unexpected, "EXTRA_OBJECT_DRIFT");
-    return { state, current, history };
+    let reference: {
+      snapshot: Record<string, unknown>;
+      counts: { table: string; count: string }[];
+    } | null = null;
+    if (includeCounts) {
+      const snapshot = (
+        await db.query(
+          `SELECT transaction_timestamp() AS at,current_database() AS database,current_setting('server_version') AS version,current_setting('transaction_read_only') AS readonly`,
+        )
+      ).rows[0];
+      const counts = [];
+      for (const table of [
+        "AuthUser",
+        "Membership",
+        "Customer",
+        "Material",
+        "MaterialVariant",
+        "MaterialPriceHistory",
+        "CloudProduct",
+        "CloudQuote",
+        "CloudSale",
+        "CloudSaleLine",
+      ]) {
+        const result = await db.query(
+          `SELECT count(*)::text AS n FROM public."${table}"`,
+        );
+        counts.push({ table, count: result.rows[0].n as string });
+      }
+      reference = { snapshot, counts };
+    }
+    return { state, current, history, reference };
   } finally {
     await db.query("ROLLBACK");
   }
