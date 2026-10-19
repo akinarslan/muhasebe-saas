@@ -5,15 +5,23 @@ import { symmetricDecrypt } from "better-auth/crypto";
 import { createOTP } from "@better-auth/utils/otp";
 import { Client } from "pg";
 import { assertDevelopmentTarget } from "../../src/server/db/target";
+import { fixtureFile } from "../../scripts/auth/fixture-files";
+import { dirname, join } from "node:path";
+import {
+  resetLocalFixtureRateLimits,
+  warmLocalFixtureAuth,
+} from "./local-isolation";
 loadEnvConfig(process.cwd());
 test("D7 customer search normal focus filled visual and filtering", async ({
   page,
 }, info) => {
   test.setTimeout(120000);
+  await resetLocalFixtureRateLimits();
+  await warmLocalFixtureAuth(page.request);
   const fixtures = JSON.parse(
     await symmetricDecrypt({
       key: process.env.AUTH_TEST_SECRET!,
-      data: await readFile(".data/auth-browser-fixtures.enc", "utf8"),
+      data: await readFile(fixtureFile("auth-browser-fixtures.enc"), "utf8"),
     }),
   );
   const f = fixtures[info.project.name];
@@ -59,7 +67,9 @@ test("D7 customer search normal focus filled visual and filtering", async ({
   await expect(input).toBeVisible({ timeout: 20000 });
   const field = input.locator("..");
   const baseline = process.env.PUSULA_D7_BASELINE === "1";
-  const folder = `docs/design/screenshots/d7/${baseline ? "before" : "after"}`;
+  const folder = process.env.PUSULA_LOCAL_FIXTURE
+    ? join(dirname(fixtureFile("target.json")), "screenshots", "d7")
+    : `docs/design/screenshots/d7/${baseline ? "before" : "after"}`;
   await mkdir(folder, { recursive: true });
   const measurements: unknown[] = [];
   for (const state of ["normal", "focus", "filled"]) {

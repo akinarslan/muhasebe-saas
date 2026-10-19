@@ -1,4 +1,22 @@
-# PUSULA v0.4 — Sprint V4.1 / veri modeli ve mimari tasarım
+# PUSULA v0.4 — Sprint V4.2 / tedarikçi ve fiyat teklifleri
+
+19.10.2026 · `feat/pusula-v030-neon-cloud` · başlangıç `f3e1baa` · **Codex commit/push yapmadı; Git teslimi Mimo'ya devredilecek.**
+
+Tedarikçi kartları, mevcut MaterialVariant N:N eşleştirmesi, immutable teklif sürümleri, tarih/miktar/birim kontrollü karşılaştırma ve `/app` Tedarikçiler arayüzü geliştirildi. Sekiz yeni Permission anahtarı mevcut ALLOW/DENY/Master sistemine bağlanır; maliyet izni olmayan API yanıtında fiyat/snapshot yoktur. TRY yalnız tarihli TCMB kaynağıyla; EUR/GBP doğrulanmış kaynak yoksa hesaplanamaz. Manuel malzeme USD maliyeti ve eski quote/sale snapshot'larına yazılmaz.
+
+Migration014 ve üç yeni tablo yalnız yeni yerel UUID PostgreSQL18.6 cluster'ında uygulandı:37 model, metadata dahil38 tablo,24 FORCE RLS. Mevcut Neon development/test/production'a migration veya bağlantı yok. Yerel DB aynı isimli olsa da mevcut Neon test DB değildir;127.0.0.1/port/UUID marker/SCRAM ile ayrılır. Auth test kimlikleri ve görseller ayrı Git dışı fixture dizininde; gerçek Master/MFA/env/demo verileri korunur.
+
+Vitest297/297,25 dosya; TypeScript/lint/build PASS. DB/RLS11/11, Auth/API62/62, Cloud/DB11/11 ve V4.2 DB/API16/16 yerel fixture'da geçti. Desktop/mobil Auth+cloud+D7+V4.2 browser6/6, demo22/22; toplam28/28. Mobil PNG'de bulunan kart içi kırpılma düzeltilip güçlü kutu/focus/klavye ölçümleriyle tekrar doğrulandı; başarısız denemeler başarılı sayılmadı. MOQ24,9 hassasiyet sertleştirmesi sonrası Vitest ve odaklı DB/API16/16 tekrar geçti. Tüm geçici sunucular kendi PID/data kimliğiyle güvenli kapandı.
+
+29 teslim dosyası ve23 production client JS dosyasında sır taraması PASS;16 trace'de .data girdisi0. Mevcut geniş .data build uyarısı sürer. Son tam yerel kabul v42-3ce925eb-61a1-4309-987d-d54a1330e26a; son odaklı tekrar v42-19a74f00-b401-4f2b-ad04-5c20ec754a7f. HEADf3e1baa korunur, index boştur;29 dosya Mimo'ya devredilecek çalışma ağacı değişikliğidir, yeni commit/push yoktur.
+
+[Doğrulama ve Mimo dosya listesi](docs/validation/V04_SPRINT_V42_VERIFICATION.md) · [Teknik denetim/izinler/kabul kapıları](research/PUSULA_V04_SPRINT_V42_AUDIT.md).
+
+Gerçek development migration'ı, yeni Permission/Master/grants uygulaması ve canlı kullanım ayrı açık onay bekler. R2/dump/kalıcı key veya production işlemi yapılmadı; Sprint E allowlist35/21 korunur ve yeni tablo/enum/function incelemesi gerekir. V4.3 satın alma/stok/sarf erkenden açılmadı.
+
+---
+
+# Önceki teslim: PUSULA v0.4 — Sprint V4.1 / veri modeli ve mimari tasarım
 
 19.10.2026 · `feat/pusula-v030-neon-cloud` · **Yalnız analiz ve uygulanmamış taslak; yeni modül veya migration uygulanmadı.**
 

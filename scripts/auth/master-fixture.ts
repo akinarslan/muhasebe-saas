@@ -4,6 +4,7 @@ import { createDatabase } from "../../src/server/db/client";
 import { symmetricDecrypt } from "better-auth/crypto";
 import { createOTP } from "@better-auth/utils/otp";
 import type { AuthMail } from "../../src/server/auth/mail";
+import { scoped } from "../../src/server/authorization/context";
 export async function masterFixture() {
   const credentials = await authFixture(),
     messages: AuthMail[] = [];
@@ -19,10 +20,12 @@ export async function masterFixture() {
   );
   const db = createDatabase(process.env.TEST_DATABASE_URL!, true),
     cookies = new Map<string, string>();
+  let membershipId = "";
   const headers = () =>
     new Headers({
       "Content-Type": "application/json",
       Origin: "http://127.0.0.1:3000",
+      ...(membershipId ? { "x-pusula-membership": membershipId } : {}),
       cookie: [...cookies].map(([k, v]) => `${k}=${v}`).join("; "),
     });
   async function call(path: string, body: object) {
@@ -70,6 +73,10 @@ export async function masterFixture() {
     ).ok
   )
     throw new Error("Fixture step-up failed");
+  // Tests may deliberately add another membership to the same identity.
+  // Pin the fixture's original tenant, just as the application's explicit selector does.
+  const boot = await source.db.authBootstrap.findFirstOrThrow({ where: { userId: user.id } });
+  membershipId = (await scoped({ tenantId: boot.tenantId, userId: user.id }, (tx) => tx.membership.findFirstOrThrow({ where: { tenantId: boot.tenantId, userId: user.id } }), db)).id;
   return {
     source,
     db,

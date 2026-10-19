@@ -3160,3 +3160,44 @@ summary {
     width: auto;
   }
 }
+/* V4.2 supplier workspace: same cloud palette and external SearchField focus. */
+.supplier-module { min-width: 0; display: grid; gap: 20px; }
+.supplier-module .cloud-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.supplier-module label, .supplier-form label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+.supplier-module input, .supplier-module select, .supplier-form input, .supplier-form select { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--text); }
+.supplier-module .pusula-search { display: flex; gap: 10px; }
+.supplier-module .pusula-search input { border: 0; border-radius: 0; background: transparent; padding: 0; outline: none; box-shadow: none; }
+.supplier-module input[type=checkbox] { width: auto; }
+.supplier-module small { display: block; color: var(--muted); margin-top: 5px; }
+.supplier-detail { border-top: 1px solid var(--line); padding-top: 20px; display: grid; gap: 12px; }
+.supplier-detail li { margin: 10px 0; }
+.supplier-compare { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.cloud-overlay { position: fixed; inset: 0; background: #020817b8; z-index: 70; }
+.cloud-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(720px, 100vw); overflow-y: auto; background: var(--card); color: var(--text); z-index: 71; padding: 28px; border-left: 1px solid var(--line); box-shadow: -16px 0 60px #0005; }
+.cloud-drawer h2 { font-size: 22px; padding-right: 36px; }
+.cloud-drawer > p { color: var(--muted); margin: 12px 0 20px; }
+.cloud-close { position: absolute; right: 20px; top: 24px; padding: 6px; }
+.supplier-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.supplier-form > .cloud-toolbar { grid-column: 1/-1; display: flex; gap: 12px; justify-content: end; position: sticky; bottom: -28px; padding: 16px 0; background: var(--card); }
+@media (max-width: 700px) { .supplier-form { grid-template-columns: 1fr; } .cloud-drawer { padding: 22px; } .supplier-module .cloud-toolbar > label, .supplier-compare > label { flex: 1 1 100%; } }
+/* Keep intrinsic table/select widths inside their own scroll containers. */
+.supplier-module { width: 100%; max-width: 100%; grid-template-columns: minmax(0, 1fr); padding: 0 20px 20px; }
+.supplier-module > *, .supplier-detail > * { min-width: 0; max-width: 100%; }
+.supplier-module > .cloud-toolbar, .supplier-detail .cloud-toolbar { padding: 0; }
+.supplier-module > .cloud-alert { margin: 0; }
+.supplier-module .table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; }
+.supplier-detail { grid-template-columns: minmax(0, 1fr); padding: 18px; border: 1px solid var(--line); border-radius: 14px; }
+.supplier-detail h3, .supplier-detail h4 { font-weight: 700; overflow-wrap: anywhere; }
+.supplier-detail h4 { margin-top: 8px; }
+.supplier-detail p { color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.supplier-detail > .btn { justify-self: start; width: auto; }
+.supplier-detail li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.supplier-detail .btn { max-width: 100%; white-space: normal; }
+.supplier-module .supplier-history-toggle { display: flex; align-items: center; gap: 8px; justify-self: start; }
+.supplier-module .supplier-history-toggle input[type=checkbox] { width: 16px; height: 16px; padding: 0; flex: 0 0 auto; accent-color: var(--accent); }
+.supplier-comparison-panel { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; }
+.supplier-comparison-panel h3 { font-weight: 700; margin-bottom: 12px; }
+.supplier-comparison-panel > p { margin: 12px 0; color: var(--muted); line-height: 1.6; }
+.supplier-compare > label { flex: 1 1 160px; min-width: 0; max-width: 100%; }
+.supplier-module input:disabled, .supplier-module select:disabled, .supplier-form input:disabled, .supplier-form select:disabled { opacity: .65; }
+@media (max-width: 700px) { .supplier-module { padding: 0 14px 14px; } .supplier-detail, .supplier-comparison-panel { padding: 12px; } }

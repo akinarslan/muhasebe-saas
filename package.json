@@ -3,6 +3,7 @@
   "version": "0.2.3",
   "private": true,
   "scripts": {
+    "suppliers:test:local": "node --conditions=react-server --import tsx scripts/suppliers/verify-local.ts",
     "backup:preflight": "node --use-system-ca --import tsx scripts/backup/cli.ts preflight",
     "backup:create": "node --use-system-ca --import tsx scripts/backup/cli.ts create",
     "backup:upload": "node --use-system-ca --import tsx scripts/backup/cli.ts upload",

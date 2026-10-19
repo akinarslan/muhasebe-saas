@@ -1,4 +1,7 @@
 ﻿export const permissionModules = {
+  suppliers: { view: "Tedarikçi görüntüle", create: "Tedarikçi oluştur", edit: "Tedarikçi düzenle/pasifleştir" },
+  supplierMaterials: { manage: "Tedarikçi malzeme eşleştirmesi" },
+  supplierOffers: { view: "Teklif görüntüle", create: "Teklif sürümü oluştur", history: "Teklif geçmişi", costView: "Tedarikçi fiyatını gör" },
   activities: { manage: "Faaliyet tanımla" },
   customers: {
     view: "Görüntüle",
@@ -77,6 +80,9 @@
   },
 } as const;
 export const moduleLabels: Record<string, string> = {
+  suppliers: "Tedarikçiler",
+  supplierMaterials: "Tedarikçi malzemeleri",
+  supplierOffers: "Tedarikçi teklifleri",
   activities: "Faaliyetler",
   products: "Ürünler",
   expenses: "Gider türleri",

@@ -6,6 +6,7 @@ import { PrismaClient } from "../../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { createAuth, provisionIdentity } from "../../src/server/auth/core";
 import { assertDevelopmentTarget } from "../../src/server/db/target";
+import { fixtureFile } from "./fixture-files";
 loadEnvConfig(process.cwd());
 async function run() {
   assertDevelopmentTarget(process.env.TEST_DIRECT_DATABASE_URL, true, true);
@@ -80,7 +81,7 @@ async function run() {
     await source.db.authRateLimit.deleteMany();
     await mkdir(".data", { recursive: true });
     await writeFile(
-      ".data/auth-browser-fixtures.enc",
+      fixtureFile("auth-browser-fixtures.enc"),
       await symmetricEncrypt({
         key: process.env.AUTH_TEST_SECRET!,
         data: JSON.stringify(fixtures),

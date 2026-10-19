@@ -3,10 +3,11 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { symmetricEncrypt, symmetricDecrypt } from "better-auth/crypto";
 import { bootstrap } from "../../src/server/auth/bootstrap";
+import { fixtureFile } from "./fixture-files";
 loadEnvConfig(process.cwd());
 export async function authFixture() {
   const key = process.env.AUTH_TEST_SECRET!;
-  const file = ".data/auth-test-fixture.enc";
+  const file = fixtureFile("auth-test-fixture.enc");
   try {
     return JSON.parse(
       await symmetricDecrypt({ key, data: await readFile(file, "utf8") }),

@@ -18,6 +18,7 @@ import {
   Coins,
 } from "lucide-react";
 import { CustomerDrawer } from "./customer-drawer";
+import { SupplierDesk } from "./supplier-desk";
 import { CostCalculator } from "./cost-calculator";
 import { Button } from "./ui/button";
 import { NumericInput } from "./ui/numeric-input";
@@ -167,6 +168,7 @@ const errorText = (e: unknown) =>
     : "Bulut bağlantısı kurulamadı. İşlem tamamlanmadı; girdileriniz korunuyor.";
 const modules = [
   { id: "customers", name: "Müşteriler", icon: Users },
+  { id: "suppliers", name: "Tedarikçiler", icon: Building2 },
   { id: "materials", name: "Malzemeler", icon: Package },
   { id: "products", name: "Ürünler", icon: Package },
   { id: "expenses", name: "Giderler", icon: Coins },
@@ -176,6 +178,7 @@ const modules = [
 ];
 export function CloudDesk() {
   const rateGeneration = useRef(0);
+  const [supplierDirty, setSupplierDirty] = useState(false);
   const [editorKey, setEditorKey] = useState(createId);
   const [metadata, setMetadata] = useState<Metadata>({
       companies: [],
@@ -859,6 +862,7 @@ export function CloudDesk() {
             className="cloud-nav-button"
             aria-current={tab === m.id ? "page" : undefined}
             onClick={() => {
+              if (supplierDirty && !window.confirm("Kaydedilmemiş tedarikçi taslağı silinsin mi?")) return;
               if (job) {
                 setError("Açık taslağı kaydedin veya kapatın.");
                 return;
@@ -907,6 +911,7 @@ export function CloudDesk() {
                 aria-label="Şirket"
                 value={company}
                 onChange={(e) => {
+                  if (supplierDirty && !window.confirm("Kaydedilmemiş tedarikçi taslağı silinsin mi?")) return;
                   if (job)
                     setSwitchTarget({ kind: "scope", value: e.target.value });
                   else {
@@ -931,6 +936,7 @@ export function CloudDesk() {
                 disabled={job}
                 value={activity}
                 onChange={(e) => {
+                  if (supplierDirty && !window.confirm("Kaydedilmemiş tedarikçi taslağı silinsin mi?")) return;
                   setActivity(e.target.value);
                   setData(empty);
                   setPreview(null);
@@ -1016,7 +1022,7 @@ export function CloudDesk() {
             <section className="cloud-panel">
               <div className="cloud-toolbar">
                 <h2>{modules.find((m) => m.id === tab)?.name}</h2>
-                {can(`${tab}.create`) && tab !== "imports" && (
+                {can(`${tab}.create`) && tab !== "imports" && tab !== "suppliers" && (
                   <Button
                     disabled={busy}
                     onClick={() => {
@@ -1046,6 +1052,9 @@ export function CloudDesk() {
                 <div className="cloud-empty">
                   Bu modülü görüntüleme yetkiniz yok.
                 </div>
+              )}
+              {tab === "suppliers" && can("suppliers.view") && (
+                <SupplierDesk key={`${company}:${activity}`} company={company} activity={activity} actions={data.actions} materials={data.materials} onDirtyChange={setSupplierDirty} />
               )}
               {tab === "customers" && can("customers.view") && (
                 <>

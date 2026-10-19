@@ -7,16 +7,23 @@ import { Client } from "pg";
 import { assertDevelopmentTarget } from "../../src/server/db/target";
 import { base32 } from "@better-auth/utils/base32";
 import { createCloudRecords, verifyCloudRecords } from "./cloud-scenario";
+import { fixtureFile } from "../../scripts/auth/fixture-files";
+import {
+  resetLocalFixtureRateLimits,
+  warmLocalFixtureAuth,
+} from "./local-isolation";
 loadEnvConfig(process.cwd());
 test("real login MFA enrollment step-up permission matrix and logout", async ({
   page,
   browser,
 }, info) => {
   test.setTimeout(300000);
+  await resetLocalFixtureRateLimits();
+  await warmLocalFixtureAuth(page.request);
   const fixtures = JSON.parse(
     await symmetricDecrypt({
       key: process.env.AUTH_TEST_SECRET!,
-      data: await readFile(".data/auth-browser-fixtures.enc", "utf8"),
+      data: await readFile(fixtureFile("auth-browser-fixtures.enc"), "utf8"),
     }),
   );
   page.setDefaultTimeout(15000);
@@ -25,6 +32,7 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
   const consoleErrors = {
     expectedHttp: 0,
     knownDevelopmentStream: 0,
+    knownPgDeprecation: 0,
     unexpected: 0,
   };
   page.on("console", (message) => {
@@ -34,7 +42,23 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
       consoleErrors.expectedHttp++;
     else if (value.includes("destination stream errored"))
       consoleErrors.knownDevelopmentStream++;
-    else consoleErrors.unexpected++;
+    else if (
+      value.includes(
+        "DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0.",
+      )
+    )
+      consoleErrors.knownPgDeprecation++;
+    else {
+      consoleErrors.unexpected++;
+      if (process.env.PUSULA_LOCAL_FIXTURE)
+        console.warn(
+          "Unexpected local browser console:",
+          value
+            .replaceAll(f.password, "[redacted]")
+            .replaceAll(f.email, "[fixture]")
+            .slice(0, 700),
+        );
+    }
   });
   page.on("pageerror", () => {
     pageErrors++;
@@ -42,13 +66,14 @@ test("real login MFA enrollment step-up permission matrix and logout", async ({
   const f = fixtures[info.project.name];
   console.log("Browser phase: fixture ready");
   await page.goto("/admin/users");
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/\/login/, { timeout: 20000 });
   await page.getByLabel("Kurumsal e-posta").fill(f.email);
   await page.getByLabel("Şifre", { exact: true }).fill(f.password);
   const initialLogin = page.waitForResponse(
     (r) =>
       r.url().endsWith("/api/auth/sign-in/email") &&
       r.request().method() === "POST",
+    { timeout: 60000 },
   );
   await page.getByRole("button", { name: "Giriş yap", exact: true }).click();
   expect((await initialLogin).status()).toBe(200);

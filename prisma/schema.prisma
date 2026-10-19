@@ -496,3 +496,104 @@ model CloudImportRecord {
  targetId String @db.Uuid
  @@unique([tenantId,legalEntityId,kind,sourceId])
 }
+
+// V4.2: composite company/activity FKs, RLS and immutable guards are SQL migrations.
+enum SupplierUnit {
+  square_meter
+  linear_meter
+  piece
+  sheet
+  kilogram
+  litre
+}
+
+model Supplier {
+  id              String             @id @default(uuid()) @db.Uuid
+  tenantId        String             @db.Uuid
+  legalEntityId   String             @db.Uuid
+  activityId      String?            @db.Uuid
+  createdById     String
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  idempotencyKey  String             @db.Uuid
+  payloadHash     String             @db.Char(64)
+  name            String             @db.VarChar(200)
+  tradeName       String             @default("")
+  phone           String             @default("")
+  email           String             @default("")
+  taxOffice       String             @default("")
+  taxId           String             @default("")
+  city            String             @default("")
+  district        String             @default("")
+  address         String             @default("")
+  contact         String             @default("")
+  defaultCurrency String             @db.VarChar(3)
+  leadTimeDays    Int
+  notes           String             @default("")
+  active          Boolean            @default(true)
+  version         Int                @default(1)
+  materials       SupplierMaterial[]
+
+  @@unique([tenantId, legalEntityId, id], map: "supplier_scope_key")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "supplier_request_key")
+  @@index([tenantId, legalEntityId, name])
+}
+
+model SupplierMaterial {
+  id             String                 @id @default(uuid()) @db.Uuid
+  tenantId       String                 @db.Uuid
+  legalEntityId  String                 @db.Uuid
+  activityId     String?                @db.Uuid
+  createdById    String
+  createdAt      DateTime               @default(now()) @db.Timestamptz(3)
+  idempotencyKey String                 @db.Uuid
+  payloadHash    String                 @db.Char(64)
+  supplierId     String                 @db.Uuid
+  variantId      String                 @db.Uuid
+  supplierSku    String
+  purchaseUnit   SupplierUnit
+  minOrderQty    Decimal                @db.Decimal(24, 9)
+  leadTimeDays   Int
+  active         Boolean                @default(true)
+  version        Int                    @default(1)
+  supplier       Supplier               @relation(fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict)
+  offers         SupplierOfferVersion[]
+
+  @@unique([tenantId, legalEntityId, id], map: "supplier_material_scope_key")
+  @@unique([tenantId, legalEntityId, supplierId, variantId], map: "supplier_variant_key")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "supplier_material_request_key")
+  @@index([tenantId, legalEntityId, variantId])
+}
+
+model SupplierOfferVersion {
+  recordedById String
+  id                     String           @id @default(uuid()) @db.Uuid
+  tenantId               String           @db.Uuid
+  legalEntityId          String           @db.Uuid
+  activityId             String?          @db.Uuid
+  createdById            String
+  createdAt              DateTime         @default(now()) @db.Timestamptz(3)
+  idempotencyKey         String           @db.Uuid
+  payloadHash            String           @db.Char(64)
+  supplierMaterialId     String           @db.Uuid
+  revision               Int
+  tierKey                String           @db.VarChar(100)
+  originalCurrency       String           @db.VarChar(3)
+  originalUnitPrice      Decimal          @db.Decimal(24, 9)
+  purchaseUnit           SupplierUnit
+  minQty                 Decimal          @db.Decimal(24, 9)
+  maxQty                 Decimal?         @db.Decimal(24, 9)
+  validFrom              DateTime         @db.Date
+  validUntil             DateTime?        @db.Date
+  offeredOn              DateTime         @db.Date
+  normalizedUsdUnitPrice Decimal?         @db.Decimal(24, 9)
+  fxSnapshot             Json
+  conversionSnapshot     Json
+  supplierReference      String
+  notes                  String
+  link                   SupplierMaterial @relation(fields: [tenantId, legalEntityId, supplierMaterialId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, legalEntityId, id], map: "supplier_offer_scope_key")
+  @@unique([tenantId, legalEntityId, supplierMaterialId, revision], map: "supplier_offer_revision_key")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "supplier_offer_request_key")
+  @@index([tenantId, legalEntityId, supplierMaterialId, validFrom])
+}

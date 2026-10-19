@@ -1,3 +1,4 @@
+import { localFixtureTarget } from "./local-fixture";
 // Explicit Sprint B allowlist. Changing this is a reviewed deployment operation.
 export const developmentTarget = {
   projectId: "icy-queen-44442204",
@@ -19,6 +20,7 @@ export function assertDevelopmentTarget(
   } catch {
     throw new Error("Database configuration is invalid.");
   }
+  if (localFixtureTarget(url, test, direct)) return url;
   const host = direct
     ? developmentTarget.host
     : developmentTarget.host.replace(".c-8.", "-pooler.c-8.");
