@@ -17,6 +17,7 @@ import { BackupError, requireCheck, digestFile } from "../backup/core";
 import { restrict } from "../backup/workspace";
 import { runTool } from "../backup/postgres";
 import { permissions, roleTemplates } from "../../src/lib/auth/catalog";
+import { MigrationSafetyError } from "../db/migration-safety";
 const serverBin = resolve(".data/tools/postgresql18-fixture-server/bin");
 const suffix = process.platform === "win32" ? ".exe" : "";
 const serverTool = (name: string) => join(serverBin, name + suffix);
@@ -239,6 +240,37 @@ async function main() {
       .filter((d) => d.isDirectory())
       .sort((a, b) => a.name.localeCompare(b.name));
     for (const m of migrations) {
+      if (
+        m.name === "202610190014_supplier_catalog" &&
+        process.argv.includes("--migration-safety")
+      ) {
+        await writeFile(
+          join(dir, "target.json"),
+          JSON.stringify({
+            id,
+            host: "127.0.0.1",
+            port,
+            database: "pusula_sprint_b_test",
+            dataDirectory: data,
+          }),
+          { mode: 0o600, flag: "wx" },
+        );
+        const migrationEnv = {
+          ...safeEnv,
+          PUSULA_LOCAL_FIXTURE: id,
+          PUSULA_DB_TARGET: "test",
+          TEST_DIRECT_DATABASE_URL: `postgresql://fixture_admin:${adminPassword}@127.0.0.1:${port}/pusula_sprint_b_test?sslmode=disable`,
+        };
+        const { verifyMigrationFixture } =
+          await import("../db/verify-migration-fixture");
+        report.migrationSafety = await verifyMigrationFixture(
+          admin,
+          migrationEnv,
+          dir,
+        );
+        pass("real-prisma-migration-safety");
+        continue;
+      }
       const sql = await readFile(
         join("prisma/migrations", m.name, "migration.sql"),
       );
@@ -282,7 +314,10 @@ async function main() {
           [r.id, p],
         );
     }
-    await admin.query(`REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+    await admin.query(`GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runtime;
+      GRANT SELECT,INSERT ON "SupplierOfferVersion" TO pusula_test_runtime;
+      GRANT EXECUTE ON FUNCTION v42_reject_offer_mutation(),v42_supplier_identity_guard() TO pusula_test_runtime;
+      REVOKE CREATE ON SCHEMA public FROM PUBLIC;
       GRANT USAGE ON SCHEMA public TO pusula_test_runtime,pusula_test_auth;
       GRANT SELECT ON "Tenant","LegalEntity","Activity","Role","Permission","RolePermission" TO pusula_test_runtime;
       GRANT SELECT,INSERT,UPDATE,DELETE ON "Customer","Material","MaterialVariant","Membership","RoleAssignment","UserPermissionOverride","PermissionScope" TO pusula_test_runtime;
@@ -303,17 +338,18 @@ async function main() {
     );
     report.schema = counts;
     pass("fourteen-local-migrations-38-tables-24-force-rls");
-    await writeFile(
-      join(dir, "target.json"),
-      JSON.stringify({
-        id,
-        host: "127.0.0.1",
-        port,
-        database: "pusula_sprint_b_test",
-        dataDirectory: data,
-      }),
-      { mode: 0o600, flag: "wx" },
-    );
+    if (!process.argv.includes("--migration-safety"))
+      await writeFile(
+        join(dir, "target.json"),
+        JSON.stringify({
+          id,
+          host: "127.0.0.1",
+          port,
+          database: "pusula_sprint_b_test",
+          dataDirectory: data,
+        }),
+        { mode: 0o600, flag: "wx" },
+      );
     const url = (user: string, password: string) =>
       `postgresql://${user}:${password}@127.0.0.1:${port}/pusula_sprint_b_test?sslmode=disable`;
     const env: NodeJS.ProcessEnv = {
@@ -456,7 +492,10 @@ async function main() {
       pass("desktop-mobile-demo-regression-browser");
     }
   } catch (e) {
-    failure = e instanceof BackupError ? e.code : "LOCAL_FIXTURE_FAILED";
+    failure =
+      e instanceof BackupError || e instanceof MigrationSafetyError
+        ? e.code
+        : "LOCAL_FIXTURE_FAILED";
     report.databaseErrorCode = /^[A-Z0-9]{5}$/.test(
       (e as { code?: string }).code ?? "",
     )

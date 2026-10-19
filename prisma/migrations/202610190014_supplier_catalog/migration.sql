@@ -1,4 +1,8 @@
 BEGIN;
+-- Server-side limits execute in the Prisma migration session, not its parent.
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+SET LOCAL transaction_timeout = '60s';
 -- CreateEnum
 CREATE TYPE "SupplierUnit" AS ENUM ('square_meter', 'linear_meter', 'piece', 'sheet', 'kilogram', 'litre');
 
@@ -163,10 +167,10 @@ CREATE TRIGGER v42_supplier_guard BEFORE UPDATE ON "Supplier" FOR EACH ROW EXECU
 CREATE TRIGGER v42_link_guard BEFORE UPDATE ON "SupplierMaterial" FOR EACH ROW EXECUTE FUNCTION v42_supplier_identity_guard();
 
 REVOKE ALL ON "Supplier","SupplierMaterial","SupplierOfferVersion" FROM PUBLIC;
-GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_runtime,pusula_test_runtime;
-GRANT SELECT,INSERT ON "SupplierOfferVersion" TO pusula_runtime,pusula_test_runtime;
+GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_runtime;
+GRANT SELECT,INSERT ON "SupplierOfferVersion" TO pusula_runtime;
 REVOKE ALL ON FUNCTION v42_reject_offer_mutation(),v42_supplier_identity_guard() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION v42_reject_offer_mutation(),v42_supplier_identity_guard() TO pusula_runtime,pusula_test_runtime;
+GRANT EXECUTE ON FUNCTION v42_reject_offer_mutation(),v42_supplier_identity_guard() TO pusula_runtime;
 INSERT INTO "Permission"(id,label,module) VALUES
  ('suppliers.view','Tedarikçi görüntüle','suppliers'),('suppliers.create','Tedarikçi oluştur','suppliers'),('suppliers.edit','Tedarikçi düzenle/pasifleştir','suppliers'),
  ('supplierMaterials.manage','Tedarikçi malzeme eşleştirmesi','supplierMaterials'),
