@@ -654,3 +654,123 @@ model PurchaseOrderLine {
   @@unique([tenantId, legalEntityId, orderId, lineNo], map: "purchase_order_line_order_key")
   @@index([tenantId, legalEntityId, variantId])
 }
+
+// V4.3b: scalar refs below have composite SQL FKs; ledger writes only via narrow posting functions.
+model StockLocation {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ code String
+ name String
+ active Boolean @default(true)
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "StockLocation_scope_date")
+}
+model GoodsReceipt {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ orderId String @db.Uuid
+ locationId String @db.Uuid
+ receivedAt DateTime @db.Date
+ sourceRef String @default("")
+ status String @default("DRAFT")
+ idempotencyKey String @db.Uuid
+ payloadHash String
+ version Int @default(1)
+ postedAt DateTime? @db.Timestamptz(3)
+ cancelReason String?
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "GoodsReceipt_scope_date")
+}
+model GoodsReceiptLine {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ receiptId String @db.Uuid
+ orderLineId String @db.Uuid
+ lineNo Int
+ receivedQty Decimal @db.Decimal(24,9)
+ rejectedQty Decimal @default(0) @db.Decimal(24,9)
+ rejectionReason String @default("")
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "GoodsReceiptLine_scope_date")
+}
+model StockLot {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ originReceiptLineId String @db.Uuid
+ variantId String @db.Uuid
+ lotCode String
+ packageOrdinal Int @default(1)
+ form String
+ baseUnit String
+ initialBaseQty Decimal @db.Decimal(24,9)
+ widthCm Decimal? @db.Decimal(12,4)
+ initialLengthM Decimal? @db.Decimal(24,9)
+ sheetHeightCm Decimal? @db.Decimal(12,4)
+ conversionSnapshot Json
+ acquisitionSnapshot Json
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "StockLot_scope_date")
+}
+model StockPostingBatch {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ receiptId String @db.Uuid
+ kind String
+ reversalOfBatchId String? @db.Uuid
+ reason String @default("")
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "StockPostingBatch_scope_date")
+}
+model StockMovement {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ batchId String @db.Uuid
+ receiptLineId String @db.Uuid
+ lotId String @db.Uuid
+ locationId String @db.Uuid
+ variantId String @db.Uuid
+ lineOrdinal Int
+ quantityDeltaBase Decimal @db.Decimal(24,9)
+ baseUnit String
+ reversesMovementId String? @db.Uuid
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "StockMovement_scope_date")
+}
+model StockBalance {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @db.Uuid
+ legalEntityId String @db.Uuid
+ activityId String? @db.Uuid
+ createdById String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ lotId String @db.Uuid
+ locationId String @db.Uuid
+ quantityBase Decimal @db.Decimal(24,9)
+ version Int @default(1)
+ @@unique([tenantId,legalEntityId,id])
+ @@index([tenantId,legalEntityId,createdAt], map: "StockBalance_scope_date")
+}

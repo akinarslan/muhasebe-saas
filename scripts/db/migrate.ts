@@ -147,6 +147,7 @@ export async function main(
   );
   check(!!pinned.appliedSchema, "APPLIED_SCHEMA_PIN_REQUIRED");
   const files = await migrationFiles();
+  check(test || !files.some(f => f.name === "202610210016_goods_receipts"), "STOCK_MIGRATION_REQUIRES_SEPARATE_CLOUD_REVIEW");
   check(
     files.length === 15 &&
       files.every((f) => pinned.migrations[f.name] === f.checksum),

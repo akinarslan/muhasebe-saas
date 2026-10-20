@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { symmetricDecrypt } from "better-auth/crypto";
-import { createOTP } from "@better-auth/utils/otp";
+import { localFreshTotp } from "./local-isolation";
 import { base32 } from "@better-auth/utils/base32";
 import { fixtureFile } from "../../scripts/auth/fixture-files";
 import {
@@ -31,19 +31,35 @@ test("V4.3a real PO create edit dirty guard step-up approve and cancel", async (
   await page.goto("/login");
   await page.getByLabel("Kurumsal e-posta").fill(f.email);
   await page.getByLabel("Şifre", { exact: true }).fill(f.password);
+  const loginResponse = page.waitForResponse(
+    (r) =>
+      r.url().includes("/sign-in/email") && r.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Giriş yap", exact: true }).click();
-  await expect(page).toHaveURL(/\/app$/);
+  expect((await loginResponse).status()).toBe(200);
+  await expect(page).toHaveURL(/\/app$/, { timeout: 30000 });
   await page.goto("/account/security");
   await page.getByLabel("Mevcut şifre").fill(f.password);
+  const enabledMfa = page.waitForResponse(
+    (r) =>
+      r.url().includes("/two-factor/enable") && r.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "TOTP kurulumunu başlat" }).click();
+  expect((await enabledMfa).status()).toBe(200);
   const encoded = (await page
     .locator('section[aria-label="TOTP kurulumu"] code')
     .textContent())!;
   const secret = new TextDecoder().decode(base32.decode(encoded));
   await page
     .getByLabel("Doğrulama kodu", { exact: true })
-    .fill(await createOTP(secret).totp());
+    .fill(await localFreshTotp(secret));
+  const verifiedMfa = page.waitForResponse(
+    (r) =>
+      r.url().includes("/two-factor/verify-totp") &&
+      r.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "MFA kurulumunu doğrula" }).click();
+  expect((await verifiedMfa).status()).toBe(200);
   await expect(
     page.getByRole("heading", { name: "Kurtarma kodlarınız" }),
   ).toHaveCount(0);
@@ -148,7 +164,7 @@ test("V4.3a real PO create edit dirty guard step-up approve and cancel", async (
   await dialog.getByLabel("Şifre", { exact: true }).fill(f.password);
   await dialog
     .getByLabel("TOTP kodu", { exact: true })
-    .fill(await createOTP(secret).totp());
+    .fill(await localFreshTotp(secret));
   await dialog
     .getByRole("button", { name: "Yeniden doğrula", exact: true })
     .click();

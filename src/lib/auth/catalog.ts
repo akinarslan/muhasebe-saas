@@ -1,7 +1,25 @@
 ﻿export const permissionModules = {
-  suppliers: { view: "Tedarikçi görüntüle", create: "Tedarikçi oluştur", edit: "Tedarikçi düzenle/pasifleştir" },
+  receipts: {
+    view: "Mal kabul görüntüle",
+    create: "Mal kabul taslağı oluştur",
+    edit: "Mal kabul taslağı düzenle",
+    post: "Mal kabul kesinleştir",
+    cancel: "Mal kabul taslağı iptal",
+    reverse: "Mal kabul ters kayıt",
+    costView: "Lot edinim maliyetini gör",
+  },
+  suppliers: {
+    view: "Tedarikçi görüntüle",
+    create: "Tedarikçi oluştur",
+    edit: "Tedarikçi düzenle/pasifleştir",
+  },
   supplierMaterials: { manage: "Tedarikçi malzeme eşleştirmesi" },
-  supplierOffers: { view: "Teklif görüntüle", create: "Teklif sürümü oluştur", history: "Teklif geçmişi", costView: "Tedarikçi fiyatını gör" },
+  supplierOffers: {
+    view: "Teklif görüntüle",
+    create: "Teklif sürümü oluştur",
+    history: "Teklif geçmişi",
+    costView: "Tedarikçi fiyatını gör",
+  },
   purchases: {
     view: "Satın alma siparişi görüntüle",
     create: "Satın alma siparişi oluştur",
@@ -61,6 +79,8 @@
     approve: "İşlem onayla",
   },
   stock: {
+    locationsManage: "Depo tanımla",
+    movementsView: "Stok hareketi görüntüle",
     view: "Görüntüle",
     receive: "Giriş",
     issue: "Çıkış",
@@ -88,6 +108,7 @@
   },
 } as const;
 export const moduleLabels: Record<string, string> = {
+  receipts: "Mal kabul",
   suppliers: "Tedarikçiler",
   supplierMaterials: "Tedarikçi malzemeleri",
   supplierOffers: "Tedarikçi teklifleri",

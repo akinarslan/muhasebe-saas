@@ -23,7 +23,9 @@ async function run() {
   );
   const fixtures: Record<string, unknown> = {};
   try {
-    for (const project of ["desktop", "mobile"]) {
+    for (const project of process.env.PUSULA_STOCK_FIXTURE === "1"
+      ? ["desktop", "mobile", "stock-desktop", "stock-mobile"]
+      : ["desktop", "mobile"]) {
       const tenant = await admin.tenant.create({
         data: { name: `Browser ${project} isolated tenant` },
       });
@@ -38,7 +40,15 @@ async function run() {
         }),
       );
       const targetName = `Browser ${project} sales ${randomBytes(4).toString("hex")}`;
-      await admin.tenantExchangeRate.create({data:{tenantId:tenant.id,actorId:master.user.id,usdTry:"50",reason:"Isolated browser fixture only",publishedAt:new Date("2026-10-17")}});
+      await admin.tenantExchangeRate.create({
+        data: {
+          tenantId: tenant.id,
+          actorId: master.user.id,
+          usdTry: "50",
+          reason: "Isolated browser fixture only",
+          publishedAt: new Date("2026-10-17"),
+        },
+      });
       const target = await provisionIdentity(() =>
         source.auth.api.signUpEmail({
           body: {

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { CustomerDrawer } from "./customer-drawer";
 import { SupplierDesk } from "./supplier-desk";
+import { InventoryDesk } from "./inventory-desk";
 import { PurchaseDesk } from "./purchase-desk";
 import { CostCalculator } from "./cost-calculator";
 import { Button } from "./ui/button";
@@ -171,6 +172,7 @@ const errorText = (e: unknown) =>
 const modules = [
   { id: "customers", name: "Müşteriler", icon: Users },
   { id: "suppliers", name: "Tedarikçiler", icon: Building2 },
+  { id: "receipts", name: "Mal Kabul ve Stok", icon: Package },
   { id: "purchases", name: "Satın Alma Siparişleri", icon: Truck },
   { id: "materials", name: "Malzemeler", icon: Package },
   { id: "products", name: "Ürünler", icon: Package },
@@ -183,6 +185,7 @@ export function CloudDesk() {
   const rateGeneration = useRef(0);
   const [supplierDirty, setSupplierDirty] = useState(false);
   const [purchaseDirty, setPurchaseDirty] = useState(false);
+  const [inventoryDirty,setInventoryDirty]=useState(false);
   const [editorKey, setEditorKey] = useState(createId);
   const [metadata, setMetadata] = useState<Metadata>({
       companies: [],
@@ -867,7 +870,7 @@ export function CloudDesk() {
             aria-current={tab === m.id ? "page" : undefined}
             onClick={() => {
               if (
-                (supplierDirty || purchaseDirty) &&
+                (supplierDirty || purchaseDirty || inventoryDirty) &&
                 !window.confirm("Kaydedilmemiş taslak silinsin mi?")
               )
                 return;
@@ -920,7 +923,7 @@ export function CloudDesk() {
                 value={company}
                 onChange={(e) => {
                   if (
-                    (supplierDirty || purchaseDirty) &&
+                    (supplierDirty || purchaseDirty || inventoryDirty) &&
                     !window.confirm("Kaydedilmemiş taslak silinsin mi?")
                   )
                     return;
@@ -949,7 +952,7 @@ export function CloudDesk() {
                 value={activity}
                 onChange={(e) => {
                   if (
-                    (supplierDirty || purchaseDirty) &&
+                    (supplierDirty || purchaseDirty || inventoryDirty) &&
                     !window.confirm("Kaydedilmemiş taslak silinsin mi?")
                   )
                     return;
@@ -1038,7 +1041,7 @@ export function CloudDesk() {
             <section className="cloud-panel">
               <div className="cloud-toolbar">
                 <h2>{modules.find((m) => m.id === tab)?.name}</h2>
-                {can(`${tab}.create`) && tab !== "imports" && tab !== "suppliers" && tab !== "purchases" && (
+                {can(`${tab}.create`) && tab !== "imports" && tab !== "suppliers" && tab !== "purchases" && tab !== "receipts" && (
                   <Button
                     disabled={busy}
                     onClick={() => {
@@ -1072,6 +1075,7 @@ export function CloudDesk() {
               {tab === "suppliers" && can("suppliers.view") && (
                 <SupplierDesk key={`${company}:${activity}`} company={company} activity={activity} actions={data.actions} materials={data.materials} onDirtyChange={setSupplierDirty} />
               )}
+              {tab === "receipts" && (can("receipts.view") || can("stock.view")) && (<InventoryDesk key={`${company}:${activity}`} company={company} activity={activity} actions={data.actions} onDirtyChange={setInventoryDirty}/>)}
               {tab === "purchases" && can("purchases.view") && (
                 <PurchaseDesk key={`${company}:${activity}`} company={company} activity={activity} actions={data.actions} onDirtyChange={setPurchaseDirty} />
               )}

@@ -40,7 +40,9 @@
     "mail:test": "node --conditions=react-server --import tsx scripts/auth/mail-smoke.ts",
     "auth:test": "npm run auth:test:c1 && npm run auth:test:c2 && npm run auth:test:c3 && npm run auth:test:c4 && npm run auth:test:c5 && npm run auth:test:c6 && npm run auth:test:c61",
     "auth:prepare-browser": "node --conditions=react-server --import tsx scripts/auth/prepare-browser.ts",
-    "test:e2e:auth": "npm run auth:prepare-browser && playwright test --config playwright.auth.config.ts"
+    "test:e2e:auth": "npm run auth:prepare-browser && playwright test --config playwright.auth.config.ts",
+    "stock:test:local": "node --conditions=react-server --import tsx scripts/stock/verify-local.ts",
+    "stock:test": "vitest run tests/receipt-contracts.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

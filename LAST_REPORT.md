@@ -1,3 +1,19 @@
+# PUSULA V4.3b — LOCAL_ACCEPTANCE_PASS
+
+20.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `295c29879b4c0fc7c24de6f5cecd5b5ddaf40697`.
+
+Mal Kabul → lot → immutable ledger/cache akışı geliştirildi. GoodsReceipt/Line,StockLocation,StockLot,StockPostingBatch,StockMovement,StockBalance:izole PG18.6'da47tablo/33FORCE RLS/16migration. Kısmi/tam/ret teslim,aynı-key replay,post idempotency,parent-lock aşım kontrolü,atomik rollback,versioned draft/cancel veayrı tam reversal var.2m×152cm=3.04m²türetilmiş;tek otoritatif stok2metredir. MaterialVariant.usdCost değişmez;edinim/FX snapshot ayrı veizinli DTO'dur.
+
+Gerçek non-owner fixture API/SQL Stock27/27;tamDB11/Auth62/Cloud11/Supplier16/Purchase28PASS. Son candidateAPI27vegerçekdesktop/mobilebrowser4/4PASS;MFA,400sonrası taslak koruma,focus,F5ve3.04m²gösterimi doğrulandı. Vitest368/368,TypeScript,ESLint0/0veproductionbuildPASS. Eski .data tracing uyarısı korunur. İlk başarısız koşular veadversarial OWN toplam/picker kusurlarının düzeltmeleri raporda saklandı;başarısız koşular PASS sayılmadı.
+
+016SHA-256:`4dc07f6a16c5d423b3dbafd06c377775212d728f701c5b3390a5dbb7cbbe5a89`. İlk15SQL/eskibaseline değişmedi. GerçekNeon'a bağlanılmadı veya016uygulanmadı;cloud runner bağlantıdan önce ayrı inceleme/onay kapısıyla durur. PO-2026-9893,gerçekAuth/MFA,env,production/testNeon,snapshot/recovery veR2korundu. Bağımsız backup/E2engeli açık;transfer,sayım,sarf/remnant,V4.3c/V4.5ayrı kapsamdır. Fixture'lar kapandı;commit/push/merge yok.
+
+[Codex raporu ve kesin25dosyalık Mimo listesi](research/PUSULA_V04_V43B_CODEX_REPORT.md) · [Gerçek test kanıtları veilk başarısızlıklar](docs/validation/V04_V43B_VERIFICATION.md) · [Stok domain sözleşmesi](docs/architecture/V43B_INVENTORY_CONTRACT.md).
+
+`.data`,fixture/env/sırlar,generated/build/browser artifact'ları Git teslimine alınmaz. GitHub teslimini Mimo yapacak;bu yerel kabul gerçekNeon016veproduction onayı değildir.
+
+---
+
 # PUSULA V4.3a.4 — CLOUD_BASELINE_ACCEPTED
 
 20.10.2026 · **V4.3a — CLOUD_BASELINE_ACCEPTED** · HEAD `1c41d04d299bd49087ac36d04f88b91cf6cfbc0f`.
