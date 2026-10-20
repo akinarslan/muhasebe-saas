@@ -1,3 +1,69 @@
+# PUSULA V4.3a.4 — CLOUD_BASELINE_ACCEPTED
+
+20.10.2026 · **V4.3a — CLOUD_BASELINE_ACCEPTED** · HEAD `1c41d04d299bd49087ac36d04f88b91cf6cfbc0f`.
+
+Kullanıcı gerçek /app üzerinde MASTER login,PurchaseAPI200,test malzeme152cm,metre link,PO-2026-9893 oluşturma,F5kalıcılığı,MFA ve ikinci tıklamada onayı manuel doğruladı. Bunlar Codex otomatik testi değildir.
+
+Codex READ ONLY SQL:40tablo/26FORCE RLS/15başarılı migration,checksum/pinler uyumlu;MASTER6satın alma izni. Hedef PO APPROVED,1satır,2metre→3,04m²;bağımsız Decimal2×15,20=30,40USD ve snapshot eşit. Test ilişkileri tutarlı. Mevcut kapsam/aggregate kontrolleri stok/cari/ödeme hareketiyle ilişki olmadığını destekliyor;mal kabul testi değildir.
+
+MFA sonrası dialog yalnız kapanıyor,approve otomatik yeniden gönderilmiyor;ikinci tıklama geçerli step-up ile uyumlu. İlk isteğin kesin hata kanıtı yok;bağlantı hatası denmedi. Yeniden Onayla yönlendirmesi UX takip maddesi.
+
+Snapshot ve iki recovery branch'i korunuyor. Gerçek bulut iki tenant negatifleri,normal explicit DENY,tüm currency/offer sürümleri,R2backup/restore ve mal kabul açık. Kabul production-ready değildir. Kod/env/SQL/gerçek veri değişikliği,R2,restore/silme,commit/push/merge yok.
+
+[Bulut kabul raporu](research/PUSULA_V04_V43A4_CLOUD_ACCEPTANCE.md) · [Doğrulama](docs/validation/V04_V43A4_VERIFICATION.md).
+
+Mimo'ya kesin sprint teslimi:`research/PUSULA_V04_V43A4_CLOUD_ACCEPTANCE.md`,`docs/validation/V04_V43A4_VERIFICATION.md`,`LAST_REPORT.md`. Önceki raporlar korunur;`.data`teslim edilmez.
+
+---
+
+# PUSULA V4.3a.3 — Development migration015 uygulandı
+
+20.10.2026 · **MIGRATION_PASS / CLOUD_ACCEPTANCE_PARTIAL** · HEAD `1c41d04d299bd49087ac36d04f88b91cf6cfbc0f`.
+
+Açık development migration ve bakım teyidiyle güvenli runner tek kez çalıştı:APPLIED,exit0. Bağımsız postflight40tablo/26FORCE RLS/15başarılı migration,çözülmüş008=1,unresolved0;checksum/schema/ACL kontrolleri geçti. Yeni6satın alma izni yalnızMASTER'a bağlandı. Eski37tablonun içerik özetleri beklenen seed ekleri dışında korundu;AuthUser2/Membership2/Supplier1.
+
+Gerçek pusula_runtime/Prisma READ ONLY liste ve olmayan detay sorgusu;API handler'ında oturumsuzGET401 geçti. Erişilebilir kullanıcı browser oturumu yok:oturumluAPI ve liste/detay ekranları YAPILMADI. PO/Line0;gerçek kayıt değiştirilmedi. Yazmalı kabul için somut sentetik senaryo raporda;henüz onaylanmadı/çalıştırılmadı. Bağımsız backup engeli açık.
+
+Production/recovery/preview/snapshot ve endpoint bağlantıları korundu;env/kod/SQL değişikliği,R2,restore/finalize,ücret yükseltme,commit/push/merge yok. Bakım boyunca başka writer görülmedi;migration ve DB postflight tamamlandı.
+
+[Migration raporu](research/PUSULA_V04_V43A3_NEON_MIGRATION_REPORT.md) · [Doğrulama ve açık kabul kapıları](docs/validation/V04_V43A3_NEON_MIGRATION_VERIFICATION.md).
+
+Mimo'ya bu sprint teslimi:`research/PUSULA_V04_V43A3_NEON_MIGRATION_REPORT.md`,`docs/validation/V04_V43A3_NEON_MIGRATION_VERIFICATION.md`,`LAST_REPORT.md`. ÖncekiV4.3a.1/.2 dosyaları korunur;`.data` teslim edilmez.
+
+---
+
+# PUSULA V4.3a.2 — RECOVERY_BRANCH_PASS
+
+20.10.2026 · HEAD `1c41d04d299bd49087ac36d04f88b91cf6cfbc0f`.
+
+Açık kullanıcı onayıyla development'tan tek güncel data branch oluşturuldu: `pusula-v43a-pre-migration-015` / `br-broad-river-bavv5pey`; endpoint `ep-wispy-frog-ba755foo`,min/max0.25CU. Parent development,LSN `0/3638E80`,provider capture12:47:55UTC,create12:48:30UTC.
+
+Gerçek TLS doğrulamalı READ ONLY SQL:PG18.6,38 tablo/24 FORCE RLS,14 başarılı migration,çözülmüş008=1,015 pending. Supplier1,AuthUser2,Membership2;MASTER Supplier izinleri8/8. Kaynak önce/son ve kopyada tüm38 tablo toplamları,şema/tablo-function ACL/rol fingerprint'leri eşleşti;invalid constraint/index0. Zaman farkları ve satır eşitliği sınırı raporda.
+
+Development/production/eski preview endpoint bağlantıları ve snapshot korundu. Free branch4/10;ücret yükseltmesi yok. Toplam storage izlenmeli;compute tüketimi sürerken sayaç gecikmelidir.015 uygulanmadı;env/kod/SQL değiştirilmedi;Auth/login trafiği yönlendirilmedi;commit/push/merge yok.015 için ayrıca açık kullanıcı onayı beklenir.
+
+[Recovery branch raporu](research/PUSULA_V04_V43A2_RECOVERY_BRANCH.md) · [SQL doğrulama kanıtı](docs/validation/V04_V43A2_RECOVERY_VERIFICATION.md).
+
+Mimo'ya bu sprint teslimi: `research/PUSULA_V04_V43A2_RECOVERY_BRANCH.md`, `docs/validation/V04_V43A2_RECOVERY_VERIFICATION.md`, `LAST_REPORT.md`. Önceki V4.3a.1 dosyaları korunur;yerel `.data` teslim edilmez.
+
+---
+
+# PUSULA v0.4 — V4.3a.1 Neon recovery hazırlığı
+
+20.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `1c41d04d299bd49087ac36d04f88b91cf6cfbc0f` · **RECOVERY_BLOCKED**.
+
+Salt okunur canlı ön denetim **PREFLIGHT_PASS**: PG18.6,38 tablo/24 FORCE RLS,14 başarılı migration,1 çözülmüş008 rollback,015 pending; schema/runner privilege pinleri ve15 migration checksum'ı uyumlu. Supplier1, SupplierMaterial0, SupplierOfferVersion0, AuthUser2, Membership2.
+
+Öneri: güncel development'tan veri içeren izole kurtarma branch'i; eski snapshot/preview korunur. Free branch3/10,snapshot1/1. Güncel toplam storage/kalan kapasite API'den doğrulanamadı (deprecated sıfırlar kullanılmadı; consumption v2 HTTP403); oturum açık erişilebilir Console yok. Console kapasite teyidi, ayrı branch/endpoint izni ve gerçek kurtarma testi gereklidir. Mevcut Sprint E kapsam/rol/ACL engelleri nedeniyle bağımsız yedek de hazır değildir.
+
+Migration015 uygulanmadı; yeni branch/snapshot, dump/upload/restore veya kalıcı bulut değişikliği yapılmadı. Kod/SQL/env değişmedi; commit/push yok. Bu hazırlık migration izni oluşturmaz.
+
+[Recovery planı](research/PUSULA_V04_V43A1_NEON_RECOVERY_PLAN.md) · [Readiness kanıtı](docs/validation/V04_V43A1_READINESS.md).
+
+Mimo'ya kesin teslim: `research/PUSULA_V04_V43A1_NEON_RECOVERY_PLAN.md`, `docs/validation/V04_V43A1_READINESS.md`, `LAST_REPORT.md`. Yerel `.data/recovery-v43a1/` teslim edilmez.
+
+---
+
 # PUSULA v0.4 — V4.3a Codex F01–F10 düzeltme kabulü
 
 20.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `2ab48ad` · **FIX_PASS — yerel kabul**.
