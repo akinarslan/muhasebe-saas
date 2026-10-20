@@ -3,7 +3,33 @@ import { readFile, readdir } from "node:fs/promises";
 import { Client } from "pg";
 import { assertDevelopmentTarget } from "../../src/server/db/target";
 import { expectedTables, expectedForcedTables } from "../backup/postgres";
-export const migrationName = "202610190014_supplier_catalog";
+export const migrationName = "202610200015_purchase_orders";
+// Post-014 catalog expected while V4.3a is still PENDING. The backup allowlist
+// itself stays untouched: supplier and purchase tables remain failed-closed.
+const catalogTables = [
+  ...expectedTables,
+  "Supplier",
+  "SupplierMaterial",
+  "SupplierOfferVersion",
+].sort();
+const catalogForcedTables = [
+  ...expectedForcedTables,
+  "Supplier",
+  "SupplierMaterial",
+  "SupplierOfferVersion",
+].sort();
+export const pendingTables = catalogTables;
+export const pendingForcedTables = catalogForcedTables;
+export const appliedTables = [
+  ...catalogTables,
+  "PurchaseOrder",
+  "PurchaseOrderLine",
+].sort();
+export const appliedForcedTables = [
+  ...catalogForcedTables,
+  "PurchaseOrder",
+  "PurchaseOrderLine",
+].sort();
 export const limits = {
   lockMs: 3000,
   statementMs: 30000,
@@ -158,7 +184,7 @@ export async function validateRemotePrivileges(
       roles: `SELECT rolname,rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls,has_database_privilege(oid,current_database(),'CONNECT') AS connect,has_database_privilege(oid,current_database(),'TEMP') AS temp,has_schema_privilege(oid,'public','CREATE') AS schema_create FROM pg_roles ORDER BY 1`,
       memberships: `SELECT pg_get_userbyid(roleid) AS parent,pg_get_userbyid(member) AS member,admin_option,inherit_option,set_option FROM pg_auth_members ORDER BY 1,2`,
       defaults: `SELECT pg_get_userbyid(defaclrole) AS owner,defaclnamespace::regnamespace::text AS schema,defaclobjtype,defaclacl::text FROM pg_default_acl ORDER BY 1,2,3`,
-      acl: `SELECT r.rolname,c.relname,has_table_privilege(r.oid,c.oid,'SELECT') AS select,has_table_privilege(r.oid,c.oid,'INSERT') AS insert,has_table_privilege(r.oid,c.oid,'UPDATE') AS update,has_table_privilege(r.oid,c.oid,'DELETE') AS delete,has_table_privilege(r.oid,c.oid,'TRUNCATE') AS truncate FROM pg_roles r CROSS JOIN pg_class c WHERE r.rolname LIKE 'pusula%' AND c.relnamespace='public'::regnamespace AND c.relkind='r' AND c.relname NOT IN ('Supplier','SupplierMaterial','SupplierOfferVersion') ORDER BY 1,2`,
+      acl: `SELECT r.rolname,c.relname,has_table_privilege(r.oid,c.oid,'SELECT') AS select,has_table_privilege(r.oid,c.oid,'INSERT') AS insert,has_table_privilege(r.oid,c.oid,'UPDATE') AS update,has_table_privilege(r.oid,c.oid,'DELETE') AS delete,has_table_privilege(r.oid,c.oid,'TRUNCATE') AS truncate FROM pg_roles r CROSS JOIN pg_class c WHERE r.rolname LIKE 'pusula%' AND c.relnamespace='public'::regnamespace AND c.relkind='r' AND c.relname NOT IN ('Supplier','SupplierMaterial','SupplierOfferVersion','PurchaseOrder','PurchaseOrderLine') ORDER BY 1,2`,
     };
     for (const [key, sql] of Object.entries(queries))
       check(
@@ -200,7 +226,7 @@ export async function inspect(
     if (state === "PENDING") {
       check(
         canonical(current.tables.map((t) => t.relname)) ===
-          canonical(expectedTables),
+          canonical(pendingTables),
         "TABLE_DRIFT",
       );
       check(
@@ -208,17 +234,17 @@ export async function inspect(
           current.tables
             .filter((t) => t.relrowsecurity && t.relforcerowsecurity)
             .map((t) => t.relname),
-        ) === canonical(expectedForcedTables),
+        ) === canonical(pendingForcedTables),
         "RLS_DRIFT",
       );
       for (const [key, value] of Object.entries(current))
         check(hash(value) === pinned[key], `SCHEMA_DRIFT_${key.toUpperCase()}`);
     } else {
       check(
-        current.tables.length === 38 &&
+        current.tables.length === 40 &&
           current.tables.filter(
             (t) => t.relrowsecurity && t.relforcerowsecurity,
-          ).length === 24,
+          ).length === 26,
         "APPLIED_SCHEMA_INCONSISTENT",
       );
       if (appliedPin)
@@ -227,31 +253,49 @@ export async function inspect(
             hash(value) === appliedPin[key],
             `APPLIED_SCHEMA_DRIFT_${key.toUpperCase()}`,
           );
-      const names = ["Supplier", "SupplierMaterial", "SupplierOfferVersion"];
+      // Per-table explicit grants; anything outside the allowlist is rejected.
+      const grants: Record<string, string> = {
+        Supplier: "SELECT,INSERT,UPDATE",
+        SupplierMaterial: "SELECT,INSERT,UPDATE",
+        SupplierOfferVersion: "SELECT,INSERT",
+        PurchaseOrder: "SELECT,INSERT,UPDATE",
+        PurchaseOrderLine: "SELECT,INSERT,DELETE",
+      };
+      const names = Object.keys(grants);
       for (const name of names) {
         const acl = (
           await db.query(
-            `SELECT has_table_privilege('pusula_runtime',$1,'SELECT') AS read,has_table_privilege('pusula_runtime',$1,'INSERT') AS insert,has_table_privilege('pusula_runtime',$1,'UPDATE') AS update,has_table_privilege('pusula_runtime',$1,'DELETE,TRUNCATE') AS destructive,has_table_privilege('pusula_auth',$1,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS auth,has_table_privilege('pusula_test_runtime',$1,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS test`,
+            `SELECT has_table_privilege('pusula_runtime',$1,'SELECT') AS read,has_table_privilege('pusula_runtime',$1,'INSERT') AS insert,has_table_privilege('pusula_runtime',$1,'UPDATE') AS update,has_table_privilege('pusula_runtime',$1,'DELETE') AS del,has_table_privilege('pusula_runtime',$1,'TRUNCATE') AS trunc,has_table_privilege('pusula_auth',$1,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS auth,has_table_privilege('pusula_test_runtime',$1,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS test`,
             [`public."${name}"`],
           )
         ).rows[0];
+        const granted = grants[name].split(",");
+        const flag = (p: string) =>
+          p === "SELECT"
+            ? acl.read
+            : p === "INSERT"
+              ? acl.insert
+              : p === "UPDATE"
+                ? acl.update
+                : p === "DELETE"
+                  ? acl.del
+                  : acl.trunc;
         check(
-          acl.read &&
-            acl.insert &&
-            acl.update === (name !== "SupplierOfferVersion") &&
-            !acl.destructive &&
+          ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE"].every((p) =>
+            granted.includes(p) ? flag(p) : !flag(p),
+          ) &&
             !acl.auth &&
             !acl.test,
-          "SUPPLIER_GRANTS_REJECTED",
+          `${name.toUpperCase()}_GRANTS_REJECTED`,
         );
       }
       const exposed = (
         await db.query(
-          `SELECT EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY($1::text[]) AND a.grantee=0) OR EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('v42_reject_offer_mutation','v42_supplier_identity_guard') AND a.grantee=0) AS exposed`,
+          `SELECT EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY($1::text[]) AND a.grantee=0) OR EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('v42_reject_offer_mutation','v42_supplier_identity_guard','v43a_reject_po_mutation','v43a_order_guard','v43a_line_guard') AND a.grantee=0) AS exposed`,
           [names],
         )
       ).rows[0].exposed;
-      check(!exposed, "SUPPLIER_PUBLIC_ACCESS_REJECTED");
+      check(!exposed, "PROTECTED_TABLE_PUBLIC_ACCESS_REJECTED");
     }
     const extra = (
       await db.query(

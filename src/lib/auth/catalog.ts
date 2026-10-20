@@ -2,6 +2,14 @@
   suppliers: { view: "Tedarikçi görüntüle", create: "Tedarikçi oluştur", edit: "Tedarikçi düzenle/pasifleştir" },
   supplierMaterials: { manage: "Tedarikçi malzeme eşleştirmesi" },
   supplierOffers: { view: "Teklif görüntüle", create: "Teklif sürümü oluştur", history: "Teklif geçmişi", costView: "Tedarikçi fiyatını gör" },
+  purchases: {
+    view: "Satın alma siparişi görüntüle",
+    create: "Satın alma siparişi oluştur",
+    edit: "Satın alma taslağını düzenle",
+    approve: "Satın alma siparişini onayla",
+    cancel: "Satın alma siparişini iptal et",
+    costView: "Satın alma maliyetini gör",
+  },
   activities: { manage: "Faaliyet tanımla" },
   customers: {
     view: "Görüntüle",
@@ -83,6 +91,7 @@ export const moduleLabels: Record<string, string> = {
   suppliers: "Tedarikçiler",
   supplierMaterials: "Tedarikçi malzemeleri",
   supplierOffers: "Tedarikçi teklifleri",
+  purchases: "Satın alma siparişleri",
   activities: "Faaliyetler",
   products: "Ürünler",
   expenses: "Gider türleri",

@@ -532,6 +532,7 @@ model Supplier {
   active          Boolean            @default(true)
   version         Int                @default(1)
   materials       SupplierMaterial[]
+  purchaseOrders  PurchaseOrder[]
 
   @@unique([tenantId, legalEntityId, id], map: "supplier_scope_key")
   @@unique([tenantId, legalEntityId, idempotencyKey], map: "supplier_request_key")
@@ -596,4 +597,60 @@ model SupplierOfferVersion {
   @@unique([tenantId, legalEntityId, supplierMaterialId, revision], map: "supplier_offer_revision_key")
   @@unique([tenantId, legalEntityId, idempotencyKey], map: "supplier_offer_request_key")
   @@index([tenantId, legalEntityId, supplierMaterialId, validFrom])
+}
+
+// V4.3a: purchase orders. Status is TEXT with a CHECK constraint in the SQL
+// migration; composite FKs, RLS and immutable guards are SQL migrations too.
+model PurchaseOrder {
+  id              String             @id @default(uuid()) @db.Uuid
+  tenantId        String             @db.Uuid
+  legalEntityId   String             @db.Uuid
+  activityId      String?            @db.Uuid
+  createdById     String
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  idempotencyKey  String             @db.Uuid
+  payloadHash     String             @db.Char(64)
+  supplierId      String             @db.Uuid
+  businessNo      String             @db.VarChar(30)
+  revision        Int
+  revisesOrderId  String?            @db.Uuid
+  status          String
+  approvedAt      DateTime?          @db.Timestamptz(3)
+  approvedById    String?
+  version         Int                @default(1)
+  supplier        Supplier           @relation(fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict)
+  revises         PurchaseOrder?     @relation("purchase_order_revision", fields: [tenantId, legalEntityId, revisesOrderId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict)
+  revisors        PurchaseOrder[]    @relation("purchase_order_revision")
+  lines           PurchaseOrderLine[]
+
+  @@unique([tenantId, legalEntityId, id], map: "purchase_order_scope_key")
+  @@unique([tenantId, legalEntityId, businessNo, revision], map: "purchase_order_revision_key")
+  @@unique([tenantId, legalEntityId, idempotencyKey], map: "purchase_order_request_key")
+  @@index([tenantId, legalEntityId, createdAt])
+}
+
+model PurchaseOrderLine {
+  id                 String             @id @default(uuid()) @db.Uuid
+  tenantId           String             @db.Uuid
+  legalEntityId      String             @db.Uuid
+  activityId         String?            @db.Uuid
+  createdById        String
+  createdAt          DateTime           @default(now()) @db.Timestamptz(3)
+  orderId            String             @db.Uuid
+  lineNo             Int
+  supplierMaterialId String             @db.Uuid
+  offerVersionId     String?            @db.Uuid
+  variantId          String             @db.Uuid
+  orderedQty         Decimal            @db.Decimal(24, 9)
+  purchaseUnit       SupplierUnit
+  orderedBaseQty     Decimal            @db.Decimal(24, 9)
+  baseUnit           SupplierUnit
+  conversionSnapshot Json
+  priceSnapshot      Json
+  expectedDate       DateTime?          @db.Date
+  order              PurchaseOrder      @relation(fields: [tenantId, legalEntityId, orderId], references: [tenantId, legalEntityId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, legalEntityId, id], map: "purchase_order_line_scope_key")
+  @@unique([tenantId, legalEntityId, orderId, lineNo], map: "purchase_order_line_order_key")
+  @@index([tenantId, legalEntityId, variantId])
 }

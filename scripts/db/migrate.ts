@@ -8,6 +8,7 @@ import {
   migrationTarget,
   migrationClient,
   migrationFiles,
+  migrationName,
   inspect,
   validateRemotePrivileges,
   check,
@@ -109,6 +110,9 @@ export async function inspectFailure(db: Client) {
         ),
       )
       .map((r) => r.relname),
+    purchaseTables: rows
+      .filter((r) => ["PurchaseOrder", "PurchaseOrderLine"].includes(r.relname))
+      .map((r) => r.relname),
     unresolvedMigrations: failed,
   };
 }
@@ -144,7 +148,7 @@ export async function main(
   check(!!pinned.appliedSchema, "APPLIED_SCHEMA_PIN_REQUIRED");
   const files = await migrationFiles();
   check(
-    files.length === 14 &&
+    files.length === 15 &&
       files.every((f) => pinned.migrations[f.name] === f.checksum),
     "LOCAL_CHECKSUM_REJECTED",
   );
@@ -190,7 +194,7 @@ export async function main(
           (m) => m.finished && !m.rolled_back,
         ).length,
         resolvedRollbacks: before.history.filter((m) => m.rolled_back).length,
-        pending: "202610190014_supplier_catalog",
+        pending: migrationName,
         schemaDrift: false,
         privilegeDrift: test ? null : false,
         reference: before.reference,
@@ -230,7 +234,7 @@ export async function main(
       JSON.stringify({
         status: "APPLIED",
         tables: after.current.tables.length,
-        forced: 24,
+        forced: 26,
       }),
     );
   } finally {

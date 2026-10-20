@@ -9,8 +9,10 @@ type Status = {
 };
 export function StepUpVerification({
   onVerified,
+  returnLabel = "Davet formuna dön",
 }: {
   onVerified?: () => void;
+  returnLabel?: string;
 }) {
   const [status, setStatus] = useState<Status | null>(null),
     [clock, setClock] = useState(0),
@@ -80,7 +82,7 @@ export function StepUpVerification({
           </p>
           {onVerified ? (
             <button className="btn btn-primary" onClick={onVerified}>
-              Davet formuna dön
+              {returnLabel}
             </button>
           ) : (
             <Link className="btn btn-primary" href="/admin/users">

@@ -705,12 +705,13 @@ async function main() {
         assert.equal(expectedTables.length, 35);
         assert.equal(expectedForcedTables.length, 21);
         assert(!expectedTables.includes("Supplier"));
+        assert(!expectedTables.includes("PurchaseOrder"));
         const actual = (
           await admin.query(
             `SELECT count(*)::int AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'`,
           )
         ).rows[0].n;
-        assert.equal(actual, 38);
+        assert.equal(actual, 40);
       },
     );
     console.log(

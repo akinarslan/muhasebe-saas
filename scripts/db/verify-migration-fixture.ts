@@ -235,7 +235,7 @@ export async function verifyMigrationFixture(
       throw e;
     }
     await db.query(
-      `INSERT INTO "Role"(id,name) VALUES('MASTER','Synthetic Master')`,
+      `INSERT INTO "Role"(id,name) VALUES('MASTER','Synthetic Master') ON CONFLICT(id) DO NOTHING`,
     );
     const oldTables = [
       "AuthUser",
@@ -295,7 +295,11 @@ export async function verifyMigrationFixture(
           "LOCK_TIMEOUT_NOT_CONFIRMED",
         );
         check(
-          (await inspectFailure(db)).supplierTables.length === 0,
+          (await inspectFailure(db)).supplierTables.length === 3,
+          "LOCK_REGRESSION_LOST_SUPPLIER_SCHEMA",
+        );
+        check(
+          (await inspectFailure(db)).purchaseTables.length === 0,
           "LOCK_PARTIAL_SCHEMA",
         );
       } finally {
@@ -327,7 +331,11 @@ export async function verifyMigrationFixture(
         "STATEMENT_TIMEOUT_NOT_CONFIRMED",
       );
       check(
-        (await inspectFailure(db)).supplierTables.length === 0,
+        (await inspectFailure(db)).supplierTables.length === 3,
+        "STATEMENT_REGRESSION_LOST_SUPPLIER_SCHEMA",
+      );
+      check(
+        (await inspectFailure(db)).purchaseTables.length === 0,
         "STATEMENT_PARTIAL_SCHEMA",
       );
       await resetFailure();
@@ -344,7 +352,11 @@ export async function verifyMigrationFixture(
         "PRISMA_CHILD_TIMEOUT",
       );
       check(
-        (await inspectFailure(db)).supplierTables.length === 0,
+        (await inspectFailure(db)).supplierTables.length === 3,
+        "CHILD_REGRESSION_LOST_SUPPLIER_SCHEMA",
+      );
+      check(
+        (await inspectFailure(db)).purchaseTables.length === 0,
         "CHILD_PARTIAL_SCHEMA",
       );
       await resetFailure();
@@ -383,7 +395,7 @@ export async function verifyMigrationFixture(
     }
     start = Date.now();
     await runPrisma(db, env);
-    pass("normal-real-prisma-014", start);
+    pass("normal-real-prisma-015", start);
     check(hash(before) === hash(await contents()), "EXISTING_RECORD_CHANGED");
     pass("ten-table-two-tenant-auth-financial-content-preserved", Date.now());
     const postCatalog = await catalog(db);
@@ -420,6 +432,21 @@ export async function verifyMigrationFixture(
       "NEW_GRANTS_TOO_WIDE",
     );
     pass("no-test-or-auth-supplier-grants", Date.now());
+    const poRights = (
+      await db.query(
+        `SELECT has_table_privilege('pusula_runtime','"PurchaseOrder"','SELECT,INSERT,UPDATE') AS orderWrite,has_table_privilege('pusula_runtime','"PurchaseOrderLine"','SELECT,INSERT,DELETE') AS lineWrite,has_table_privilege('pusula_runtime','"PurchaseOrderLine"','TRUNCATE') AS lineDestructive,has_table_privilege('pusula_test_runtime','"PurchaseOrder"','SELECT') AS testOrder,has_table_privilege('pusula_auth','"PurchaseOrderLine"','SELECT') AS authLine`,
+      )
+    ).rows[0];
+    console.log(JSON.stringify({ poRights }));
+    check(
+      !poRights.linedestructive &&
+        !poRights.testorder &&
+        !poRights.authline &&
+        poRights.orderwrite &&
+        poRights.linewrite,
+      "NEW_GRANTS_TOO_WIDE",
+    );
+    pass("purchase-order-runtime-grants-fail-closed", Date.now());
     check(
       (
         await db.query(
@@ -429,6 +456,15 @@ export async function verifyMigrationFixture(
       "MASTER_PERMISSION_EFFECT_WRONG",
     );
     pass("eight-master-permissions-explicitly-observed", Date.now());
+    check(
+      (
+        await db.query(
+          `SELECT count(*)::int AS n FROM "RolePermission" WHERE "roleId"='MASTER' AND "permissionId" LIKE 'purchases%'`,
+        )
+      ).rows[0].n === 6,
+      "MASTER_PURCHASE_PERMISSION_EFFECT_WRONG",
+    );
+    pass("six-master-purchase-permissions-explicitly-observed", Date.now());
     let tls: unknown = null;
     if (process.argv.includes("--fixture-tls")) {
       const { verifyMigrationTls } = await import("./verify-migration-tls");

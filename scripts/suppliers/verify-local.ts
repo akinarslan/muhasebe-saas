@@ -17,7 +17,7 @@ import { BackupError, requireCheck, digestFile } from "../backup/core";
 import { restrict } from "../backup/workspace";
 import { runTool } from "../backup/postgres";
 import { permissions, roleTemplates } from "../../src/lib/auth/catalog";
-import { MigrationSafetyError } from "../db/migration-safety";
+import { MigrationSafetyError, migrationName } from "../db/migration-safety";
 const serverBin = resolve(".data/tools/postgresql18-fixture-server/bin");
 const suffix = process.platform === "win32" ? ".exe" : "";
 const serverTool = (name: string) => join(serverBin, name + suffix);
@@ -240,8 +240,18 @@ async function main() {
       .filter((d) => d.isDirectory())
       .sort((a, b) => a.name.localeCompare(b.name));
     for (const m of migrations) {
+      // Mirrors production order: the app boot seeds Roles before migrations
+      // run, so permission-seeding migrations (011, 012, 014, 015) cross-join
+      // Role and land their RolePermission rows at migration time.
+      if (m.name === "202610170011_cloud_business") {
+        for (const r of roleTemplates)
+          await admin.query(
+            'INSERT INTO "Role"(id,name) VALUES($1,$2) ON CONFLICT(id) DO NOTHING',
+            [r.id, r.name],
+          );
+      }
       if (
-        m.name === "202610190014_supplier_catalog" &&
+        m.name === migrationName &&
         process.argv.includes("--migration-safety")
       ) {
         await writeFile(
@@ -316,7 +326,10 @@ async function main() {
     }
     await admin.query(`GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runtime;
       GRANT SELECT,INSERT ON "SupplierOfferVersion" TO pusula_test_runtime;
+      GRANT SELECT,INSERT,UPDATE ON "PurchaseOrder" TO pusula_test_runtime;
+      GRANT SELECT,INSERT,DELETE ON "PurchaseOrderLine" TO pusula_test_runtime;
       GRANT EXECUTE ON FUNCTION v42_reject_offer_mutation(),v42_supplier_identity_guard() TO pusula_test_runtime;
+      GRANT EXECUTE ON FUNCTION v43a_reject_po_mutation(),v43a_order_guard(),v43a_line_guard() TO pusula_test_runtime;
       REVOKE CREATE ON SCHEMA public FROM PUBLIC;
       GRANT USAGE ON SCHEMA public TO pusula_test_runtime,pusula_test_auth;
       GRANT SELECT ON "Tenant","LegalEntity","Activity","Role","Permission","RolePermission" TO pusula_test_runtime;
@@ -333,11 +346,11 @@ async function main() {
       )
     ).rows[0];
     requireCheck(
-      counts.tables === 38 && counts.forced === 24,
+      counts.tables === 40 && counts.forced === 26,
       "V42_SCOPE_REJECTED",
     );
     report.schema = counts;
-    pass("fourteen-local-migrations-38-tables-24-force-rls");
+    pass("fifteen-local-migrations-40-tables-26-force-rls");
     if (!process.argv.includes("--migration-safety"))
       await writeFile(
         join(dir, "target.json"),
@@ -370,7 +383,11 @@ async function main() {
       R2_SECRET_ACCESS_KEY: "",
     };
     const scripts = process.argv.includes("--supplier-only")
-      ? ["scripts/auth/verify-c2.ts", "scripts/suppliers/verify.ts"]
+      ? [
+          "scripts/auth/verify-c2.ts",
+          "scripts/suppliers/verify.ts",
+          "scripts/purchases/verify.ts",
+        ]
       : [
           "scripts/db/verify.ts",
           ...["c1", "c2", "c3", "c4", "c5", "c6", "c61"].map(
@@ -378,6 +395,7 @@ async function main() {
           ),
           "scripts/auth/verify-d.ts",
           "scripts/suppliers/verify.ts",
+          "scripts/purchases/verify.ts",
         ];
     report.testMode = process.argv.includes("--supplier-only")
       ? "supplier-only"
@@ -435,22 +453,23 @@ async function main() {
         });
       });
     for (const script of scripts) {
+      const logName = script.split("/").slice(-2).join("-").replace(".ts", "");
       const output = await runJob(
         ["--conditions=react-server", "--import", "tsx", script],
-        script.split("/").at(-1)!,
+        logName,
         env,
         300000,
       );
-      await writeFile(join(dir, script.split("/").at(-1)! + ".log"), output, {
-        mode: 0o600,
-      });
       const passed = output
         .split(/\r?\n/)
         .filter((l) => /^PASS\b/.test(l)).length;
       results.push({ name: script + ` (${passed} checks)`, status: "PASS" });
       console.log(JSON.stringify({ script, checks: passed, status: "PASS" }));
     }
-    if (process.argv.includes("--with-browser")) {
+    if (
+      process.argv.includes("--with-browser") ||
+      process.argv.includes("--purchase-browser")
+    ) {
       const output = await runJob(
         [
           "--conditions=react-server",
@@ -469,27 +488,36 @@ async function main() {
           "test",
           "--config",
           "playwright.auth.config.ts",
+          ...(process.argv.includes("--purchase-browser")
+            ? ["v43a.spec.ts", "--output", join(dir, "browser-results")]
+            : []),
         ],
         "playwright",
         { ...env, NODE_ENV: "development" },
         900000,
       );
       await writeFile(join(dir, "playwright.log"), browser, { mode: 0o600 });
-      pass("desktop-mobile-auth-cloud-d7-suppliers-browser");
-      await runJob(
-        [
-          "node_modules/@playwright/test/cli.js",
-          "test",
-          "--config",
-          "playwright.config.ts",
-          "--trace",
-          "off",
-        ],
-        "demo-playwright",
-        { ...env, NODE_ENV: "development" },
-        600000,
+      pass(
+        process.argv.includes("--purchase-browser")
+          ? "desktop-mobile-purchase-browser"
+          : "desktop-mobile-auth-cloud-d7-suppliers-browser",
       );
-      pass("desktop-mobile-demo-regression-browser");
+      if (!process.argv.includes("--purchase-browser")) {
+        await runJob(
+          [
+            "node_modules/@playwright/test/cli.js",
+            "test",
+            "--config",
+            "playwright.config.ts",
+            "--trace",
+            "off",
+          ],
+          "demo-playwright",
+          { ...env, NODE_ENV: "development" },
+          600000,
+        );
+        pass("desktop-mobile-demo-regression-browser");
+      }
     }
   } catch (e) {
     failure =

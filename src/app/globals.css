@@ -3201,3 +3201,16 @@ summary {
 .supplier-compare > label { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .supplier-module input:disabled, .supplier-module select:disabled, .supplier-form input:disabled, .supplier-form select:disabled { opacity: .65; }
 @media (max-width: 700px) { .supplier-module { padding: 0 14px 14px; } .supplier-detail, .supplier-comparison-panel { padding: 12px; } }
+
+/* V4.3a purchase orders: reuse the supplier drawer palette; only line rows differ. */
+.purchase-lines { grid-column: 1/-1; display: grid; gap: 14px; }
+.purchase-lines h4 { font-weight: 700; }
+.purchase-line { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.purchase-line legend { color: var(--muted); font-size: 12px; padding: 0 6px; }
+.purchase-line > label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+.purchase-line input, .purchase-line select { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--text); }
+.purchase-manual { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.purchase-manual label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; min-width: 0; }
+.purchase-line-note { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.purchase-line .btn { justify-self: start; width: auto; }
+@media (max-width: 700px) { .purchase-line { padding: 10px; } }

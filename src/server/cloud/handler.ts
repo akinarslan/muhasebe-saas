@@ -1,6 +1,7 @@
 import "server-only";
 import { catalogRequest } from "./business/catalog";
 import { supplierRequest } from "./business/suppliers";
+import { purchaseRequest } from "./business/purchases";
 import { documentRequest } from "./business/documents";
 import { importRequest } from "./business/imports";
 import { randomUUID } from "node:crypto";
@@ -58,6 +59,8 @@ export async function cloudRequest(
       const handler =
         ["suppliers", "supplier-materials", "supplier-offers", "supplier-comparison"].includes(parts[1])
           ? supplierRequest
+          : parts[1] === "purchase-orders"
+          ? purchaseRequest
           : parts[1] === "imports"
           ? importRequest
           : ["quotes", "sales"].includes(parts[1])

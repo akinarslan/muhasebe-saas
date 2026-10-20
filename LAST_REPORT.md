@@ -1,4 +1,34 @@
-# PUSULA v0.4 — V4.2f / temel bulut kabulü ve kapanış
+# PUSULA v0.4 — V4.3a Codex F01–F10 düzeltme kabulü
+
+20.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `2ab48ad` · **FIX_PASS — yerel kabul**.
+
+Bağımsız denetimdeki F01–F10 düzeltildi: materyal maliyet DENY redaksiyonu, alış birimi fiyat hesabı, parent-row kilitleri ve boş onay engeli, SQL ilişki/snapshot doğrulaması, iki iptal yolu, onay step-up, create/edit ayrımı, güvenli gizli fiyat koruması ve editör para birimi, tam temsil edilemeyen miktar422 ve eksik manuel fiyat400. Tarihsel TRY teklifinin kendi TCMB snapshot'ı korunur. Normal kullanıcı OWN/ACTIVITY ve numara tahsisi kusuru, indeks uyumu, rol şablonu tutarlılığı ve yeni sipariş ayrıntı seçimi de ele alındı.
+
+Yeni PostgreSQL18.6 fixture `v42-e20dd3a4-a688-4a06-a3b8-673bfb50d651`: gerçek Prisma migration safety18/18, DB/RLS11, Auth62, Cloud11, Supplier16, Purchases28, gerçek masaüstü/mobil Chrome2/2 PASS; 40 tablo/26 FORCE RLS/15 migration; serverStopped true. Son Vitest355/355 (29 dosya), TypeScript, ESLint0/0 ve production build PASS. Build'de mevcut rate-store dosya pattern'i için tek Turbopack warning var; başarısız ilk denemeler raporda korunur.
+
+İlk14 migration değişmedi; 015 checksum ve yalnız dört post-schema hash'i gerçek fixture ölçümüne göre güncellendi. Eski denetim/GLM raporları ve mevcut çalışma ağacı korunur. Neon/R2/gerçek veri işlemi veya commit/push yok. Mevcut backup allowlist'i yeni PO şemasını kapsamaz; fail-closed kontrolü korunur. FIX_PASS, production/go-live veya Neon015 apply onayı değildir. GitHub teslimi Mimo'ya ayrı görev; gerçek Neon migration ayrıca kullanıcı onayı ister.
+
+[Codex düzeltme raporu ve kesin28 dosya listesi](research/PUSULA_V04_V43A_CODEX_FIX_REPORT.md) · [Regresyon ve nihai kabul kanıtı](docs/validation/V04_V43A_CODEX_FIX_VERIFICATION.md).
+
+---
+
+# Önceki GLM V4.3a raporu — tarihsel kayıt
+
+# PUSULA v0.4 — Sprint V4.3a / Satın Alma Siparişleri ilk çalışan modül
+
+20.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `2ab48ad` (tüm değişiklikler commit'siz) · **V4.3a — LOCAL_ACCEPTANCE_PASS**
+
+Yeni Satın Alma Siparişleri (PO) modülünün ilk çalışan sürümü tamamlandı: `PurchaseOrder`/`PurchaseOrderLine` şemaları, migration 015, tam PO servisi (idempotency/businessNo/draft versiyonlama/approve-cancel mühürleme/costView DENY sansürü), premium liste+detay+drawer UI ve izin kataloğu. PO akışı stok/cari/ödemeye dokunmaz; TRY yalnız açık TCMB snapshot'ıyla, EUR/GBP hiçbir zaman otomatik USD'ye çevrilmez; `MaterialVariant.usdCost` otomatik güncellenmez.
+
+Migration `202610200015_purchase_orders` izole yerel PostgreSQL 18.6 fixture'ında gerçek Prisma yoluyla uygulandı ve kabul koşusu `v42-f8a7c083-db7f-480a-9a77-5baeebd82e9f` PASS: migration safety 18 kontrol PASS (baseline/schema checksum/column pin'ler, gerçek lock/statement/child timeout ve nontransactional partial enjeksiyonları, içerik koruması, ALREADY_APPLIED no-replay, fail-closed ACL: runtime PO SEL/INS/UPD + POLine SEL/INS/DEL varken test/auth ve TRUNCATE yok), `verify-c2` 9/9, suppliers 16/16, purchases 16/16 (kurumsal senaryolar: replay/409, Decimal matematik sabitliği, foreign tenant 404, inaktif tedarikçi, audit event'ler, concurrent idempotency çakışması), 40 tablo/26 FORCE RLS/15 migration. Post-015 `appliedSchema` 8 hash'i gerçek `post-schema.json`'dan `migration-baseline.json`'a pinlendi (iki fazlı bootstrap: ilk koşunun beklenen `APPLIED_SCHEMA_DRIFT` sonrası ikinci koşu birebir uyuştu). Vitest 344/344 (28 dosya, `purchase-pricing.test.ts` 15/15), `tsc --noEmit` temiz, ESLint 0/0.
+
+Regresyon bakımı: `suppliers/verify.ts` yedek fail-closed sayımı 38→40 (PO yedekte hâlâ yok; `scripts/backup/postgres.ts` pinleri dokunulmadı, backup allowlist 35/21 kalır); fixture bootstrap artık Role satırlarını migration cross-join'lerinden önce ekliyor (production sırası); partial-schema kontrolleri 015 tablo sınıflandırmasına güncellendi. Neon (development/test/production), R2, restore/finalize işlemi yok; 014 ve öncesi checksum'lar korundu; `OLD`/`NEW` yalnız trigger'lerde. Kullanıcı teslimi: commit/push yapılmadı — Git teslimi Mimo'ya.
+
+[V4.3a sprint raporu](research/PUSULA_V04_V43A_GLM_REPORT.md) · [Doğrulama kanıtı](docs/validation/V04_V43A_VERIFICATION.md)
+
+---
+
+# Önceki V4.2f / V4.2e kaydı — tarihsel durum (içerik aşağıda korunur)
 
 19.10.2026 · `feat/pusula-v030-neon-cloud` · **V4.2 temel development bulut kabulü tamamlandı; ileri senaryolar açık.**
 

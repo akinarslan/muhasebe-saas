@@ -1,5 +1,5 @@
 {
-  "source": "Reviewed V4.2c read-only PG18 metadata, 2026-10-19T06:00:41.611Z; structure fingerprints exclude role/owner identities; remote privileges pinned separately.",
+  "source": "Reviewed V4.2c read-only PG18 metadata, 2026-10-19T06:00:41.611Z; pre-015 schema and privilege pins unchanged. Post-015 Codex F01-F10 fingerprints measured by real Prisma fixture v42-c5130a98-c240-49c0-8f3b-f9cefcdcef85 and verified by v42-433ea7d5-5421-45b7-9015-fecd0a0cf3e1 (2026-10-20). Only constraints/indexes/policies/functions post-015 hashes changed. Structure fingerprints exclude role/owner identities; remote privileges pinned separately.",
   "migrations": {
     "202610160001_foundation": "8aee85371a154958570ba41ae9a4da7eefc6b54790c74e36af88a4a6a356af23",
     "202610160002_scope_security": "94d2742fdd32026bf430185366795498ad20351ff937566f0c50f08713ee7d86",
@@ -14,17 +14,18 @@
     "202610170011_cloud_business": "d50442a98f4bc6dfce20f9daecced81755bb950bfc702bda60f148d2170c378c",
     "202610170012_cloud_catalog_controls": "ee460b6466adbae8755b64840af36de3eb4d52756947ce6e6153fb2a791e2e2e",
     "202610170013_sale_line_sealing": "91ab80f3b4b879007808377e6a43a477495426685d0f8c364384a2e370711085",
-    "202610190014_supplier_catalog": "0950d8de6cc51930492491a91b1756c7cafb65c6ff05c4ee9310fd99cdfde1da"
+    "202610190014_supplier_catalog": "0950d8de6cc51930492491a91b1756c7cafb65c6ff05c4ee9310fd99cdfde1da",
+    "202610200015_purchase_orders": "181a783a6b63b21016e789d4201781829063397d906b19ba7018a15735b1614a"
   },
   "schema": {
-    "tables": "e5e3e8066ad1faee8bbb92f1a75344644c7cb234f19d6dd46928ef2b3dcddf2e",
-    "columns": "a7afe131a39d2b5f6b8baf414857327f89deb9bc463dfdb3beb7d9d04ac93856",
-    "constraints": "4066cf25eac5857012c929b1a8181f984abd87920865a1ef5377b83e17f6c470",
-    "indexes": "677ae2c5a6290425f1a6981c6fc4c8f10c317aa0da756e142266d0ddedb97fdd",
-    "policies": "51ee303585fe3d49620f95cdf2ab89e38968e2342f045d97573cf362695ff0d9",
-    "triggers": "8d18ac69e9a8288499d9d1b2dadfc8d2f23cdd4ac70b2fe64c8262afeb9eb315",
-    "types": "4d29b38dd2b49e9eff27cb2558374b0c86352e04dffc0255dd4e28f4b43e2713",
-    "functions": "2452cf661cea62db87188e577b2c632a817495c9d0b0e1b15d4375dd695034f5"
+    "tables": "e7fe806f27ce3cdb410fe7beaeff964adab585c577dd0958bf84ccf7b56bef44",
+    "columns": "74128aab1acad38c1cbabd217b186d4fe3066d3278a5a02ab5ad71ff776c6313",
+    "constraints": "6afa9a5849a5617aba1b9f315e3833157f5b6c581699614249977c3dac4b74b3",
+    "indexes": "ba7353ce2d6df33135b74c9926cd85acb072edb00980f33cde966469e3a7136c",
+    "policies": "df28f363390f5b472709f75ed001ad528a502e6b45a7d95dfdc187a05d4d1425",
+    "triggers": "b0da18282e95eb93ec702965ed1ae823c2c3709d8ed353b1aab417b4c56d919b",
+    "functions": "b7723611dfebe04c69404462b9390cd60d3a593bdf678e2735e5ae7c711bc6c2",
+    "types": "d891fe9cc3ffd8303e957a2c4ca3173f607ffa7223e3374caa023d34cb30ba9c"
   },
   "privileges": {
     "roles": "ea06d98051bc3100dec1fe9ce9276a310d0fa6b29e2874665a79e41f0ac2ce01",
@@ -33,13 +34,13 @@
     "acl": "f23a34bfa7501669cb0d2ef09c75843a6b03f1ecab5a316af605b7660054eff6"
   },
   "appliedSchema": {
-    "tables": "e7fe806f27ce3cdb410fe7beaeff964adab585c577dd0958bf84ccf7b56bef44",
-    "columns": "74128aab1acad38c1cbabd217b186d4fe3066d3278a5a02ab5ad71ff776c6313",
-    "constraints": "6afa9a5849a5617aba1b9f315e3833157f5b6c581699614249977c3dac4b74b3",
-    "indexes": "ba7353ce2d6df33135b74c9926cd85acb072edb00980f33cde966469e3a7136c",
-    "policies": "df28f363390f5b472709f75ed001ad528a502e6b45a7d95dfdc187a05d4d1425",
-    "triggers": "b0da18282e95eb93ec702965ed1ae823c2c3709d8ed353b1aab417b4c56d919b",
-    "functions": "b7723611dfebe04c69404462b9390cd60d3a593bdf678e2735e5ae7c711bc6c2",
+    "tables": "391078b902f632ad5773d78b22ebaf6c1b7068eeffa8d4d0ec18e711409d2013",
+    "columns": "b0f8744bab3b63cad62fdce18ba17c22c1310541f6e9b1dac9c2669dac16c0d7",
+    "constraints": "ca339c8a0c4478eb7550d28c659272ac90e39132f012b6a4b847ff80d80ab6e9",
+    "indexes": "529ae5ba3685dd826945fe072cf6211fc95f7c1e9509395940696f62217ef3dd",
+    "policies": "fba9067f92fd40d23bca4509512b1e3cd0989444c089f076ceb2e06644f478e5",
+    "triggers": "99cd95a8c16c6f30cf7bb68e12944c0f8c91d690a622ade1bac3f1d538ed217e",
+    "functions": "f00c459557c661f543824f5c638c199c9f57f5e818a8c80d8c7cbdc0607f23ac",
     "types": "d891fe9cc3ffd8303e957a2c4ca3173f607ffa7223e3374caa023d34cb30ba9c"
   }
 }
