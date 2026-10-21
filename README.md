@@ -1,5 +1,7 @@
 ﻿# Pusula — Muhasebe SaaS ve Maliyet Atölyesi v0.2.2
 
+Pusula is an open-source accounting and business management project designed for small and medium-sized businesses. Its current local prototype brings together customer and sales management, cost calculations, receivables, payment planning, and financial dashboards. The longer-term roadmap includes inventory workflows, secure cloud storage, AI-assisted voice interactions, and modular SaaS capabilities. These planned features are not yet production-ready.
+
 Türkçe, Next.js App Router tabanlı yerel prototip. Müşteri/satış/malzeme verileri tarayıcıda; TCMB kur hizmeti sunucudadır. Veritabanı, tam kullanıcı kimlik doğrulaması, gerçek ödeme ve resmî muhasebe entegrasyonu içermez.
 
 ## Kurulum
