@@ -1,6 +1,6 @@
 # PUSULA V4.3b.9a — GitHub nihai teslimi
 
-**DELIVERY_READY — commit öncesi kontroller geçti; push sonucu aşağıya doğrulandıktan sonra eklenecek.**
+**DELIVERY_PASS — 30 dosyalık kod/rapor commit'i ve normal push doğrulandı.**
 
 Bu görevde kullanıcı yalnız `feat/pusula-v030-neon-cloud` dalında normal commit/push yetkisi verdi. Önceki raporlardaki “commit/push yapılmadı” ifadeleri hazırlık görevlerinin tarihsel kayıtlarıdır. Bu teslim, gerçek Neon migration 016 uygulama onayı değildir.
 
@@ -77,6 +77,19 @@ Private key, GitHub PAT, AWS access key, JWT ve Neon API key desenleri teslim i�
 
 ## Git teslim kaydı
 
-Önerilen kod commit mesajı: `fix(v0.4): finalize V4.3b managed ACL and migration checksum compatibility`.
+| Kontrol | Gerçek sonuç |
+| --- | --- |
+| Kod commit mesajı | `fix(v0.4): finalize V4.3b managed ACL and migration checksum compatibility` |
+| Kod/rapor commit SHA | `9d5fb2d12799b4dcc42547ab054036f28e8d55d7` |
+| Commit dosya kapsamı | Tam 30 dosya; listeyle birebir eşit |
+| Staged hassas bilgi taraması | PASS; gerçek sır bulunmadı |
+| `git diff --cached --check` | PASS |
+| Staged 016 Git blob SHA | `7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272` |
+| Normal push | `git push origin HEAD:refs/heads/feat/pusula-v030-neon-cloud`, native exit 0; f56caed → 9d5fb2d |
+| Push sonrası HEAD/upstream | İkisi de `9d5fb2d12799b4dcc42547ab054036f28e8d55d7` |
+| Gerçek uzak ref | `git ls-remote` aynı tam SHA'yı doğruladı |
+| Ahead/behind / çalışma ağacı | 0/0; `git status --porcelain=v1` boş |
 
-Bu bölüm push öncesinde hazırlandı; gerçek commit SHA ve push gözlemi başarıyla doğrulandıktan sonra yalnız rapor/LAST_REPORT değişikliğiyle normal takip dokümantasyon commit'ine kaydedilecektir. Nihai takip commit'inin kendi SHA'sı dosyanın içine yazılamaz; son mesajda gerçek uzak ref ve temiz çalışma ağacıyla birlikte bildirilecektir. Force-push, main merge veya hard reset kullanılmaz.
+İlk son-ref sorgusu geçici DNS çözümleme hatası verdi; sonraki salt okunur sorgu beklenen eski ref'i doğruladıktan sonra commit/push yapıldı. Push veya commit hatası olmadı.
+
+Bu tablo ilk başarılı kod/rapor push'undan hemen sonraki gerçek gözlemdir. Bu gözlem yalnız bu rapor ve LAST_REPORT'a normal takip dokümantasyon commit'iyle kaydedilir; benzersiz teslim dosya kapsamı yine 30'dur. Takip adımı SQL/test/runner içeriğini değiştirmez. Nihai takip commit'inin kendi SHA'sı dosyanın içine yazılamaz; son mesajda gerçek uzak ref ve temiz çalışma ağacıyla birlikte bildirilecektir. Force-push, main merge veya hard reset yapılmadı.

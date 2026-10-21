@@ -1,6 +1,8 @@
-# PUSULA V4.3b.9a — Nihai GitHub teslim hazırlığı
+# PUSULA V4.3b.9a — DELIVERY_PASS
 
-Yetkili feature dalında nihai teslim için 29 dosya doğrulandı; yeni teslim raporuyla kapsam30. Bu teslimde Vitest395/395, TypeScript, ESLint, native build ve gerçek Git LF artifact9/9 yeniden geçti. PostgreSQL fixture sonuçları önceki hazırlık kanıtıdır; yeniden çalıştırılmadı. SQL016 SHA7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272 ve tarihsel sınırlı checksum çiftleri korunur; cloud apply kapalı. Hassas içerik/staged kontrollerinden sonra yalnız izinli dala normal commit/push yapılacak; gerçek sonuç takip kaydına yazılacaktır.
+Yetkili feature dalında tam30dosya, commit `9d5fb2d12799b4dcc42547ab054036f28e8d55d7` ile teslim edildi. Normal push exit0; push sonrası HEAD/upstream/gerçek uzak ref aynı SHA, ahead/behind0/0 ve çalışma ağacı temiz doğrulandı. Bu gözlem yalnız rapor ve LAST_REPORT takip dokümantasyon commit'ine kaydedilir; nihai takip SHA'sı son mesajda bildirilir.
+
+Bu teslimde Vitest395/395, TypeScript, ESLint, native build ve gerçek Git LF artifact9/9 yeniden geçti. Staged sır taraması, diff check ve staged SQL016 SHA7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272 doğrulandı. PostgreSQL fixture sonuçları önceki hazırlık kanıtıdır; yeniden çalıştırılmadı. İlk15SQL/eski baseline ve sınırlı checksum çiftleri korundu; cloud apply kapalı. Gerçek Neon/DB/provider/R2/env işlemi, main merge, force-push veya hard reset yok. token_roles ve managed cloud/bağımsız backup engelleri açık.
 
 [Nihai teslim raporu](reports/PUSULA_V04_V43B9A_CODEX_DELIVERY.md).
 
