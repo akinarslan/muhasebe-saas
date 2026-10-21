@@ -1,3 +1,4 @@
+import { migrationChecksumMatches } from "../db/migration-checksum";
 // Local-only V4.2 acceptance runner. No env loading, Neon or R2 client.
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { createServer } from "node:net";
@@ -11,7 +12,7 @@ import {
   realpath,
   lstat,
 } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { Client } from "pg";
 import { BackupError, requireCheck, digestFile } from "../backup/core";
 import { restrict } from "../backup/workspace";
@@ -135,8 +136,11 @@ async function main() {
       join("prisma/migrations", name, "migration.sql"),
     );
     requireCheck(
-      createHash("sha256").update(bytes).digest("hex") ===
+      migrationChecksumMatches(
+        name,
         baseline.migrations[name],
+        createHash("sha256").update(bytes).digest("hex"),
+      ),
       "LEGACY_SQL_CHECKSUM",
     );
   }
@@ -344,9 +348,13 @@ async function main() {
         );
         continue;
       }
-      const sql = await readFile(
-        join("prisma/migrations", m.name, "migration.sql"),
-      );
+      const sql = process.argv.includes("--git-migration-bytes")
+        ? execFileSync(
+            "git",
+            ["show", `HEAD:prisma/migrations/${m.name}/migration.sql`],
+            { windowsHide: true },
+          )
+        : await readFile(join("prisma/migrations", m.name, "migration.sql"));
       await admin.query("BEGIN");
       try {
         // Migration014 is explicitly transactional for Prisma deploy as well.

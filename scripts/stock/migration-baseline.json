@@ -1,5 +1,5 @@
 {
-  "checksum": "80229d594126e1fda30bd975aa4af76b4a47eda920d2a7d52a556e237f4bbe18",
+  "checksum": "7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272",
   "schema": {
     "tables": "9e91d98a786de1d9bcb7415224b4facf88c0c4c7ca6091ab03d0eb426c5f4ccd",
     "columns": "d278ceadd49988e4910a57fe1f7abf883e551d591c6de67d58c478ac3ff3e97c",
@@ -7,7 +7,7 @@
     "indexes": "d794f0746612930328dde340a32f1a3fb343a973c8dfd741dd5aa78234f8ada7",
     "policies": "f49566264466445b44465c1db2a783fe84c81a30de1951dec1e8aa2d9e560db7",
     "triggers": "2612b11034f380b45b0bc043adce20b25a2276f79dd9f182efded509b4b7fa95",
-    "functions": "54df0b609a83daa0dc4037d9930ef1c66e61950b1fe81ba5767bdd120286b88c",
+    "functions": "985bc3b9cf0cb7fdd3930786d8fbad6c60d6e2732d057e19cf3536f981c9b227",
     "types": "d891fe9cc3ffd8303e957a2c4ca3173f607ffa7223e3374caa023d34cb30ba9c"
   }
 }

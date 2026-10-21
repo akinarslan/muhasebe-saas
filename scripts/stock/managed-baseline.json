@@ -1,0 +1,8 @@
+{
+  "profile": "neon-development-reviewed",
+  "checksum": "7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272",
+  "pre": "59252aa93cf52f7d087e066bcf7ab0b469cd1bd5cd57a372642ce2f7bb07c009",
+  "post": null,
+  "applyEnabled": false,
+  "source": "V4.3b.8 development READ ONLY 2026-10-21T19:49:17.398Z; pre is historical, must be rechecked. No Neon post pin enrolled. Local managed-fixture pins are separate."
+}

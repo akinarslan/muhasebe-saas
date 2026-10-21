@@ -1,3 +1,7 @@
+import {
+  migrationChecksumMatches,
+  reviewedRollbackMatches,
+} from "../db/migration-checksum";
 // Phase 016 is deliberately separate from the unchanged cloud migration runner.
 // No env loading on import; this sprint exposes only verified loopback fixtures.
 import { readFile } from "node:fs/promises";
@@ -17,7 +21,7 @@ import { runPrisma } from "../db/migrate";
 
 export const stockMigration = "202610210016_goods_receipts";
 export const stockChecksum =
-  "80229d594126e1fda30bd975aa4af76b4a47eda920d2a7d52a556e237f4bbe18";
+  "7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272";
 export type AclPins = { pre: string; post: string };
 export function requireAclPins(pins: unknown): asserts pins is AclPins {
   const p = pins as Partial<AclPins> | null;
@@ -136,7 +140,11 @@ export async function stockFiles() {
     "STOCK_CHECKSUM_REJECTED",
   );
   check(
-    files.slice(0, 15).every((f) => old.migrations[f.name] === f.checksum),
+    files
+      .slice(0, 15)
+      .every((f) =>
+        migrationChecksumMatches(f.name, old.migrations[f.name], f.checksum),
+      ),
     "STOCK_LEGACY_CHECKSUM_REJECTED",
   );
   const sql = await readFile(
@@ -156,6 +164,64 @@ export async function stockFiles() {
   };
 }
 
+export type StockHistoryRow = {
+  migration_name: string;
+  checksum: string;
+  finished: boolean;
+  rolled_back: boolean;
+};
+// Only one reviewed 008 rollback is allowed, with either the successful SQL byte
+// identity or its exact historical failed checksum, plus one successful 008.
+// The failed checksum is never accepted as executable SQL or successful history.
+export function validateStockHistory(
+  history: StockHistoryRow[],
+  files: { name: string; checksum: string }[],
+) {
+  check(
+    history.every((r) => r.finished || r.rolled_back),
+    "STOCK_MIGRATION_UNRESOLVED",
+  );
+  check(
+    history.every((r) =>
+      files.some(
+        (f) =>
+          f.name === r.migration_name &&
+          (migrationChecksumMatches(f.name, f.checksum, r.checksum) ||
+            (r.rolled_back &&
+              !r.finished &&
+              reviewedRollbackMatches(r.migration_name, r.checksum))),
+      ),
+    ),
+    "STOCK_HISTORY_CHECKSUM_REJECTED",
+  );
+  const resolved = history.filter((r) => r.rolled_back);
+  check(
+    resolved.length <= 1 &&
+      resolved.every(
+        (r) =>
+          !r.finished &&
+          r.migration_name === "202610160008_company_metadata" &&
+          history.filter(
+            (s) =>
+              s.migration_name === r.migration_name &&
+              s.finished &&
+              !s.rolled_back,
+          ).length === 1,
+      ),
+    "STOCK_MIGRATION_HISTORY_REVIEW_REQUIRED",
+  );
+  const names = history
+    .filter((r) => r.finished && !r.rolled_back)
+    .map((r) => r.migration_name);
+  check(
+    new Set(names).size === names.length &&
+      [15, 16].includes(names.length) &&
+      files.slice(0, names.length).every((f) => names.includes(f.name)),
+    "STOCK_HISTORY_REJECTED",
+  );
+  return names;
+}
+
 export async function inspectStock(db: Client, pins?: AclPins) {
   const manifest = await stockFiles();
   await db.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
@@ -168,32 +234,7 @@ export async function inspectStock(db: Client, pins?: AclPins) {
         `SELECT migration_name,checksum,finished_at IS NOT NULL finished,rolled_back_at IS NOT NULL rolled_back FROM public._prisma_migrations ORDER BY migration_name`,
       )
     ).rows;
-    check(
-      history.every((r) => r.finished || r.rolled_back),
-      "STOCK_MIGRATION_UNRESOLVED",
-    );
-    check(
-      history.every((r) =>
-        manifest.files.some(
-          (f) => f.name === r.migration_name && f.checksum === r.checksum,
-        ),
-      ),
-      "STOCK_HISTORY_CHECKSUM_REJECTED",
-    );
-    // Failed/resolved attempts are never silently cleared or treated as ready.
-    check(
-      history.every((r) => r.finished && !r.rolled_back),
-      "STOCK_MIGRATION_HISTORY_REVIEW_REQUIRED",
-    );
-    const names = history.map((r) => r.migration_name);
-    check(
-      new Set(names).size === names.length &&
-        [15, 16].includes(names.length) &&
-        manifest.files
-          .slice(0, names.length)
-          .every((f) => names.includes(f.name)),
-      "STOCK_HISTORY_REJECTED",
-    );
+    const names = validateStockHistory(history, manifest.files);
     const applied = names.length === 16;
     const current = await catalog(db),
       expected = applied ? manifest.post : manifest.pre;
@@ -221,6 +262,14 @@ export async function inspectStock(db: Client, pins?: AclPins) {
       ).rows[0];
       check(role && !role.unsafe, "STOCK_EXECUTOR_REJECTED");
       check(
+        !(
+          await db.query(
+            `SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='pusula_stock_role_creator') OR EXISTS(SELECT 1 FROM pg_auth_members WHERE roleid='pusula_stock_executor'::regrole OR member='pusula_stock_executor'::regrole) OR has_schema_privilege('pusula_stock_executor','public','CREATE') unsafe`,
+          )
+        ).rows[0].unsafe,
+        "STOCK_EXECUTOR_MEMBERSHIP_REJECTED",
+      );
+      check(
         (
           await db.query(
             `SELECT count(*)::int n FROM pg_class WHERE relnamespace='public'::regnamespace AND relowner='pusula_stock_executor'::regrole`,
@@ -232,7 +281,7 @@ export async function inspectStock(db: Client, pins?: AclPins) {
       check(
         !(
           await db.query(
-            `SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='pusula_stock_executor') yes`,
+            `SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN ('pusula_stock_executor','pusula_stock_role_creator')) yes`,
           )
         ).rows[0].yes,
         "STOCK_PARTIAL_ROLE_REJECTED",

@@ -2,7 +2,14 @@ BEGIN;
 SET LOCAL lock_timeout='3s';
 SET LOCAL statement_timeout='30s';
 SET LOCAL transaction_timeout='60s';
+-- A disposable creator prevents a permanent bootstrap ADMIN membership on executor.
+-- Both roles and all grants are transactional; no application role is a member.
+CREATE ROLE pusula_stock_role_creator NOLOGIN NOSUPERUSER NOCREATEDB CREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT pusula_stock_role_creator TO CURRENT_USER WITH INHERIT FALSE, SET TRUE;
+SET LOCAL ROLE pusula_stock_role_creator;
 CREATE ROLE pusula_stock_executor NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT pusula_stock_executor TO SESSION_USER WITH INHERIT FALSE, SET TRUE;
+RESET ROLE;
 GRANT USAGE ON SCHEMA public TO pusula_stock_executor;
 GRANT EXECUTE ON FUNCTION pusula_can(text,uuid,uuid,uuid,text) TO pusula_stock_executor;
 CREATE TABLE "StockLocation" (
@@ -231,7 +238,7 @@ GRANT SELECT ON "Tenant","LegalEntity","Activity","Material","MaterialVariant","
 GRANT SELECT,UPDATE ON "PurchaseOrder","PurchaseOrderLine" TO pusula_stock_executor;
 GRANT SELECT,INSERT ON "AuditEvent" TO pusula_stock_executor;
 -- No runtime direct DML on receipt/ledger objects and no executor membership.
-CREATE FUNCTION v43b_immutable() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+CREATE FUNCTION v43b_immutable() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public,pg_temp AS $$
 BEGIN
  IF current_user<>'pusula_stock_executor' THEN RAISE EXCEPTION 'STOCK_WRITE_GATE' USING ERRCODE='42501'; END IF;
  IF TG_OP='TRUNCATE' OR (TG_TABLE_NAME IN ('StockLot','StockMovement','StockPostingBatch') AND TG_OP<>'INSERT') THEN RAISE EXCEPTION 'STOCK_IMMUTABLE' USING ERRCODE='23514'; END IF;
@@ -241,7 +248,7 @@ BEGIN
 END $$;
 -- Shared net purchase quantity: a full ledger reversal releases the order quantity.
 -- Invoker-only helper; execution is private to the stock executor and FORCE RLS applies.
-CREATE FUNCTION v43b_net_received(oid uuid) RETURNS TABLE("orderLineId" uuid,accepted numeric) LANGUAGE sql SET search_path=pg_catalog,public AS $$
+CREATE FUNCTION v43b_net_received(oid uuid) RETURNS TABLE("orderLineId" uuid,accepted numeric) LANGUAGE sql SET search_path=pg_catalog,public,pg_temp AS $$
  SELECT l."orderLineId",sum(l."receivedQty"-l."rejectedQty")
  FROM public."GoodsReceiptLine" l JOIN public."GoodsReceipt" h ON h.id=l."receiptId"
  WHERE h."orderId"=oid AND h.status='POSTED'
@@ -250,7 +257,7 @@ CREATE FUNCTION v43b_net_received(oid uuid) RETURNS TABLE("orderLineId" uuid,acc
 $$;
 REVOKE ALL ON FUNCTION v43b_net_received(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_net_received(uuid) TO pusula_stock_executor;
-CREATE FUNCTION v43b_command(op text, body jsonb) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+CREATE FUNCTION v43b_command(op text, body jsonb) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
 DECLARE
  t uuid:=nullif(current_setting('app.tenant_id',true),'')::uuid;
  e uuid:=nullif(current_setting('app.legal_entity_id',true),'')::uuid;
@@ -392,7 +399,7 @@ DO $$ DECLARE tab text; BEGIN
  END LOOP;
 END $$;
 -- The batch/header cannot commit without a complete ledger and reconciled cache.
-CREATE FUNCTION v43b_complete() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+CREATE FUNCTION v43b_complete() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
 DECLARE h public."GoodsReceipt"; b public."StockPostingBatch";
 BEGIN
  IF EXISTS(SELECT 1 FROM public."StockBalance" sb WHERE sb."tenantId"::text=current_setting('app.tenant_id',true) AND (public.pusula_can('receipts.post',sb."tenantId",sb."legalEntityId",sb."activityId",sb."createdById") OR public.pusula_can('receipts.reverse',sb."tenantId",sb."legalEntityId",sb."activityId",sb."createdById")) AND sb."quantityBase"<>(SELECT coalesce(sum(m."quantityDeltaBase"),0) FROM public."StockMovement" m WHERE m."lotId"=sb."lotId" AND m."locationId"=sb."locationId")) THEN RAISE EXCEPTION 'LEDGER_BALANCE_MISMATCH' USING ERRCODE='23514'; END IF;
@@ -414,7 +421,7 @@ INSERT INTO "Permission"(id,label,module) VALUES
  ('receipts.view','Mal kabul görüntüle','receipts'),('receipts.create','Mal kabul taslağı oluştur','receipts'),('receipts.edit','Mal kabul taslağı düzenle','receipts'),('receipts.post','Mal kabul kesinleştir','receipts'),('receipts.cancel','Mal kabul taslağı iptal','receipts'),('receipts.reverse','Mal kabul ters kayıt','receipts'),('receipts.costView','Lot edinim maliyetini gör','receipts'),('stock.locationsManage','Depo tanımla','stock'),('stock.movementsView','Stok hareketi görüntüle','stock');
 INSERT INTO "RolePermission"("roleId","permissionId") SELECT 'MASTER',id FROM "Permission" WHERE id LIKE 'receipts.%' OR id IN ('stock.locationsManage','stock.movementsView');
 
-CREATE FUNCTION v43b_order_received(oid uuid) RETURNS TABLE("orderLineId" uuid,accepted text) LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+CREATE FUNCTION v43b_order_received(oid uuid) RETURNS TABLE("orderLineId" uuid,accepted text) LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
 DECLARE p public."PurchaseOrder";
 BEGIN
  SELECT * INTO p FROM public."PurchaseOrder" WHERE id=oid AND "tenantId"::text=current_setting('app.tenant_id',true) AND "legalEntityId"::text=current_setting('app.legal_entity_id',true);
@@ -429,7 +436,7 @@ REVOKE ALL ON FUNCTION v43b_order_received(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_order_received(uuid) TO pusula_runtime;
 -- Logically read-only reconciliation. SHARE waits for an in-flight command's header lock.
 -- This is intentionally not a READ ONLY transaction: PostgreSQL row locks need UPDATE rights.
-CREATE FUNCTION v43b_receipt_outcome(rid uuid, action text) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+CREATE FUNCTION v43b_receipt_outcome(rid uuid, action text) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
 DECLARE r public."GoodsReceipt"; reversed boolean;
 BEGIN
  IF action NOT IN ('post','reverse') THEN RAISE EXCEPTION 'INVALID_COMMAND' USING ERRCODE='23514'; END IF;
@@ -444,4 +451,9 @@ ALTER FUNCTION v43b_receipt_outcome(uuid,text) OWNER TO pusula_stock_executor;
 REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
 REVOKE ALL ON FUNCTION v43b_receipt_outcome(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_receipt_outcome(uuid,text) TO pusula_runtime;
+-- The creator revokes its grant; dropping it removes its bootstrap ADMIN row.
+SET LOCAL ROLE pusula_stock_role_creator;
+REVOKE pusula_stock_executor FROM SESSION_USER;
+RESET ROLE;
+DROP ROLE pusula_stock_role_creator;
 COMMIT;

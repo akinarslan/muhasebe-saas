@@ -1,3 +1,4 @@
+import { migrationChecksumMatches } from "./migration-checksum";
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { Client } from "pg";
@@ -126,7 +127,9 @@ export function validateHistory(
     applied.every(
       (r) =>
         files.filter(
-          (f) => f.name === r.migration_name && f.checksum === r.checksum,
+          (f) =>
+            f.name === r.migration_name &&
+            migrationChecksumMatches(f.name, f.checksum, r.checksum),
         ).length === 1,
     ),
     "MIGRATION_CHECKSUM_REJECTED",

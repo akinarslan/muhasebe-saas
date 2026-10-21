@@ -7,6 +7,7 @@ import {
   stockFiles,
   stockChecksum,
   requireAclPins,
+  validateStockHistory,
 } from "../scripts/stock/migrate";
 
 const env: NodeJS.ProcessEnv = {
@@ -62,5 +63,70 @@ describe("stock migration 016 separate safety gate", () => {
     expect(expectedTables).toHaveLength(35);
     expect(expectedForcedTables).toHaveLength(21);
     expect(expectedTables).not.toContain("StockMovement");
+  });
+});
+
+describe("reviewed resolved stock history", () => {
+  const files = Array.from({ length: 16 }, (_, i) => ({
+    name: i === 7 ? "202610160008_company_metadata" : `migration-${i}`,
+    checksum: String(i).padStart(64, "0"),
+  }));
+  const success = files
+    .slice(0, 15)
+    .map((f) => ({
+      ...f,
+      migration_name: f.name,
+      finished: true,
+      rolled_back: false,
+    }));
+  const rollback = { ...success[7], finished: false, rolled_back: true };
+  it("counts successful migrations and retains the reviewed 008 rollback", () => {
+    const rows = [...success, rollback];
+    const before = JSON.stringify(rows);
+    expect(validateStockHistory(rows, files)).toHaveLength(15);
+    expect(JSON.stringify(rows)).toBe(before);
+  });
+  it.each([
+    [{ ...rollback, rolled_back: false }, "STOCK_MIGRATION_UNRESOLVED"],
+    [
+      { ...rollback, checksum: "f".repeat(64) },
+      "STOCK_HISTORY_CHECKSUM_REJECTED",
+    ],
+    [success[7], "STOCK_HISTORY_REJECTED"],
+    [
+      {
+        ...rollback,
+        migration_name: files[8].name,
+        checksum: files[8].checksum,
+      },
+      "STOCK_MIGRATION_HISTORY_REVIEW_REQUIRED",
+    ],
+    [
+      { ...rollback, finished: true },
+      "STOCK_MIGRATION_HISTORY_REVIEW_REQUIRED",
+    ],
+  ])("rejects unsafe history %#", (extra, code) => {
+    expect(() => validateStockHistory([...success, extra], files)).toThrow(
+      code,
+    );
+  });
+  it("rejects duplicate rollbacks and missing success", () => {
+    expect(() =>
+      validateStockHistory([...success, rollback, rollback], files),
+    ).toThrow("STOCK_MIGRATION_HISTORY_REVIEW_REQUIRED");
+    expect(() =>
+      validateStockHistory(
+        [
+          ...success.filter(
+            (r) => r.migration_name !== rollback.migration_name,
+          ),
+          rollback,
+        ],
+        files,
+      ),
+    ).toThrow("STOCK_MIGRATION_HISTORY_REVIEW_REQUIRED");
+    expect(() => validateStockHistory(success.slice(0, 14), files)).toThrow(
+      "STOCK_HISTORY_REJECTED",
+    );
   });
 });

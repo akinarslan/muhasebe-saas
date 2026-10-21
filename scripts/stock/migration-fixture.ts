@@ -18,6 +18,11 @@ export async function verifyStockMigration(
   Object.assign(process.env, env);
   try {
     migrationTarget(url, true);
+    if (process.argv.includes("--managed-profile")) {
+      const { verifyManagedFixture } = await import("./managed-fixture");
+      await verifyManagedFixture(db, env, dir, measureRunner);
+      return;
+    }
     const old = JSON.parse(
       await readFile("scripts/db/migration-baseline.json", "utf8"),
     );

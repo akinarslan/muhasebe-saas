@@ -1,4 +1,100 @@
-# PUSULA V4.3b.4 — DELIVERY_PASS
+# PUSULA V4.3b.9a — Nihai GitHub teslim hazırlığı
+
+Yetkili feature dalında nihai teslim için 29 dosya doğrulandı; yeni teslim raporuyla kapsam30. Bu teslimde Vitest395/395, TypeScript, ESLint, native build ve gerçek Git LF artifact9/9 yeniden geçti. PostgreSQL fixture sonuçları önceki hazırlık kanıtıdır; yeniden çalıştırılmadı. SQL016 SHA7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272 ve tarihsel sınırlı checksum çiftleri korunur; cloud apply kapalı. Hassas içerik/staged kontrollerinden sonra yalnız izinli dala normal commit/push yapılacak; gerçek sonuç takip kaydına yazılacaktır.
+
+[Nihai teslim raporu](reports/PUSULA_V04_V43B9A_CODEX_DELIVERY.md).
+
+---
+
+# PUSULA V4.3b.9a — CHECKSUM_FIX_PASS
+
+Beş tarihsel migration'ın gerçek PostgreSQL READ ONLY history kayıtları, baseline ve çalışma ağacıyla eşleşiyor. Git LF blob'larından fark her dosyada yalnız son LF önündeki tek CR; tüm dosyanın CRLF olması değil. Başarılı history checksum'ları değiştirilmeden, beş tam ad/sabit hash çiftiyle dar karşılaştırma uyumluluğu eklendi. Bilinmeyen byte biçimi, içerik değişikliği, yanlış ad, eksik dosya ve bilinmeyen checksum reddediliyor. Gerçek eski resolved 008 checksum'u 35ca1ae8…ed1fd9 yalnız rollback kaydında kabul edilir; başarılı SQL olarak kabul edilmez.
+
+İlk 16 SQL, eski baseline'lar, managed pinler, Git attributes ve .env.local değişmedi. 016 SHA 7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272 korunuyor. Cloud apply hâlâ kapalı. Gerçek Neon SQL/API, DB history mutation, provider/R2/env işlemi veya Git commit/push/merge yok.
+
+Yeni izole PG18.6: managed14 + artifact9, Git LF history ile normal Prisma runner20; DB11/Auth62/Cloud11/Supplier16/Purchase28/Stock36 PASS. İki fixture sunucusu kapandı. Vitest395/395, TypeScript, ESLint ve production build native exit0. Önceki başarısız denemeler raporda korunur. Eski DELIVERY_BLOCKED sonucu tarihsel kayıttır; checksum engeli yerelde giderildi, GitHub teslimi henüz yapılmadı. token_roles ve managed cloud/R2 denetim sınırları açık.
+
+[Checksum düzeltmesi ve kesin 29 dosyalık teslim listesi](research/PUSULA_V04_V43B9A_CHECKSUM_FIX.md) · [Doğrulama](docs/validation/V04_V43B9A_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.5–V4.3b.9 — DELIVERY_BLOCKED
+
+21.10.2026 · GitHub tesliminde HEAD/upstream/gerçek uzak ref f56caed5eadb64e76304777f83477f1677c19d19 ve ahead/behind 0/0 doğrulandı. V4.3b.9'un 13 dosyası ile uzakta eksik yedi V4.3b.5–8 raporu kapsamda; beklenmeyen dosya yok. Dört istenen kontrol yeniden çalıştı: Vitest389/389, npx tsc, ESLint ve native build exit0. Önceki PostgreSQL fixture testleri bu teslimde yeniden çalıştırılmadı.
+
+Kritik engel: değişmemiş 004/005/007/008/012 migration çalışma kopyaları CRLF checksum baseline'ına uyarken, mevcut Git commit'indeki LF blob'ları aynı baseline'a uymuyor. Git artifact'larının izole kopyasında gerçek stockFiles kontrolü STOCK_LEGACY_CHECKSUM_REJECTED verdi; DB bağlantısı yok. Bu önceden mevcut sorunu kontrol gevşeterek veya ilk 15 SQL/baseline'ı değiştirerek geçirme yapılmadı. Kullanıcının kritik hatada dur koşulu gereği stage/commit/push yapılmadı. 016 SHA 7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272 ve yeni pinler doğru; cloud apply kapalı. Gerçek Neon/R2/env ve provider kaynak mutation yok.
+
+[Teslim raporu, hash kanıtları ve açık engel](reports/PUSULA_V04_V43B9_CODEX_DELIVERY.md). Önceki yerel kabul aşağıda tarihsel olarak korunur.
+
+---
+
+# PUSULA V4.3b.9 — MANAGED_ACL_LOCAL_PASS
+
+21.10.2026 · PostgreSQL 18.6 üzerinde ayrı non-superuser LOGIN actor ile 016 sahiplik sorunu çözüldü. Tek-aktör yaklaşımının silemediği bootstrap ADMIN üyeliği, transaction içinde geçici pusula_stock_role_creator kullanılıp sonunda DROP edilerek kaldırılıyor. Commit sonrası executor üyelikleri, actor SET/INHERIT ve executor schema CREATE yok; runtime'a executor veya doğrudan stok DML yetkisi verilmedi. pg_temp yeni fonksiyonların search_path sonunda açıkça yer alıyor.
+
+Resolved 008 kaydı exact checksum ve tek başarılı karşılığıyla korunur; başarılı migration sayısı ayrı hesaplanır. Unresolved, bilinmeyen checksum, çift başarı ve kısmi durumlar fail-closed. Yeni 016 SHA `7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272`; önceki SHA `80229d594126e1fda30bd975aa4af76b4a47eda920d2a7d52a556e237f4bbe18`. İlk 15 SQL ve eski DB baseline değişmedi. Ayrı managed fixture pinleri ölçüldü; Neon profili tarihsel pre ile sınırlı, post=null/applyEnabled=false. Cloud apply açılmadı.
+
+Nihai gerçek fixture: normal runner 20/20, managed 12/12; 47 tablo/33 FORCE RLS/16 başarı. Normal fixture DB11/Auth62/Cloud11/Supplier16/Purchase28/Stock36; managed AuthC2 9/Supplier16/Purchase28/Stock36 PASS. İki fixture sunucusu kapandı. Vitest389/389, TypeScript, ESLint ve native production build exit0. Mevcut .data tracing uyarısı sürüyor. İlk pin/üyelik/kodlama ve build çıkış kaydı sorunları raporda açıklandı ve nihai adayla tekrar doğrulandı.
+
+Gerçek Neon/API/DDL/DML/GRANT, recovery/production/test bulut DB, provider kaynak mutation, gerçek Auth/MFA/R2/env değişikliği veya Git commit/push/merge yok. Önceki V4.3b.5–8 raporlar korundu. token_roles ROLE_DELTA_UNRESOLVED ve bağımsız backup engeli açık. Gerçek bulut uygulaması için ayrı denetim ve açık kullanıcı onayı gerekir.
+
+[Düzeltme raporu](research/PUSULA_V04_V43B9_MANAGED_ACL_FIX.md) · [Doğrulama](docs/validation/V04_V43B9_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.8 ? NEON_COMPATIBILITY_BLOCKED
+
+21.10.2026 ? development TLS do?rulamal? RR READ ONLY SQL: PG18.6, 40 tablo/26 FORCE RLS, 15 ba?ar?l? migration, 015 checksum ve sekiz ?ema kategorisi e?it; 016 pending. ?nceki kapsanan business/?ema/history/rol/ACL kan?tlar?yla e?le?me korundu. Ger?ek actor neondb_owner; CREATEROLE/CREATE/grant haklar? var fakat SUPERUSER=false ve createrole_self_grant bo?. De?i?memi? 016 yeni executor'a SET ROLE yolu kurmadan ALTER FUNCTION OWNER kullan?yor; standart PG18 ile sahiplik devri engeli beklenir, Neon istisnas? veya DDL ba?ar?s? kan?tlanmad?. Yerel runner cloud'a kapal?; fixture ACL pin'i managed profile e?it de?il ve ger?ek resolved 008 kayd? kat? stock history kontrol?ne uyumsuz.
+
+A managed ACL: BLOCKED. B recovery: PASS_WITH_LIMITATIONS, yaln?z kapsanan tarihsel veri/?ema kan?t?. C cloud runner haz?rl???: PASS_WITH_LIMITATIONS, engelleri ??zmek i?in ayr? haz?rl?k yap?labilir; apply yetkisi yok. Recovery token_roles fark? ROLE_DELTA_UNRESOLVED korunur; recovery SQL yok. Provider GET sistem CA ile HTTP401: g?ncel kaynak envanteri teyit edilemedi. R2 ba??ms?z backup/restore operasyonel de?il; 35/21 allowlist 47/33 kabul? sa?lamaz.
+
+Yaln?z iki yeni rapor ve bu dosyan?n ba??na ?zet eklendi; ?nceki raporlar korundu. Migration/source/env de?i?ikli?i, rol/ACL DDL-DML-GRANT, branch/endpoint/snapshot mutation, test/production/recovery SQL, restore/R2, test/build veya Git commit/push/merge yok. HEAD f56caed5eadb64e76304777f83477f1677c19d19.
+
+[Uyumluluk raporu](research/PUSULA_V04_V43B8_NEON_COMPATIBILITY.md) ? [Do?rulama](docs/validation/V04_V43B8_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.7 — RECOVERY_BRANCH_PARTIAL (güncellenmiş onay)
+
+21.10.2026 18:54 Türkiye saati. Free plan + Console kapasite kanıtına ve tüketim API'si 403 olsa da devam edilmesine verilen yeni açık onaya dayanarak tek recovery oluşturuldu: br-late-river-baeipun8 / pusula-v43b6-pre-migration-016-20261021. Parent br-rough-darkness-ba6ow9zo; provider capture 2026-10-21T15:51:53Z, LSN 0/38201C8; oluşturulma 15:52:18Z. Yeni endpoint ep-aged-flower-bauhc0to, min=max0.25CU, suspend_timeout_seconds=0 (Free varsayılanı5dk; 0 kapalı anlamına gelmez). Her iki POST tek deneme HTTP201; eski kaynaklar korundu.
+
+Kaynak/recovery TLS CA+hostname ve RR READ ONLY kontrolleri geçti. PG18.6,40tablo,26FORCERLS,15başarılımigration,015SHA,016pending,8schemahash,üyelik/default/tableACL,7businesscount/digest ve Supplier/Material/Variant/PO ilişkileri eşit. PO-2026-9893 APPROVED,1satır,2m→3.04m²,30.40USD. Capture öncesi ve sonrası kaynak business/schema/izin referansları aynı; tamDBRPO0 iddiası yok.
+
+PARTIAL gerekçesi: ilk recovery kontrolü PRIVILEGE_DRIFT ile durdu. Salt okunur tanılama tek ek rol token_roles olduğunu gösterdi (NOLOGIN, super/createdb/createrole/bypassrls=false); kaynak rollerinin ölçülen özellikleri eşit. Ek rolün kökeni doğrulanmadı, tam rol fingerprint'i PASS sayılmadı. Düzeltme/normalization/silme/restore/yeniden oluşturma yapılmadı. Son GET:5/10branch,5endpoint,1snapshot,118operasyon,pending/failed0. TüketimAPI403; artımlı tüketim/kalan kota API ile ölçülemedi.
+
+Migration016, production/test SQL, R2, Auth/MFA/session içerik erişimi, .env.local değişikliği, test/build veya Git commit/push/merge yapılmadı. HEAD f56caed5eadb64e76304777f83477f1677c19d19. [Oluşturma raporu](research/PUSULA_V04_V43B7_RECOVERY_CREATION.md) · [Doğrulama](docs/validation/V04_V43B7_RECOVERY_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.7 — RECOVERY_BRANCH_BLOCKED
+
+21.10.2026 18:40 Türkiye saati. Güncel GET ile proje/source/endpoint kimlikleri, Free plan, 4/10 branch, mevcut 4 endpoint ve 1 snapshot doğrulandı; önerilen recovery adı mevcut değil. Cursor ile provider geçmişinin son boş sayfasına kadar 112 kayıt tarandı; pending/failed 0.
+
+Tüketim GET yeniden HTTP 403 döndürdü. Kullanıcının önceki Console kullanım kanıtı korundu; güncel API ölçümü veya kesin kalan kota sayılmadı. V4.3b.7 talimatındaki kapasite belirsizliğinde oluşturma öncesinde durma koşulu nedeniyle yeni branch/endpoint POST'u gönderilmedi. Yeni SQL kaynak kontrolü, yazıcı kontrolü, source referansı ve recovery karşılaştırması çalıştırılmadı; V4.3b.6 sonuçları yeni koşulmuş gibi sunulmadı. Yeni branch/endpoint ID ve capture LSN yoktur.
+
+Yalnız GET ve yerel raporlama yapıldı. Mevcut kaynaklar, önceki değişiklikler ve .env.local korundu. Migration, R2, restore/finalize, SQL bağlantısı, Auth/MFA/session içeriği erişimi, test/build veya Git commit/push/merge yok. HEAD f56caed5eadb64e76304777f83477f1677c19d19 olarak kaldı.
+
+[Oluşturma raporu](research/PUSULA_V04_V43B7_RECOVERY_CREATION.md) · [Gerçek doğrulama sonuçları](docs/validation/V04_V43B7_RECOVERY_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.5 — RECOVERY_PREFLIGHT_PARTIAL
+
+21.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `f56caed5eadb64e76304777f83477f1677c19d19`. İlk koşuda ağacı temizdi;devam koşusunda yalnız önceki üç rapor değişikliği vardı ve korundu. Commit/push/merge yapılmadı.
+
+Son devam talimatında kullanıcıConsoleekran görüntüsü kanıtı verdi:Free,storage31,69MB,compute0,02CU-saat,4branch,6saatretention. Bu değerler kullanıcıkanıtı olarak ayrıldı;APIölçümü veya kalan kota gibi sunulmadı.21Ekim18:11Türkiye saati yeniGET200ile onaylıproje/development/endpoint doğrulandı;APIfree_v3,4/10branch ve21600sretentiondöndü.
+
+YalnızonaylıdevelopmentDB'de CA/hostnameTLS,startupread-only veREPEATABLE READ READ ONLY denetimiPASS:PG18.6,40tablo/26FORCERLS,15başarılımigration,015SHAeşit,016pending.8schemahash ve4mevcutprivilegehash eşit;unresolved0,bilinen008resolvedrollback1,stokexecutorrolüyok. PO-2026-9893APPROVED,1satır,30,40USD;2m→3,04m²dönüşümeşit. Supplier/PO/Material/Variant toplamları1'er. Transactionrollbackilekapandı ve bağlantısonlandırıldı;Auth/MFA/sessioniçeriği okunmadı.
+
+GenelsonuçPARTIAL:ConsumptionAPI403,kalanstorage/CUkotası,snapshotlimiti ve yeni recovery/endpointmaliyet teyidi eksik;ücretsizoluşturma veya tamkapasitePASSiddiası yok. Önceki401veSQLçalıştırılmayan koşular raporda tarihsel olarak korundu. MevcutACLpinlerinin kapsam sınırlaması raporda belirtildi;bu016manageduyumluluk onayı değildir.
+
+Yerel ilk15migration SHA15/15 ve016SHA `80229d594126e1fda30bd975aa4af76b4a47eda920d2a7d52a556e237f4bbe18` korundu. Yalnız üç rapor belgesi değişti. NeonPOST/PATCH/DELETE,branch/endpoint/snapshotoluşturma,restore/finalize,R2,veri/rol/ACLve.env.localdeğişikliği veya test/build işlemi yoktur. RPO/capture ve kalanquota/maliyet teyidi sonra tamamlanmalıdır. Henüz brancholuşturma veya016apply izni yoktur.
+
+[Recovery preflight raporu](research/PUSULA_V04_V43B5_RECOVERY_PREFLIGHT.md) · [Gerçek kontroller ve eksik kanıtlar](docs/validation/V04_V43B5_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.4 — DELIVERY_PASS (önceki teslim)
 
 21.10.2026 · Kullanıcı bu görevde yalnız `feat/pusula-v030-neon-cloud` dalında commit/normal push yetkisi verdi. Başlangıç HEAD ve gerçek uzak ref `cd4ffcfeb576cef64b553c875e59617716ed1383`, ahead/behind0/0; değişiklikler beklenen9dosyaydı.
 
