@@ -340,6 +340,7 @@ async function main() {
           },
           dir,
           process.argv.includes("--measure-stock"),
+          process.argv.includes("--measure-runner"),
         );
         continue;
       }

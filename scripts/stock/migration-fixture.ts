@@ -4,11 +4,14 @@ import { createHash } from "node:crypto";
 import { Client } from "pg";
 import { catalog, hash, migrationTarget, check } from "../db/migration-safety";
 import { runPrisma } from "../db/migrate";
+import { runStock } from "./migrate";
+import { runnerPre, runnerPost, runnerLockFailure } from "./runner-fixture";
 export async function verifyStockMigration(
   db: Client,
   env: NodeJS.ProcessEnv,
   dir: string,
   measure = false,
+  measureRunner = false,
 ) {
   const url = env.TEST_DIRECT_DATABASE_URL;
   const saved = { ...process.env };
@@ -67,6 +70,7 @@ export async function verifyStockMigration(
     const contents = await db.query(
       `SELECT 'MaterialVariant' tab,md5(coalesce(string_agg(to_jsonb(v)::text,'' ORDER BY id),'')) digest FROM "MaterialVariant" v UNION ALL SELECT 'CloudSaleLine',md5(coalesce(string_agg(to_jsonb(l)::text,'' ORDER BY id),'')) FROM "CloudSaleLine" l`,
     );
+    const runner = await runnerPre(db, env, measureRunner);
     // Force a late SQL failure on this brand-new cluster, then prove full rollback.
     let failed = false;
     try {
@@ -98,7 +102,17 @@ export async function verifyStockMigration(
         injectedLateSqlFailure: true,
       }),
     );
-    await runPrisma(db, env);
+    if (measureRunner) await runPrisma(db, env);
+    else {
+      await runnerLockFailure(db, env, runner.pins);
+      const applied = await runStock(db, env, {
+        pins: runner.pins,
+        apply: true,
+        approved: true,
+      });
+      check(applied.state === "APPLIED", "STOCK_RUNNER_APPLY_REQUIRED");
+    }
+    await runnerPost(db, env, dir, runner.pre, runner.pins, measureRunner);
     const cat = await catalog(db);
     const schema = Object.fromEntries(
       Object.entries(cat).map(([k, v]) => [k, hash(v)]),

@@ -1,4 +1,28 @@
-# PUSULA V4.3b.3 — FIX_PASS
+# PUSULA V4.3b.4 — GITHUB_DELIVERY_PREPARED
+
+21.10.2026 · Kullanıcı bu görevde yalnız `feat/pusula-v030-neon-cloud` dalında commit/normal push yetkisi verdi. Başlangıç HEAD ve gerçek uzak ref `cd4ffcfeb576cef64b553c875e59617716ed1383`, ahead/behind0/0; değişiklikler beklenen9dosyaydı.
+
+Bu teslim görevinde `npm.cmd test`379/379, `npx.cmd tsc --noEmit`, `npm.cmd run lint` ve `npm.cmd run build` native exit0 ile geçti. Runner20/20 ve Stock36/36 önceki hazırlık kanıtıdır; bu görevde PostgreSQL veya migration çalıştırılmadı. Migration001–016 içerikleri/checksum'ları ve cloudguard korunur;Neon/R2/Auth/MFA/.env.local işlemi yoktur.
+
+Commit/push sonucu henüz oluşmadı. Gerçek SHA ve push gözlemi ilk push sonrasında yalnız iki teslim belgesine kaydedilecektir. [GitHub teslim raporu](reports/PUSULA_V04_V43B4_CODEX_DELIVERY.md).
+
+---
+
+# PUSULA V4.3b.4 — LOCAL_RUNNER_READY (hazırlık aşaması)
+
+21.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD ve upstream `cd4ffcfeb576cef64b553c875e59617716ed1383`; başlangıç çalışma ağacı temizdi. Commit/push yapılmadı.
+
+Migration 016 için ayrı, yalnız yerel fixture kabul eden runner hazırlandı. Preflight 40 tablo/26 FORCE RLS/15 migration, postflight 47/33/16; SQL/şema ve ayrı ACL/rol/izin pin'leri doğrulanır. Gerçek Prisma apply, ALREADY_APPLIED, kısmi şema/ACL/RLS drift, preflight ve apply lock timeout/rollback testleri geçti. Boş/bozuk ACL pinleri de reddedilir. Eski cloud guard kaldırılmadı; yeni kapı Neon'a bağlantıdan önce durur. 016 SHA `80229d594126e1fda30bd975aa4af76b4a47eda920d2a7d52a556e237f4bbe18` ve ilk15 SQL aynen korunur.
+
+Son tam yerel PG18.6 koşusunda runner20 kontrol, DB/RLS11, Auth62, Cloud11, Supplier16, Purchase28 ve Stock36 PASS. Vitest379/379; TypeScript/ESLint ve production build native exit0. Tüm fixture sunucuları kapatıldı. İlk başarısızlıklar ve düzeltmeler raporda korunur.
+
+Pre-016 recovery planı hazır; eski pre-015 branch güncel PO ve015 için yeterli değildir. Güncel kota, parent ID/TLS, managed ACL ve capture RPO teyidi sonraki ayrı onaylı aşamadır. Bağımsız R2 backup/restore engeli ve35/21 allowlist korundu. Gerçek Neon/API/SQL, test/production, Auth/MFA, R2, branch/snapshot/restore veya .env.local işlemi yapılmadı. Bu sonuç gerçek Neon migration uygulama izni değildir.
+
+[Hazırlık/kurtarma planı ve kesin9dosyalık Mimo listesi](research/PUSULA_V04_V43B4_CLOUD_READINESS.md) · [Test kanıtları](docs/validation/V04_V43B4_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.3 — FIX_PASS (önceki teslim)
 
 21.10.2026 · `feat/pusula-v030-neon-cloud` · başlangıç `1287e82fd1df1357b128fb55f0966cd1789db5c4`. Başlangıç çalışma ağacı temizdi;commit/push yapılmadı.
 
