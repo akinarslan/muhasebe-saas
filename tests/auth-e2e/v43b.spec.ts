@@ -209,9 +209,47 @@ test("V4.3b real receipt post ledger lot and mobile dirty guard", async ({
     .getByRole("button", { name: "Yeniden doğrula", exact: true })
     .click();
   await expect(verification).toHaveCount(0);
+  await page.route(
+    "**/goods-receipts/*/post",
+    (route) =>
+      route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "RECEIPT_STATE_CONFLICT" }),
+      }),
+    { times: 1 },
+  );
   await page.getByRole("button", { name: "Kesinleştir", exact: true }).click();
   await expect(
-    page.getByText("Mal kabul kesinleşti.", { exact: true }),
+    page.getByText("RECEIPT_STATE_CONFLICT", { exact: true }),
+  ).toBeVisible();
+  await page.route(
+    "**/goods-receipts/*/post",
+    (route) => route.abort("failed"),
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "Kesinleştir", exact: true }).click();
+  await expect(
+    page.getByText(
+      "Kontrol anında işlem kesinleşmemiş. Aynı kayıt üzerinden durumu kontrol edin.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  // Commit in the actual isolated PostgreSQL backend, then lose the response.
+  await page.route(
+    "**/goods-receipts/*/post",
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "Kesinleştir", exact: true }).click();
+  await expect(
+    page.getByText("Mal kabul kesinleşti; kayıt durumu doğrulandı.", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("cell", { name: "POSTED", exact: true }),
@@ -240,5 +278,38 @@ test("V4.3b real receipt post ledger lot and mobile dirty guard", async ({
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+  page.once("dialog", (dialog) => dialog.accept("Browser correction"));
+  await page.route(
+    "**/goods-receipts/*/reverse",
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "Ters kayıt", exact: true }).click();
+  await expect(
+    page.getByText("Ters kayıt tamamlandı; kayıt durumu doğrulandı.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept("Browser second correction"));
+  await page.route(
+    "**/goods-receipts/*/reverse",
+    (route) => route.abort("failed"),
+    { times: 1 },
+  );
+  await page.route(
+    "**/goods-receipts/*/outcome?*",
+    (route) => route.abort("failed"),
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "Ters kayıt", exact: true }).click();
+  await expect(
+    page.getByText("İşlem sonucu doğrulanamadı; kayıt durumunu kontrol edin.", {
+      exact: true,
+    }),
+  ).toBeVisible();
   expect(errors).toBe(0);
 });

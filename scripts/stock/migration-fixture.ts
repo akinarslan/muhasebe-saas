@@ -67,6 +67,37 @@ export async function verifyStockMigration(
     const contents = await db.query(
       `SELECT 'MaterialVariant' tab,md5(coalesce(string_agg(to_jsonb(v)::text,'' ORDER BY id),'')) digest FROM "MaterialVariant" v UNION ALL SELECT 'CloudSaleLine',md5(coalesce(string_agg(to_jsonb(l)::text,'' ORDER BY id),'')) FROM "CloudSaleLine" l`,
     );
+    // Force a late SQL failure on this brand-new cluster, then prove full rollback.
+    let failed = false;
+    try {
+      await db.query(
+        sql.toString("utf8").replace(/COMMIT;\s*$/, "SELECT 1/0; COMMIT;"),
+      );
+    } catch {
+      failed = true;
+      await db.query("ROLLBACK");
+    }
+    check(failed, "STOCK_LATE_FAILURE_REQUIRED");
+    const rolledBack = await catalog(db);
+    for (const [k, v] of Object.entries(rolledBack))
+      check(
+        hash(v) === hash(before[k as keyof typeof before]),
+        "STOCK_MIGRATION_ROLLBACK_" + k,
+      );
+    check(
+      (
+        await db.query(
+          "SELECT count(*)::int n FROM pg_roles WHERE rolname='pusula_stock_executor'",
+        )
+      ).rows[0].n === 0,
+      "STOCK_EXECUTOR_ROLLBACK",
+    );
+    console.log(
+      JSON.stringify({
+        stockMigrationRollback: "PASS",
+        injectedLateSqlFailure: true,
+      }),
+    );
     await runPrisma(db, env);
     const cat = await catalog(db);
     const schema = Object.fromEntries(

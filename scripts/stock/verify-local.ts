@@ -387,7 +387,7 @@ async function main() {
         );
     }
     await admin.query(`GRANT SELECT ON "StockLocation","GoodsReceipt","GoodsReceiptLine","StockLot","StockPostingBatch","StockMovement","StockBalance" TO pusula_test_runtime;
-GRANT EXECUTE ON FUNCTION v43b_command(text,jsonb),v43b_order_received(uuid) TO pusula_test_runtime;
+GRANT EXECUTE ON FUNCTION v43b_command(text,jsonb),v43b_order_received(uuid),v43b_receipt_outcome(uuid,text) TO pusula_test_runtime;
 GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runtime;
       GRANT SELECT,INSERT ON "SupplierOfferVersion" TO pusula_test_runtime;
       GRANT SELECT,INSERT,UPDATE ON "PurchaseOrder" TO pusula_test_runtime;

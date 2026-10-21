@@ -1,4 +1,18 @@
-# PUSULA V4.3b — LOCAL_ACCEPTANCE_PASS
+# PUSULA V4.3b.3 — FIX_PASS
+
+21.10.2026 · `feat/pusula-v030-neon-cloud` · başlangıç `1287e82fd1df1357b128fb55f0966cd1789db5c4`. Başlangıç çalışma ağacı temizdi;commit/push yapılmadı.
+
+F1:ortak PO→depo kilit sırası,sıralı PO satırı/varyant ve lot/bakiye kilitleri. F2:tam reversal sipariş net kabulünü azaltır;2m→2m→reverse→yeniden2m artık mümkün,eski POSTED belge ve immutable ledger korunur. F6:yetkili salt okunur outcome sorgusu,ağ/5xx uzlaştırması,kesin4xx ayrımı ve doğrulanamayan sonuç mesajı;otomatik mutation retry yoktur. Runtime lock3s/statement10s;Prisma8s maxWait/15s timeout değişmedi.
+
+Gerçek izole PostgreSQL18.6:son Stock36/36,Supplier16/16,Purchase28/28;ayrı tam koşudaDB/RLS11/11,Auth62/62,Cloud11/11. Gerçek Chrome desktop/mobile4/4,Vitest373/373,TypeScript/ESLint PASS,production build native exit0. Migration late-failure rollback ve yeni checksum/fingerprint ile sıfırdan pinli gerçek Prisma deploy PASS;47tablo/33FORCE RLS. Tüm fixture sunucuları kapatıldı. İlk başarısızlıklar raporda korunur;tam koşunun test enjeksiyonunda durması başarılı son candidate'larla karıştırılmaz.
+
+016eskiSHA `4dc07f6a16c5d423b3dbafd06c377775212d728f701c5b3390a5dbb7cbbe5a89`;yeniSHA `80229d594126e1fda30bd975aa4af76b4a47eda920d2a7d52a556e237f4bbe18`. Mimo teslimiyle yeni resmî referans değişmektedir. İlk15migration checksum'u15/15aynı. Gerçek Neon,PO-2026-9893,.env.local,gerçek Auth/MFA,R2,recovery branch'leri ve cloud migration guard korunur. Cloud/production/backup kabulü iddia edilmez. Build'de mevcut .data tracing uyarısı vardır;son koşuda native çıkış0doğrulandı.
+
+[Düzeltme raporu ve kesin14dosyalık Mimo listesi](research/PUSULA_V04_V43B3_FIX_REPORT.md) · [Test kanıtı ve ilk başarısızlıklar](docs/validation/V04_V43B3_VERIFICATION.md) · [Güncel stok sözleşmesi](docs/architecture/V43B_INVENTORY_CONTRACT.md).
+
+---
+
+# PUSULA V4.3b — LOCAL_ACCEPTANCE_PASS (önceki teslim)
 
 20.10.2026 · `feat/pusula-v030-neon-cloud` · HEAD `295c29879b4c0fc7c24de6f5cecd5b5ddaf40697`.
 

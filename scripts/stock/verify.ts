@@ -45,12 +45,21 @@ async function main() {
       ).rows[0].digest;
       legacy[table] = { ids, digest };
     }
-    const request = async (path: string, method = "GET", body?: object) => {
+    const request = async (
+      path: string,
+      method = "GET",
+      body?: object,
+      action?: string,
+    ) => {
       const r = await cloudRequest(
         new Request(
           "http://127.0.0.1:3000/api/cloud/workspace/" +
             path +
-            (method === "GET" ? "?company=" + scope.legalEntityId : ""),
+            (method === "GET"
+              ? "?company=" +
+                scope.legalEntityId +
+                (action ? "&action=" + action : "")
+              : ""),
           {
             method,
             headers: f.headers(),
@@ -62,8 +71,13 @@ async function main() {
       );
       return { status: r.status, body: await r.json() };
     };
-    const ok = async (path: string, method = "GET", body?: object) => {
-      const r = await request(path, method, body);
+    const ok = async (
+      path: string,
+      method = "GET",
+      body?: object,
+      action?: string,
+    ) => {
+      const r = await request(path, method, body, action);
       assert.equal(r.status, 200, JSON.stringify({ path, ...r }));
       return r.body;
     };
@@ -391,8 +405,8 @@ async function main() {
               JSON.stringify({ ...scope, id: b.id, version: 1 }),
             ])
             .then(
-              () => false,
-              () => true,
+              () => null,
+              (e: { code: string; message: string }) => e,
             );
           await new Promise((resolve) => setTimeout(resolve, 150));
           const waiting = (
@@ -403,7 +417,9 @@ async function main() {
           ).rows[0].yes;
           assert.equal(waiting, true);
           await c1.query("COMMIT");
-          assert(await pending);
+          const rejected = await pending;
+          assert.equal(rejected?.code, "23514");
+          assert.match(rejected?.message ?? "", /OVER_RECEIPT/);
           await c2.query("ROLLBACK");
           assert.equal(
             (
@@ -555,6 +571,17 @@ async function main() {
             403,
           );
           assert.deepEqual(await counts(), before);
+          assert.equal(
+            (
+              await request(
+                "goods-receipts/" + deniedReceipt.id + "/outcome",
+                "GET",
+                undefined,
+                "post",
+              )
+            ).status,
+            403,
+          );
         } finally {
           await admin.query(
             `DELETE FROM "UserPermissionOverride" WHERE id=$1`,
@@ -790,6 +817,17 @@ async function main() {
             (await request("goods-receipts/" + otherId!)).status,
             404,
           );
+          assert.equal(
+            (
+              await request(
+                "goods-receipts/" + otherId + "/outcome",
+                "GET",
+                undefined,
+                "post",
+              )
+            ).status,
+            404,
+          );
           const own = await draft(ord, "1.5");
           assert.equal((await ok("goods-receipts/" + own.id)).status, "DRAFT");
           const before = await counts();
@@ -804,6 +842,34 @@ async function main() {
           assert.deepEqual(await counts(), before);
           const remaining = await draft(ord, "0.5");
           await post(remaining.id);
+          // Another actor reverses their hidden receipt; OWN totals must see that reversal.
+          const reversing = await runtime();
+          try {
+            await reversing.query("SELECT set_config('app.user_id',$1,true)", [
+              otherUser,
+            ]);
+            await reversing.query("SELECT v43b_command($1,$2::jsonb)", [
+              "reverse",
+              JSON.stringify({
+                ...scope,
+                id: otherId,
+                version: 2,
+                reason: "Hidden reversal correction",
+              }),
+            ]);
+            await reversing.query("COMMIT");
+          } finally {
+            await reversing.query("ROLLBACK");
+            await reversing.end();
+          }
+          await post(own.id);
+          const picker = await ok("receipt-orders");
+          assert(
+            new Decimal(
+              picker.find((x: { id: string }) => x.id === ord.id).lines[0]
+                .acceptedQty,
+            ).eq(2),
+          );
         } finally {
           await admin.query(
             `DELETE FROM "RoleAssignment" WHERE "membershipId"=$1`,
@@ -838,6 +904,20 @@ async function main() {
             (await client.query('SELECT count(*)::int n FROM "GoodsReceipt"'))
               .rows[0].n,
             0,
+          );
+          await assert.rejects(
+            () =>
+              client.query("SELECT v43b_receipt_outcome($1,$2)", [
+                r!.id,
+                "post",
+              ]),
+            (e: unknown) => (e as { code: string }).code === "42501",
+          );
+          await client.query("ROLLBACK");
+          await client.query("BEGIN");
+          await client.query(
+            "SELECT set_config('app.user_id',$1,true),set_config('app.tenant_id',$2,true),set_config('app.legal_entity_id',$3,true)",
+            [ctx.userId, foreignTenant, scope.legalEntityId],
           );
           await assert.rejects(() =>
             client.query("SELECT v43b_command($1,$2::jsonb)", [
@@ -1146,6 +1226,452 @@ async function main() {
             'UPDATE "SupplierMaterial" SET "purchaseUnit"=$2,version=version+1 WHERE id=$1',
             [link.id, "linear_meter"],
           );
+        }
+      },
+    );
+
+    const outcome = (id: string, action: string) =>
+      ok("goods-receipts/" + id + "/outcome", "GET", undefined, action);
+    await check(
+      "F2 full reversal releases quantity; new receipt has new lot; replay cannot duplicate",
+      async () => {
+        const order = await po();
+        const first = await draft(order, "2");
+        await post(first.id);
+        assert.equal((await outcome(first.id, "post")).state, "SUCCEEDED");
+        await ok("goods-receipts/" + first.id + "/reverse", "POST", {
+          version: 2,
+          reason: "Correction",
+        });
+        assert.equal((await outcome(first.id, "reverse")).state, "SUCCEEDED");
+        const picker = await ok("receipt-orders");
+        assert(
+          new Decimal(
+            picker.find((x: { id: string }) => x.id === order.id).lines[0]
+              .acceptedQty,
+          ).eq(0),
+        );
+        const second = await draft(order, "2");
+        await post(second.id);
+        await post(second.id);
+        assert.equal(
+          (
+            await request("goods-receipts/" + first.id + "/reverse", "POST", {
+              version: 2,
+              reason: "Again",
+            })
+          ).status,
+          409,
+        );
+        const over = await draft(order, "0.1");
+        assert.equal(
+          (
+            await request("goods-receipts/" + over.id + "/post", "POST", {
+              version: 1,
+            })
+          ).body.error,
+          "OVER_RECEIPT",
+        );
+        const rows = (
+          await admin.query(
+            'SELECT count(DISTINCT l.id)::int lots,sum(m."quantityDeltaBase")::text qty FROM "StockMovement" m JOIN "StockLot" l ON l.id=m."lotId" JOIN "GoodsReceiptLine" rl ON rl.id=m."receiptLineId" WHERE rl."orderLineId"=$1',
+            [order.line],
+          )
+        ).rows[0];
+        assert.equal(rows.lots, 2);
+        assert(new Decimal(rows.qty).eq(2));
+        assert.equal((await ok("goods-receipts/" + first.id)).status, "POSTED");
+      },
+    );
+    await check(
+      "F2 partial reversal and reaccept leaves other order quantities unchanged",
+      async () => {
+        const a = await po(),
+          b = await po();
+        const ra = await draft(a, "0.75"),
+          rb = await draft(b, "1");
+        await post(ra.id);
+        await post(rb.id);
+        await ok("goods-receipts/" + ra.id + "/reverse", "POST", {
+          version: 2,
+          reason: "Partial correction",
+        });
+        const next = await draft(a, "2");
+        await post(next.id);
+        const picker = await ok("receipt-orders");
+        assert(
+          new Decimal(
+            picker.find((x: { id: string }) => x.id === a.id).lines[0]
+              .acceptedQty,
+          ).eq(2),
+        );
+        assert(
+          new Decimal(
+            picker.find((x: { id: string }) => x.id === b.id).lines[0]
+              .acceptedQty,
+          ).eq(1),
+        );
+      },
+    );
+
+    await check(
+      "F2 different lines on one PO retain independent net quantities",
+      async () => {
+        const line = {
+          supplierMaterialId: link.id,
+          offerVersionId: null,
+          orderedQty: "2",
+          purchaseUnit: "linear_meter",
+          expectedDate: null,
+          manualCurrency: "USD",
+          manualUnitPrice: "15.20",
+        };
+        const order = await ok("purchase-orders", "POST", {
+          idempotencyKey: randomUUID(),
+          supplierId: supplier.id,
+          revisesOrderId: null,
+          lines: [line, line],
+        });
+        await ok("purchase-orders/" + order.id + "/approve", "POST", {
+          version: 1,
+        });
+        const lines = (
+          await admin.query(
+            'SELECT id FROM "PurchaseOrderLine" WHERE "orderId"=$1 ORDER BY "lineNo"',
+            [order.id],
+          )
+        ).rows;
+        const a = await draft({ id: order.id, line: lines[0].id }, "1");
+        const b = await draft({ id: order.id, line: lines[1].id }, "2");
+        await post(a.id);
+        await post(b.id);
+        await ok("goods-receipts/" + a.id + "/reverse", "POST", {
+          version: 2,
+          reason: "Line correction",
+        });
+        const picker = await ok("receipt-orders");
+        const found = picker.find((x: { id: string }) => x.id === order.id);
+        assert(
+          new Decimal(
+            found.lines.find((x: { id: string }) => x.id === lines[0].id)
+              .acceptedQty,
+          ).eq(0),
+        );
+        assert(
+          new Decimal(
+            found.lines.find((x: { id: string }) => x.id === lines[1].id)
+              .acceptedQty,
+          ).eq(2),
+        );
+        const again = await draft({ id: order.id, line: lines[0].id }, "2");
+        await post(again.id);
+      },
+    );
+    await check(
+      "F6 real statement timeout rolls back all stock and audit; SQLSTATE deadlock classification",
+      async () => {
+        const receipt = await draft(await po(), "2");
+        const before = await counts();
+        const audits = (
+          await admin.query('SELECT count(*)::int n FROM "AuditEvent"')
+        ).rows[0].n;
+        await admin.query(
+          `CREATE FUNCTION fixture_slow_stock() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_sleep(11); RETURN NEW; END $$;CREATE TRIGGER fixture_slow_stock BEFORE INSERT ON "StockMovement" FOR EACH ROW EXECUTE FUNCTION fixture_slow_stock()`,
+        );
+        try {
+          const result = await request(
+            "goods-receipts/" + receipt.id + "/post",
+            "POST",
+            { version: 1 },
+          );
+          assert.equal(result.status, 503);
+          assert.equal(result.body.error, "STOCK_OUTCOME_UNKNOWN");
+        } finally {
+          await admin.query(
+            'DROP TRIGGER fixture_slow_stock ON "StockMovement";DROP FUNCTION fixture_slow_stock()',
+          );
+        }
+        assert.deepEqual(await counts(), before);
+        assert.equal(
+          (await outcome(receipt.id, "post")).state,
+          "NOT_COMMITTED",
+        );
+        assert.equal(
+          (await admin.query('SELECT count(*)::int n FROM "AuditEvent"'))
+            .rows[0].n,
+          audits,
+        );
+        // Synthetic SQLSTATE tests the API mapping, not proof of a naturally occurring deadlock.
+        await admin.query(
+          `CREATE FUNCTION fixture_deadlock_stock() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'fixture deadlock' USING ERRCODE='40P01'; END $$;CREATE TRIGGER fixture_deadlock_stock BEFORE INSERT ON "StockMovement" FOR EACH ROW EXECUTE FUNCTION fixture_deadlock_stock()`,
+        );
+        try {
+          const result = await request(
+            "goods-receipts/" + receipt.id + "/post",
+            "POST",
+            { version: 1 },
+          );
+          assert.equal(result.status, 409);
+          assert.equal(result.body.error, "STOCK_DEADLOCK");
+        } finally {
+          await admin.query(
+            'DROP TRIGGER fixture_deadlock_stock ON "StockMovement";DROP FUNCTION fixture_deadlock_stock()',
+          );
+        }
+        assert.deepEqual(await counts(), before);
+      },
+    );
+
+    await check(
+      "F2 insufficient stock rejects reversal atomically; original trace preserved",
+      async () => {
+        const order = await po(),
+          receipt = await draft(order, "2");
+        await post(receipt.id);
+        const before = await counts();
+        // Only this synthetic failure injection uses the isolated fixture administrator.
+        const client = new Client({
+          connectionString: process.env.TEST_DIRECT_DATABASE_URL,
+        });
+        await client.connect();
+        await client.query("BEGIN");
+        await client.query(
+          "SELECT set_config('app.user_id',$1,true),set_config('app.tenant_id',$2,true),set_config('app.legal_entity_id',$3,true)",
+          [ctx.userId, ctx.tenantId, scope.legalEntityId],
+        );
+        try {
+          await client.query("SET LOCAL ROLE pusula_stock_executor");
+          await client.query(
+            'UPDATE "StockBalance" SET "quantityBase"=0 WHERE "lotId" IN(SELECT l.id FROM "StockLot" l JOIN "GoodsReceiptLine" rl ON rl.id=l."originReceiptLineId" WHERE rl."receiptId"=$1)',
+            [receipt.id],
+          );
+          await assert.rejects(
+            () =>
+              client.query("SELECT v43b_command($1,$2::jsonb)", [
+                "reverse",
+                JSON.stringify({
+                  ...scope,
+                  id: receipt.id,
+                  version: 2,
+                  reason: "Insufficient test",
+                }),
+              ]),
+            (e: unknown) =>
+              (e as { message: string }).message.includes("INSUFFICIENT_STOCK"),
+          );
+        } finally {
+          await client.query("ROLLBACK");
+          await client.end();
+        }
+        assert.deepEqual(await counts(), before);
+        assert.equal(
+          (await outcome(receipt.id, "reverse")).state,
+          "NOT_COMMITTED",
+        );
+      },
+    );
+    const waitLock = async (pid: number) => {
+      for (let i = 0; i < 100; i++) {
+        if (
+          (
+            await admin.query(
+              "SELECT wait_event_type='Lock' yes FROM pg_stat_activity WHERE pid=$1",
+              [pid],
+            )
+          ).rows[0]?.yes
+        )
+          return;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      assert.fail("Expected real PostgreSQL lock wait");
+    };
+    for (const action of ["post", "reverse"])
+      await check(
+        "F1 deterministic create + " + action + " with two runtime backends",
+        async () => {
+          const order = await po();
+          const receipt = await draft(order, "1");
+          if (action === "reverse") await post(receipt.id);
+          const c1 = await runtime(),
+            c2 = await runtime();
+          try {
+            await c1.query(
+              "SET LOCAL lock_timeout='5s';SET LOCAL statement_timeout='8s'",
+            );
+            await c2.query(
+              "SET LOCAL lock_timeout='5s';SET LOCAL statement_timeout='8s'",
+            );
+            const pid1 = (await c1.query("SELECT pg_backend_pid() pid")).rows[0]
+              .pid;
+            const pid2 = (await c2.query("SELECT pg_backend_pid() pid")).rows[0]
+              .pid;
+            assert.notEqual(pid1, pid2);
+            await admin.query("BEGIN");
+            await admin.query(
+              'SELECT id FROM "StockLocation" WHERE id=$1 FOR UPDATE',
+              [location.id],
+            );
+            const creating = c1
+              .query("SELECT v43b_command($1,$2::jsonb)", [
+                "create",
+                JSON.stringify({ ...scope, ...body(order, "1") }),
+              ])
+              .then(
+                () => null,
+                (e: unknown) => e,
+              );
+            await waitLock(pid1);
+            const posting = c2
+              .query("SELECT v43b_command($1,$2::jsonb)", [
+                action,
+                JSON.stringify({
+                  ...scope,
+                  id: receipt.id,
+                  version: 1,
+                  reason: "Race correction",
+                }),
+              ])
+              .then(
+                () => null,
+                (e: unknown) => e,
+              );
+            await waitLock(pid2);
+            const blockers = (
+              await admin.query("SELECT pg_blocking_pids($1) p", [pid2])
+            ).rows[0].p;
+            assert(
+              blockers.includes(pid1),
+              "Command must wait on PO held by create, not location",
+            );
+            await admin.query("COMMIT");
+            assert.equal(await creating, null);
+            await c1.query("COMMIT");
+            assert.equal(await posting, null);
+            await c2.query("COMMIT");
+            const count = (
+              await admin.query(
+                'SELECT count(*)::int n FROM "StockPostingBatch" WHERE "receiptId"=$1 AND kind=$2',
+                [receipt.id, action === "post" ? "RECEIPT" : "REVERSAL"],
+              )
+            ).rows[0].n;
+            assert.equal(count, 1);
+          } finally {
+            await admin.query("ROLLBACK");
+            await c1.query("ROLLBACK");
+            await c2.query("ROLLBACK");
+            await c1.end();
+            await c2.end();
+          }
+        },
+      );
+    await check(
+      "F6 precommit rollback, lost response reconciliation and same post concurrency",
+      async () => {
+        const order = await po(),
+          receipt = await draft(order, "2");
+        const before = await counts();
+        const c = await runtime();
+        try {
+          await c.query("SELECT v43b_command($1,$2::jsonb)", [
+            "post",
+            JSON.stringify({ ...scope, id: receipt.id, version: 1 }),
+          ]);
+          await c.query("ROLLBACK");
+        } finally {
+          await c.end();
+        }
+        assert.deepEqual(await counts(), before);
+        assert.equal(
+          (await outcome(receipt.id, "post")).state,
+          "NOT_COMMITTED",
+        );
+        const a = await runtime(),
+          b = await runtime();
+        try {
+          await a.query("SELECT v43b_command($1,$2::jsonb)", [
+            "post",
+            JSON.stringify({ ...scope, id: receipt.id, version: 1 }),
+          ]);
+          const pid = (await b.query("SELECT pg_backend_pid() pid")).rows[0]
+            .pid;
+          const pending = b.query("SELECT v43b_command($1,$2::jsonb)", [
+            "post",
+            JSON.stringify({ ...scope, id: receipt.id, version: 1 }),
+          ]);
+          await waitLock(pid);
+          await a.query("COMMIT");
+          await pending;
+          await b.query("COMMIT");
+        } finally {
+          await a.query("ROLLBACK");
+          await b.query("ROLLBACK");
+          await a.end();
+          await b.end();
+        }
+        // The caller intentionally discards the successful mutation response and reads status.
+        assert.equal((await outcome(receipt.id, "post")).state, "SUCCEEDED");
+        assert.equal(
+          (
+            await admin.query(
+              'SELECT count(*)::int n FROM "StockPostingBatch" WHERE "receiptId"=$1',
+              [receipt.id],
+            )
+          ).rows[0].n,
+          1,
+        );
+        const holder = await runtime();
+        try {
+          await holder.query("SELECT v43b_command($1,$2::jsonb)", [
+            "post",
+            JSON.stringify({ ...scope, id: receipt.id, version: 1 }),
+          ]);
+          const waiting = request(
+            "goods-receipts/" + receipt.id + "/outcome",
+            "GET",
+            undefined,
+            "post",
+          );
+          const result = await waiting;
+          assert.equal(result.status, 409);
+          assert.equal(result.body.error, "STOCK_LOCK_TIMEOUT");
+        } finally {
+          await holder.query("ROLLBACK");
+          await holder.end();
+        }
+      },
+    );
+
+    await check(
+      "F6 outcome waits for in-flight post commit or rollback before answering",
+      async () => {
+        for (const finish of ["COMMIT", "ROLLBACK"]) {
+          const receipt = await draft(await po(), "2");
+          const a = await runtime(),
+            b = await runtime();
+          try {
+            await a.query("SELECT v43b_command($1,$2::jsonb)", [
+              "post",
+              JSON.stringify({ ...scope, id: receipt.id, version: 1 }),
+            ]);
+            const pid = (await b.query("SELECT pg_backend_pid() pid")).rows[0]
+              .pid;
+            const pending = b.query(
+              "SELECT v43b_receipt_outcome($1,$2) state",
+              [receipt.id, "post"],
+            );
+            await waitLock(pid);
+            await a.query(finish);
+            assert.equal(
+              (await pending).rows[0].state,
+              finish === "COMMIT" ? "SUCCEEDED" : "NOT_COMMITTED",
+            );
+            await b.query("COMMIT");
+          } finally {
+            await a.query("ROLLBACK");
+            await b.query("ROLLBACK");
+            await a.end();
+            await b.end();
+          }
         }
       },
     );

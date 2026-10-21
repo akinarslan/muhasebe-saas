@@ -211,7 +211,7 @@ GRANT SELECT ON "StockLot" TO pusula_runtime;
 GRANT SELECT,INSERT,UPDATE,DELETE ON "StockLot" TO pusula_stock_executor;
 ALTER TABLE "StockPostingBatch" ENABLE ROW LEVEL SECURITY;ALTER TABLE "StockPostingBatch" FORCE ROW LEVEL SECURITY;
 CREATE POLICY v43b_scope ON "StockPostingBatch" USING ("tenantId"::text=current_setting('app.tenant_id',true) AND "legalEntityId"::text=current_setting('app.legal_entity_id',true) AND coalesce(current_setting('app.user_id',true),'')<>'') WITH CHECK ("tenantId"::text=current_setting('app.tenant_id',true) AND "legalEntityId"::text=current_setting('app.legal_entity_id',true) AND coalesce(current_setting('app.user_id',true),'')<>'');
-CREATE POLICY v43b_read ON "StockPostingBatch" AS RESTRICTIVE FOR SELECT USING (pusula_can('stock.movementsView',"tenantId","legalEntityId","activityId","createdById") OR (current_user='pusula_stock_executor' AND (pusula_can('receipts.create',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.edit',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.post',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.reverse',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.cancel',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('stock.locationsManage',"tenantId","legalEntityId","activityId","createdById"))));
+CREATE POLICY v43b_read ON "StockPostingBatch" AS RESTRICTIVE FOR SELECT USING ((current_user='pusula_stock_executor' AND EXISTS(SELECT 1 FROM public."GoodsReceipt" h WHERE h.id="receiptId" AND h."orderId"::text=current_setting('app.stock_order_id',true))) OR pusula_can('stock.movementsView',"tenantId","legalEntityId","activityId","createdById") OR (current_user='pusula_stock_executor' AND (pusula_can('receipts.create',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.edit',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.post',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.reverse',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('receipts.cancel',"tenantId","legalEntityId","activityId","createdById") OR pusula_can('stock.locationsManage',"tenantId","legalEntityId","activityId","createdById"))));
 CREATE POLICY v43b_write ON "StockPostingBatch" AS RESTRICTIVE FOR ALL USING (current_user='pusula_stock_executor' OR pusula_can('stock.movementsView',"tenantId","legalEntityId","activityId","createdById")) WITH CHECK (current_user='pusula_stock_executor');
 GRANT SELECT ON "StockPostingBatch" TO pusula_runtime;
 GRANT SELECT,INSERT,UPDATE,DELETE ON "StockPostingBatch" TO pusula_stock_executor;
@@ -239,6 +239,17 @@ BEGIN
  IF TG_TABLE_NAME='GoodsReceiptLine' AND EXISTS(SELECT 1 FROM public."GoodsReceipt" WHERE id=CASE WHEN TG_OP='DELETE' THEN (to_jsonb(OLD)->>'receiptId')::uuid ELSE (to_jsonb(NEW)->>'receiptId')::uuid END AND status<>'DRAFT') THEN RAISE EXCEPTION 'RECEIPT_IMMUTABLE' USING ERRCODE='23514'; END IF;
  IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW;
 END $$;
+-- Shared net purchase quantity: a full ledger reversal releases the order quantity.
+-- Invoker-only helper; execution is private to the stock executor and FORCE RLS applies.
+CREATE FUNCTION v43b_net_received(oid uuid) RETURNS TABLE("orderLineId" uuid,accepted numeric) LANGUAGE sql SET search_path=pg_catalog,public AS $$
+ SELECT l."orderLineId",sum(l."receivedQty"-l."rejectedQty")
+ FROM public."GoodsReceiptLine" l JOIN public."GoodsReceipt" h ON h.id=l."receiptId"
+ WHERE h."orderId"=oid AND h.status='POSTED'
+ AND NOT EXISTS(SELECT 1 FROM public."StockPostingBatch" b JOIN public."StockPostingBatch" rev ON rev."reversalOfBatchId"=b.id WHERE b."receiptId"=h.id AND b.kind='RECEIPT' AND rev.kind='REVERSAL')
+ GROUP BY l."orderLineId"
+$$;
+REVOKE ALL ON FUNCTION v43b_net_received(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION v43b_net_received(uuid) TO pusula_stock_executor;
 CREATE FUNCTION v43b_command(op text, body jsonb) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE
  t uuid:=nullif(current_setting('app.tenant_id',true),'')::uuid;
@@ -292,16 +303,18 @@ BEGIN
    IF r.status<>'DRAFT' OR r.version IS DISTINCT FROM (body->>'version')::int OR coalesce(length(trim(body->>'reason')),0)<3 THEN RAISE EXCEPTION 'CANCEL_REJECTED' USING ERRCODE='23514'; END IF;
    UPDATE public."GoodsReceipt" SET status='CANCELLED',"cancelReason"=body->>'reason',version=version+1 WHERE id=rid;
   ELSE
+   -- Existing receipt first, then PO, location, order lines, variant locks, lots/balances.
+   -- Create has no existing receipt; its PO -> location order is identical.
+   SELECT * INTO p FROM public."PurchaseOrder" WHERE id=r."orderId" FOR UPDATE;
    PERFORM 1 FROM public."StockLocation" WHERE id=r."locationId" AND active FOR UPDATE;
    IF NOT FOUND THEN RAISE EXCEPTION 'LOCATION_REQUIRED' USING ERRCODE='23514'; END IF;
-   SELECT * INTO p FROM public."PurchaseOrder" WHERE id=r."orderId" FOR UPDATE;
    PERFORM set_config('app.stock_order_id',p.id::text,true);
    IF op='reverse' THEN
     IF r.status<>'POSTED' OR coalesce(length(trim(body->>'reason')),0)<3 THEN RAISE EXCEPTION 'REVERSAL_REJECTED' USING ERRCODE='23514'; END IF;
     SELECT * INTO original FROM public."StockPostingBatch" WHERE "receiptId"=rid AND kind='RECEIPT';
     IF EXISTS(SELECT 1 FROM public."StockPostingBatch" WHERE "reversalOfBatchId"=original.id) THEN RAISE EXCEPTION 'ALREADY_REVERSED' USING ERRCODE='23514'; END IF;
     INSERT INTO public."StockPostingBatch"("tenantId","legalEntityId","activityId","createdById","receiptId",kind,"reversalOfBatchId",reason) VALUES(t,e,r."activityId",r."createdById",rid,'REVERSAL',original.id,body->>'reason') RETURNING id INTO bid;
-    FOR m IN SELECT * FROM public."StockMovement" WHERE "batchId"=original.id ORDER BY id LOOP
+    FOR m IN SELECT * FROM public."StockMovement" WHERE "batchId"=original.id ORDER BY "lotId","locationId",id LOOP
      PERFORM 1 FROM public."StockLot" WHERE id=m."lotId" FOR UPDATE;
      UPDATE public."StockBalance" SET "quantityBase"="quantityBase"-m."quantityDeltaBase",version=version+1 WHERE "lotId"=m."lotId" AND "locationId"=m."locationId" AND "quantityBase">=m."quantityDeltaBase";
      IF NOT FOUND THEN RAISE EXCEPTION 'INSUFFICIENT_STOCK' USING ERRCODE='23514'; END IF;
@@ -311,11 +324,18 @@ BEGIN
     IF r.status<>'DRAFT' OR r.version IS DISTINCT FROM (body->>'version')::int OR p.status<>'APPROVED' THEN RAISE EXCEPTION 'RECEIPT_STATE_CONFLICT' USING ERRCODE='23514'; END IF;
     IF NOT EXISTS(SELECT 1 FROM public."GoodsReceiptLine" WHERE "receiptId"=rid) THEN RAISE EXCEPTION 'RECEIPT_EMPTY' USING ERRCODE='23514'; END IF;
     INSERT INTO public."StockPostingBatch"("tenantId","legalEntityId","activityId","createdById","receiptId",kind) VALUES(t,e,r."activityId",r."createdById",rid,'RECEIPT') RETURNING id INTO bid;
+    -- Acquire all shared variant advisory locks in global UUID order, even across POs.
+    FOR pl IN SELECT pol.* FROM public."PurchaseOrderLine" pol JOIN public."GoodsReceiptLine" rl ON rl."orderLineId"=pol.id WHERE rl."receiptId"=rid ORDER BY pol.id FOR UPDATE OF pol LOOP
+     NULL;
+    END LOOP;
+    FOR x IN SELECT DISTINCT to_jsonb(pol."variantId") FROM public."PurchaseOrderLine" pol JOIN public."GoodsReceiptLine" rl ON rl."orderLineId"=pol.id WHERE rl."receiptId"=rid ORDER BY to_jsonb(pol."variantId") LOOP
+     PERFORM pg_advisory_xact_lock(hashtextextended((x #>> '{}'),7317));
+    END LOOP;
     FOR x IN SELECT to_jsonb(l) FROM public."GoodsReceiptLine" l WHERE l."receiptId"=rid ORDER BY l."orderLineId" LOOP
      SELECT * INTO pl FROM public."PurchaseOrderLine" WHERE id=(x->>'orderLineId')::uuid AND "orderId"=p.id FOR UPDATE;
      accepted:=(x->>'receivedQty')::numeric-(x->>'rejectedQty')::numeric;
      IF accepted=0 THEN CONTINUE; END IF;
-     SELECT coalesce(sum(l."receivedQty"-l."rejectedQty"),0) INTO total FROM public."GoodsReceiptLine" l JOIN public."GoodsReceipt" h ON h.id=l."receiptId" WHERE l."orderLineId"=pl.id AND h.status='POSTED';
+     SELECT coalesce((SELECT n.accepted FROM public.v43b_net_received(p.id) n WHERE n."orderLineId"=pl.id),0) INTO total;
      IF total+accepted>pl."orderedQty" THEN RAISE EXCEPTION 'OVER_RECEIPT' USING ERRCODE='23514'; END IF;
      SELECT * INTO v FROM public."MaterialVariant" WHERE id=pl."variantId" AND active;
      SELECT * INTO mat FROM public."Material" WHERE id=v."materialId" AND active;
@@ -400,11 +420,28 @@ BEGIN
  SELECT * INTO p FROM public."PurchaseOrder" WHERE id=oid AND "tenantId"::text=current_setting('app.tenant_id',true) AND "legalEntityId"::text=current_setting('app.legal_entity_id',true);
  IF NOT FOUND OR NOT public.pusula_can('purchases.view',p."tenantId",p."legalEntityId",p."activityId",p."createdById") THEN RAISE EXCEPTION 'FORBIDDEN' USING ERRCODE='42501';END IF;
  PERFORM set_config('app.stock_order_id',p.id::text,true);
- RETURN QUERY SELECT l."orderLineId",sum(l."receivedQty"-l."rejectedQty")::text FROM public."GoodsReceiptLine" l JOIN public."GoodsReceipt" h ON h.id=l."receiptId" WHERE h."orderId"=p.id AND h.status='POSTED' GROUP BY l."orderLineId";
+ RETURN QUERY SELECT n."orderLineId",n.accepted::text FROM public.v43b_net_received(p.id) n;
 END $$;
 GRANT CREATE ON SCHEMA public TO pusula_stock_executor;
 ALTER FUNCTION v43b_order_received(uuid) OWNER TO pusula_stock_executor;
 REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
 REVOKE ALL ON FUNCTION v43b_order_received(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_order_received(uuid) TO pusula_runtime;
+-- Logically read-only reconciliation. SHARE waits for an in-flight command's header lock.
+-- This is intentionally not a READ ONLY transaction: PostgreSQL row locks need UPDATE rights.
+CREATE FUNCTION v43b_receipt_outcome(rid uuid, action text) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE r public."GoodsReceipt"; reversed boolean;
+BEGIN
+ IF action NOT IN ('post','reverse') THEN RAISE EXCEPTION 'INVALID_COMMAND' USING ERRCODE='23514'; END IF;
+ SELECT * INTO r FROM public."GoodsReceipt" WHERE id=rid AND "tenantId"::text=current_setting('app.tenant_id',true) AND "legalEntityId"::text=current_setting('app.legal_entity_id',true) FOR SHARE;
+ IF NOT FOUND OR NOT public.pusula_can('receipts.view',r."tenantId",r."legalEntityId",r."activityId",r."createdById") OR NOT public.pusula_can('receipts.'||action,r."tenantId",r."legalEntityId",r."activityId",r."createdById") THEN RAISE EXCEPTION 'FORBIDDEN' USING ERRCODE='42501'; END IF;
+ SELECT EXISTS(SELECT 1 FROM public."StockPostingBatch" b JOIN public."StockPostingBatch" rev ON rev."reversalOfBatchId"=b.id WHERE b."receiptId"=r.id AND b.kind='RECEIPT' AND rev.kind='REVERSAL') INTO reversed;
+ IF (action='post' AND r.status='POSTED') OR (action='reverse' AND reversed) THEN RETURN 'SUCCEEDED'; END IF;
+ RETURN 'NOT_COMMITTED';
+END $$;
+GRANT CREATE ON SCHEMA public TO pusula_stock_executor;
+ALTER FUNCTION v43b_receipt_outcome(uuid,text) OWNER TO pusula_stock_executor;
+REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
+REVOKE ALL ON FUNCTION v43b_receipt_outcome(uuid,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION v43b_receipt_outcome(uuid,text) TO pusula_runtime;
 COMMIT;

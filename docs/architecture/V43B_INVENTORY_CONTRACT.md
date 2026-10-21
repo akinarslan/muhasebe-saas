@@ -4,7 +4,7 @@ V4.1 model adları korunur: GoodsReceipt/Line,StockLocation,StockLot,StockPostin
 
 ## Kaynak ve yaşam döngüsü
 
-`APPROVED PO → DRAFT GoodsReceipt → POSTED → ayrı REVERSAL batch`. DRAFT düzenlenebilir/iptal edilebilir;POSTED belge ve lot/movement/batch değiştirilemez. Reversal header'ı değiştirmez;tam özgün hareket setine negatif kayıt ekler,bakiyeyi azaltır ve bir kez yapılabilir. Önceki kabul miktarını yeniden kullanılabilir sipariş bakiyesine dönüştürmez. Transfer/iade/sayım/sarf API'leri bu sprintte yoktur.
+`APPROVED PO → DRAFT GoodsReceipt → POSTED → ayrı REVERSAL batch`. DRAFT düzenlenebilir/iptal edilebilir;POSTED belge ve lot/movement/batch değiştirilemez. Reversal header'ı değiştirmez;tam özgün hareket setine negatif kayıt ekler,bakiyeyi azaltır ve bir kez yapılabilir. V4.3b.3 kararıyla tam reversal, ilgili kabulü siparişin net kabul hesabından çıkarır ve yeniden kabul hakkı açar. Bu işlem fiziksel tedarikçi iadesi değildir. Transfer/iade/sayım/sarf API'leri bu sprintte yoktur.
 
 Gelen miktar pozitif,ret miktarı0..gelen;ret>0 gerekçe zorunlu. Kullanılabilir giriş=gelen−ret. Tam ret fiziksel belge/audit/batch olarak POSTED olabilir;lot/zero-delta movement üretmez. Eksik satırlı belge,geçersiz version veya gerekçesiz iptal SQL kapısında da reddedilir. Aynı create key+normalize payload aynıid;farklıpayload409. POSTED receipt post tekrarında yeni stok yok;reversal tekrarı409.
 
@@ -43,6 +43,7 @@ Prefix `/api/cloud/workspace`:
 | goods-receipts/:id/post |POST step-up+receipts.post |
 | goods-receipts/:id/cancel |POST draft+version+gerekçe+receipts.cancel |
 | goods-receipts/:id/reverse |POST step-up+gerekçe+receipts.reverse |
+| goods-receipts/:id/outcome?action=post\|reverse |GET receipts.view ve ilgili işlem izni; maliyet içermeyen sonuç uzlaştırma |
 | stock/locations |GET stock.view;POST stock.locationsManage |
 | stock/lots |GET miktar/lot/izinli edinim DTO |
 | stock/movements |GET stock.movementsView;edit/delete yok |
@@ -56,3 +57,13 @@ Listeler200ile sınırlıdır;daha büyük işletme için pagination/filter ve r
 `npm run stock:test:local -- --approve-local-fixture --with-browser --purchase-browser` yalnız yeni UUID loopback PG18.6 cluster'ı oluşturur. İlk15checksum,016checksum,pre/post-schema ve gerçek non-owner testler korunur. `--measure-stock` yalnız izole fixture'da yeni SQL'in ölçüm çıktısını ignored dosyaya yazar;baseline'ı otomatik değiştirmez. Pinli kabul ayrı koşudur.
 
 016 repository'de pending'dir;bulut runner yeni dosyayı görünce `STOCK_MIGRATION_REQUIRES_SEPARATE_CLOUD_REVIEW` ile bağlantıdan önce durur. Gerçek Neon apply prosedürü,managed executor/grant uyumluluğu,güncel recovery/RPO ve bağımsız backup/E2 definer denetimi ayrı inceleme/onay gerektirir. Backup allowlist35/21olarak fail-closed kalır;47/33ve yeni definer'lar otomatik kabul edilmez. Mevcut gerçek PO-2026-9893 bu sprintte okunmaz/değiştirilmez.
+
+## V4.3b.3 işlem sınırları
+
+Ortak kilit sırası mevcut kabul başlığı (varsa) → PO → depo → sıralı PO satırları → sıralı varyant advisory kilitleri → lot/bakiye şeklindedir. Create yeni başlık ekler;edit mevcut başlık ve PO kilitlerinden sonra kendi taslak satırlarını değiştirir, depo değiştirmez. Reverse lot/location sırasını kullanır. FK kontrollerinin anahtar paylaşım kilitleri ve UPDATE kilitleri bu sıranın arkasında kalır. Otomatik mutation retry yoktur;40P01 ve55P03 ayrı hata kodlarıdır.
+
+`v43b_net_received()` hem picker hem OVER_RECEIPT için aynı net hesabı sağlar:POSTED kabulün RECEIPT batch'ine bağlı REVERSAL varsa satırlar toplama girmez. Özgün belge/lot/ledger korunur;yeniden kabul yeni lot üretir. Başka aktörün gizli kabul/reversal kayıtları dar executor current-order aggregate görünürlüğüyle hesaba katılır;ham kayıtlar kullanıcıya açılmaz.
+
+Runtime mal kabul transaction'larında lock_timeout3s ve statement_timeout10s SET LOCAL uygulanır. scoped/CompanyRepository maxWait8s ve timeout15s değişmez. Migration'ın3s/30s/60s değerleri yalnız migration içindir;runtime transaction_timeout bu sprintte ayarlanmaz.
+
+Belirsiz ağ/5xx yanıtında UI aynı kabul kimliği için tek salt okunur outcome sorgusu yapar;otomatik post/reverse/create göndermez. Sorgu header FOR SHARE ile devam eden komutu bekler;bu nedenle PostgreSQL READ ONLY transaction değildir ama business DML yapmaz. Bekleme de timeout olursa sonuç doğrulanamadı mesajı gösterilir. NOT_COMMITTED, kontrol anındaki gözlemdir;henüz DB'ye ulaşmamış bir ağ isteğinin daha sonra ulaşmasını iptal etmez. UI bu durumu kontrol anıyla sınırlar;sonraki kullanıcı işlemi aynı receipt kimliğini kullanır. POSTED post tekrarı başarıdır;ikinci reverse409 ALREADY_REVERSED olur ve yeni negatif hareket üretmez.

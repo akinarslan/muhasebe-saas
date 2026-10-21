@@ -4,6 +4,12 @@ import * as Dialog from "@radix-ui/react-dialog";
 import DecimalBase from "decimal.js";
 const Decimal = DecimalBase.clone({ precision: 60 });
 import { Button } from "./ui/button";
+import {
+  ReceiptRequestError,
+  reconcileReceiptAction,
+  unknownReceiptOutcome,
+  type ReceiptOutcome,
+} from "@/lib/cloud/receipt-outcome";
 import { StepUpVerification } from "./step-up-verification";
 type Line = {
   materialName: string;
@@ -130,7 +136,11 @@ export function InventoryDesk({
       },
     );
     const value = await res.json();
-    if (!res.ok) throw new Error(value.error ?? "API_UNAVAILABLE");
+    if (!res.ok)
+      throw new ReceiptRequestError(
+        res.status,
+        value.error ?? "API_UNAVAILABLE",
+      );
     return value;
   }
   useEffect(() => {
@@ -200,6 +210,7 @@ export function InventoryDesk({
     }
     setBusy(true);
     setError("");
+    setNotice("");
     try {
       await request(`goods-receipts/${r.id}/${op}`, "POST", {
         ...scope,
@@ -209,6 +220,42 @@ export function InventoryDesk({
       setNotice(op === "post" ? "Mal kabul kesinleşti." : "İşlem kaydedildi.");
       reload();
     } catch (e) {
+      if (op === "post" || op === "reverse") {
+        const outcome = await reconcileReceiptAction(e, async () => {
+          const res = await fetch(
+            "/api/cloud/workspace/goods-receipts/" +
+              r.id +
+              "/outcome?" +
+              query +
+              "&action=" +
+              op,
+            { cache: "no-store" },
+          );
+          if (!res.ok)
+            throw new ReceiptRequestError(res.status, "OUTCOME_UNAVAILABLE");
+          return (await res.json()) as ReceiptOutcome;
+        });
+        if (outcome === "SUCCEEDED") {
+          setNotice(
+            op === "post"
+              ? "Mal kabul kesinleşti; kayıt durumu doğrulandı."
+              : "Ters kayıt tamamlandı; kayıt durumu doğrulandı.",
+          );
+          reload();
+          return;
+        }
+        if (outcome === "NOT_COMMITTED") {
+          setError(
+            "Kontrol anında işlem kesinleşmemiş. Aynı kayıt üzerinden durumu kontrol edin.",
+          );
+          reload();
+          return;
+        }
+        if (outcome === "UNKNOWN") {
+          setError(unknownReceiptOutcome);
+          return;
+        }
+      }
       const m = e instanceof Error ? e.message : "API_UNAVAILABLE";
       setError(m);
       if (m === "STEP_UP_REQUIRED" || m === "MFA_REQUIRED") setStepUp(true);

@@ -48,6 +48,8 @@ export async function inventoryRequest(
     return await scoped(
       c,
       async (tx) => {
+        // Runtime limits are local to this transaction, below Prisma's unchanged 15s limit.
+        await tx.$queryRaw`SELECT set_config('lock_timeout','3s',true),set_config('statement_timeout','10s',true)`;
         await validateScope(tx, c, s);
         const where = {
           tenantId: c.tenantId,
@@ -57,6 +59,25 @@ export async function inventoryRequest(
             : {}),
         };
         if (method === "GET") {
+          if (kind === "goods-receipts" && id && sub === "outcome") {
+            const action = z
+              .enum(["post", "reverse"])
+              .parse(query.get("action"));
+            const receipt = await tx.goodsReceipt.findFirst({
+              where: { ...where, id },
+            });
+            if (!receipt) throw new AccessError(404, "NOT_FOUND");
+            authorize(c, "receipts.view", receipt);
+            authorize(
+              c,
+              action === "post" ? "receipts.post" : "receipts.reverse",
+              receipt,
+            );
+            const rows = await tx.$queryRaw<
+              { state: "SUCCEEDED" | "NOT_COMMITTED" }[]
+            >`SELECT public.v43b_receipt_outcome(${id}::uuid,${action}) state`;
+            return { id, action, state: rows[0].state };
+          }
           if (kind === "goods-receipts") {
             authorize(c, "receipts.view", resource(c, s));
             const rows = await tx.goodsReceipt.findMany({
@@ -318,6 +339,11 @@ export async function inventoryRequest(
       };
     };
     const detail = cause.meta?.driverAdapterError?.cause;
+    const sqlCode = detail?.originalCode;
+    if (sqlCode === "40P01") throw new AccessError(409, "STOCK_DEADLOCK");
+    if (sqlCode === "55P03") throw new AccessError(409, "STOCK_LOCK_TIMEOUT");
+    if (sqlCode === "57014" || cause.code === "P2028")
+      throw new AccessError(503, "STOCK_OUTCOME_UNKNOWN");
     const msg = detail?.originalMessage ?? "";
     const allowed = [
       "OVER_RECEIPT",
