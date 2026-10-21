@@ -1,10 +1,10 @@
-# PUSULA V4.3b.4 — GITHUB_DELIVERY_PREPARED
+# PUSULA V4.3b.4 — DELIVERY_PASS
 
 21.10.2026 · Kullanıcı bu görevde yalnız `feat/pusula-v030-neon-cloud` dalında commit/normal push yetkisi verdi. Başlangıç HEAD ve gerçek uzak ref `cd4ffcfeb576cef64b553c875e59617716ed1383`, ahead/behind0/0; değişiklikler beklenen9dosyaydı.
 
 Bu teslim görevinde `npm.cmd test`379/379, `npx.cmd tsc --noEmit`, `npm.cmd run lint` ve `npm.cmd run build` native exit0 ile geçti. Runner20/20 ve Stock36/36 önceki hazırlık kanıtıdır; bu görevde PostgreSQL veya migration çalıştırılmadı. Migration001–016 içerikleri/checksum'ları ve cloudguard korunur;Neon/R2/Auth/MFA/.env.local işlemi yoktur.
 
-Commit/push sonucu henüz oluşmadı. Gerçek SHA ve push gözlemi ilk push sonrasında yalnız iki teslim belgesine kaydedilecektir. [GitHub teslim raporu](reports/PUSULA_V04_V43B4_CODEX_DELIVERY.md).
+Kod commit'i `364944090b93c7372b695d599f7001a053a25aa8`, istenen `chore(v0.4): prepare isolated V4.3b.4 migration 016 runner` mesajıyla oluşturuldu. Yalnız `origin/feat/pusula-v030-neon-cloud` dalına normal push exit0. Push sonrası HEAD/upstream ve gerçek uzak ref aynıSHA,ahead/behind0/0,çalışma ağacı temiz olarak doğrulandı. Bu gözlem yalnız iki teslim belgesine takip dokümantasyon commit'iyle kaydedilir;nihai rapor commit SHA'sı kullanıcıya ayrıca bildirilir. [GitHub teslim raporu](reports/PUSULA_V04_V43B4_CODEX_DELIVERY.md).
 
 ---
 

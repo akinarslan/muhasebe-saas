@@ -1,6 +1,6 @@
 # PUSULA V4.3b.4 — Codex GitHub teslimi
 
-21.10.2026 · **DELIVERY_PREPARED — kontroller geçti, commit/push bekleniyor.**
+21.10.2026 · **DELIVERY_PASS — kod commit'i ve normal push doğrulandı.**
 
 Bu görev için kullanıcı, yalnız `feat/pusula-v030-neon-cloud` dalında commit ve normal push yetkisi verdi. Önceki hazırlık belgelerindeki “Mimo teslim edecek / Codex commit yapmadı” ifadeleri hazırlık aşamasının tarihsel kaydıdır; bu yeni teslim yetkisini anlatmaz.
 
@@ -14,11 +14,12 @@ Bu görev için kullanıcı, yalnız `feat/pusula-v030-neon-cloud` dalında comm
 | Başlangıç ahead/behind |0/0 |
 | Başlangıç değişiklikleri |Beklenen9dosya; staged dosya ve çakışma yok; kapsam dışı kullanıcı değişikliği yok |
 | Kod commit mesajı |`chore(v0.4): prepare isolated V4.3b.4 migration 016 runner` |
-| Kod commit SHA |Commit oluşturulunca kaydedilecek |
-| Normal push sonucu |Henüz çalıştırılmadı |
-| Push sonrası HEAD/upstream/ahead/behind/tree |Push sonrası kaydedilecek |
+| Kod commit SHA |`364944090b93c7372b695d599f7001a053a25aa8` |
+| Normal push sonucu |PASS,exit0;`git push origin HEAD:refs/heads/feat/pusula-v030-neon-cloud`;cd4ffcf→3649440 |
+| Push sonrası HEAD/upstream |İkisi de `364944090b93c7372b695d599f7001a053a25aa8`;gerçek `git ls-remote` ref'i de aynı |
+| Push sonrası ahead/behind/tree |0/0;`git status --porcelain=v1` boş,çalışma ağacı temiz |
 
-Gerçek kod commit SHA'sı ve başarılı push gözlemi, ilk push sonrasında bu rapora ve LAST_REPORT.md dosyasına yazılarak yalnız aynı feature dalında bir takip dokümantasyon commit'iyle kaydedilecektir. Bir dosya kendi commit SHA'sını içeremez; son dokümantasyon commit'inin nihai SHA'sı push sonrası kullanıcıya ayrıca bildirilecektir.
+Bu tablo ilk başarılı kod push'undan hemen sonra yapılan gerçek gözlemdir. Kod commit'i [GitHub'da3649440](https://github.com/akinarslan/muhasebe-saas/commit/364944090b93c7372b695d599f7001a053a25aa8) olarak teslim edildi. Push gözlemi daha sonra yalnız bu rapora ve LAST_REPORT.md dosyasına yazıldı;bu iki belge aynı feature dalında bir takip dokümantasyon commit'iyle kaydedilir. Bir dosya kendi commit SHA'sını içeremez;son dokümantasyon commit'inin nihai SHA'sı,push sonrası HEAD/upstream/gerçekuzakref ve temiz çalışma ağacı kontrolüyle kullanıcıya ayrıca bildirilecektir. Bu takip adımı uygulama/test/runner kodunu değiştirmez.
 
 ## Bu teslim görevinde gerçekten çalıştırılan testler
 
@@ -41,7 +42,7 @@ Runner20/20 ve Stock36/36, önceki V4.3b.4 hazırlık sprintinin gerçek izole P
 - Yeni runner yalnız UUIDmarker ile doğrulanmış loopbackfixture,fixture_admin,port/database/data_directory vePG18.6 kabul eder. Bulut yolu env/bağlantıdan önce kapanır;remoteoverride yoktur. Onaysız yerelapply ve eksik/bozukACLpinleri reddedilir.
 - Stage kapsamı yalnız aşağıdaki10dosyadır. `.env`,`.env.local`,`.data`,fixture/sır/build/generated/test artifact'ları alınmaz.
 - Hassas bilgi taraması privatekey,credentialURL,GitHub/AWS token,JWT ve açık secretliteral kalıplarını kapsar. İşaretlenen iki satır mevcut verify-local.ts içindeki `${adminPassword}` ve `${password}` değişkenli sabit loopback URL şablonlarıdır;gerçek sır değildir. Yalnız bu iki incelenmiş şablon dar istisna olarak ayrılır. Sırlar veya eşleşen değerler tarama loguna basılmaz.
-- Commit öncesi staged dosya listesi,hassas bilgi taraması ve `git diff --cached --check` doğrulanacaktır. Bu statik tarama bütün olası sır türleri için mutlak garanti değildir.
+- Kod commit'inden önce staged liste tam10dosya olarak doğrulandı;hassas bilgi taraması PASS ve `git diff --cached --check` exit0. Takip dokümantasyon commit'inde de yalnız izinli iki belge stage edilerek aynı kontroller uygulanır. Bu statik tarama bütün olası sır türleri için mutlak garanti değildir.
 
 ## Teslim edilen kesin10dosya
 
