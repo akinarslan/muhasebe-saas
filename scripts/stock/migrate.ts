@@ -21,7 +21,7 @@ import { runPrisma } from "../db/migrate";
 
 export const stockMigration = "202610210016_goods_receipts";
 export const stockChecksum =
-  "7368c775ec5d9b2b126b4731d5985ec83d1cad077f2cd5904ff596a04f22b272";
+  "27b2c82d9a2915ca1c32d516e578662f2b778b4d088cf9cf08f39ecfd886a567";
 export type AclPins = { pre: string; post: string };
 export function requireAclPins(pins: unknown): asserts pins is AclPins {
   const p = pins as Partial<AclPins> | null;

@@ -390,8 +390,12 @@ BEGIN
 END $$;
 GRANT CREATE ON SCHEMA public TO pusula_stock_executor;
 ALTER FUNCTION v43b_command(text,jsonb) OWNER TO pusula_stock_executor;
-REVOKE ALL ON FUNCTION v43b_command(text,jsonb),v43b_immutable() FROM PUBLIC;
+REVOKE ALL ON FUNCTION v43b_immutable() FROM PUBLIC;
+-- SET membership permits ownership transfer but does not inherit owner ACL rights.
+SET LOCAL ROLE pusula_stock_executor;
+REVOKE ALL ON FUNCTION v43b_command(text,jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_command(text,jsonb) TO pusula_runtime;
+RESET ROLE;
 DO $$ DECLARE tab text; BEGIN
  FOREACH tab IN ARRAY ARRAY['StockLocation','GoodsReceipt','GoodsReceiptLine','StockLot','StockPostingBatch','StockMovement','StockBalance'] LOOP
   EXECUTE format('CREATE TRIGGER v43b_write_guard BEFORE INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION v43b_immutable()',tab);
@@ -409,14 +413,17 @@ BEGIN
  END LOOP;
  RETURN NULL;
 END $$;
-ALTER FUNCTION v43b_complete() OWNER TO pusula_stock_executor;
-REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
-REVOKE ALL ON FUNCTION v43b_complete() FROM PUBLIC;
+-- Install triggers while the table owner still owns the trigger function.
 DO $$ DECLARE tab text; BEGIN
  FOREACH tab IN ARRAY ARRAY['GoodsReceipt','GoodsReceiptLine','StockLot','StockPostingBatch','StockMovement','StockBalance'] LOOP
   EXECUTE format('CREATE CONSTRAINT TRIGGER v43b_complete AFTER INSERT OR UPDATE OR DELETE ON %I DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION v43b_complete()',tab);
  END LOOP;
 END $$;
+ALTER FUNCTION v43b_complete() OWNER TO pusula_stock_executor;
+REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
+SET LOCAL ROLE pusula_stock_executor;
+REVOKE ALL ON FUNCTION v43b_complete() FROM PUBLIC;
+RESET ROLE;
 INSERT INTO "Permission"(id,label,module) VALUES
  ('receipts.view','Mal kabul görüntüle','receipts'),('receipts.create','Mal kabul taslağı oluştur','receipts'),('receipts.edit','Mal kabul taslağı düzenle','receipts'),('receipts.post','Mal kabul kesinleştir','receipts'),('receipts.cancel','Mal kabul taslağı iptal','receipts'),('receipts.reverse','Mal kabul ters kayıt','receipts'),('receipts.costView','Lot edinim maliyetini gör','receipts'),('stock.locationsManage','Depo tanımla','stock'),('stock.movementsView','Stok hareketi görüntüle','stock');
 INSERT INTO "RolePermission"("roleId","permissionId") SELECT 'MASTER',id FROM "Permission" WHERE id LIKE 'receipts.%' OR id IN ('stock.locationsManage','stock.movementsView');
@@ -432,8 +439,10 @@ END $$;
 GRANT CREATE ON SCHEMA public TO pusula_stock_executor;
 ALTER FUNCTION v43b_order_received(uuid) OWNER TO pusula_stock_executor;
 REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
+SET LOCAL ROLE pusula_stock_executor;
 REVOKE ALL ON FUNCTION v43b_order_received(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_order_received(uuid) TO pusula_runtime;
+RESET ROLE;
 -- Logically read-only reconciliation. SHARE waits for an in-flight command's header lock.
 -- This is intentionally not a READ ONLY transaction: PostgreSQL row locks need UPDATE rights.
 CREATE FUNCTION v43b_receipt_outcome(rid uuid, action text) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
@@ -449,8 +458,10 @@ END $$;
 GRANT CREATE ON SCHEMA public TO pusula_stock_executor;
 ALTER FUNCTION v43b_receipt_outcome(uuid,text) OWNER TO pusula_stock_executor;
 REVOKE CREATE ON SCHEMA public FROM pusula_stock_executor;
+SET LOCAL ROLE pusula_stock_executor;
 REVOKE ALL ON FUNCTION v43b_receipt_outcome(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION v43b_receipt_outcome(uuid,text) TO pusula_runtime;
+RESET ROLE;
 -- The creator revokes its grant; dropping it removes its bootstrap ADMIN row.
 SET LOCAL ROLE pusula_stock_role_creator;
 REVOKE pusula_stock_executor FROM SESSION_USER;

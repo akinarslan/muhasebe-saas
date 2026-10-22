@@ -1,0 +1,5163 @@
+{
+  "version": 1,
+  "target": {
+    "projectId": "icy-queen-44442204",
+    "branchId": "br-rough-darkness-ba6ow9zo",
+    "host": "ep-blue-breeze-bavbjb7l.c-8.eu-central-1.aws.neon.tech",
+    "database": "pusula_development",
+    "owner": "neondb_owner"
+  },
+  "checksum": "27b2c82d9a2915ca1c32d516e578662f2b778b4d088cf9cf08f39ecfd886a567",
+  "applyEnabled": false,
+  "postFingerprint": null,
+  "evidence": {
+    "observedAt": "2026-10-22T10:49:51.491Z",
+    "providerMapping": "historical",
+    "missing": [
+      "Current provider GET identity/capacity (last HTTP401)",
+      "Expanded database/column/default ACL grantor pre evidence not fully captured historically",
+      "Provider CREATE/SET/GRANT/REVOKE/DROP lifecycle evidence",
+      "Measured and independently reviewed Neon post fingerprint",
+      "Independent backup/restore acceptance; ROLE_DELTA_UNRESOLVED"
+    ]
+  },
+  "pre": {
+    "identity": {
+      "actor": "neondb_owner",
+      "sessionActor": "neondb_owner",
+      "version": 180006,
+      "database": "pusula_development"
+    },
+    "counts": {
+      "tables": 40,
+      "forced": 26
+    },
+    "schema": {
+      "tables": "391078b902f632ad5773d78b22ebaf6c1b7068eeffa8d4d0ec18e711409d2013",
+      "columns": "b0f8744bab3b63cad62fdce18ba17c22c1310541f6e9b1dac9c2669dac16c0d7",
+      "constraints": "ca339c8a0c4478eb7550d28c659272ac90e39132f012b6a4b847ff80d80ab6e9",
+      "indexes": "529ae5ba3685dd826945fe072cf6211fc95f7c1e9509395940696f62217ef3dd",
+      "policies": "fba9067f92fd40d23bca4509512b1e3cd0989444c089f076ceb2e06644f478e5",
+      "triggers": "99cd95a8c16c6f30cf7bb68e12944c0f8c91d690a622ade1bac3f1d538ed217e",
+      "functions": "f00c459557c661f543824f5c638c199c9f57f5e818a8c80d8c7cbdc0607f23ac",
+      "types": "d891fe9cc3ffd8303e957a2c4ca3173f607ffa7223e3374caa023d34cb30ba9c"
+    },
+    "history": [
+      {
+        "migration_name": "202610160001_foundation",
+        "checksum": "8aee85371a154958570ba41ae9a4da7eefc6b54790c74e36af88a4a6a356af23",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160002_scope_security",
+        "checksum": "94d2742fdd32026bf430185366795498ad20351ff937566f0c50f08713ee7d86",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160003_auth_identity",
+        "checksum": "5280b80d14245e06f42df12d8dad0f5989f3b3e009c32172c617808ac8db7649",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160004_auth_mfa",
+        "checksum": "96a7e660105b3ff8f897e0894d6eb8ceea3ee7152a4747c04cd1cbf449020644",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160005_authorization",
+        "checksum": "27bfae7c1ba1622774e57d4fe226893f46089b5c68bef3e8779fe2c7c7ed899a",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160006_invitation",
+        "checksum": "800cafc67b3b22d52428bbb7081fd709cd52b86c04e50c36b0621b89e5585506",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160007_resource_policy",
+        "checksum": "b0154ad979dd5a3ba077dbfa65379fee95eb420283b59166c2c52ca0a986bd86",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160008_company_metadata",
+        "checksum": "db552670276d5e5d5b7ed37a78cc618bac9a79d8dc3e5d72cabe239dd4e7d36a",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610160008_company_metadata",
+        "checksum": "35ca1ae820b9e040ef189f3ff346381c591a268b74e4c37f639e94d2dded1fd9",
+        "finished": false,
+        "rolled_back": true
+      },
+      {
+        "migration_name": "202610160009_last_login",
+        "checksum": "f068d522fb5f8c7472294fd804c24952b3ab7704cd2c3d689587a2767cd51752",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610170010_auth_mail",
+        "checksum": "662eb41d02e3b3d6707facb83a7d5c8209e7c7679cce236579278f1f791496a7",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610170011_cloud_business",
+        "checksum": "d50442a98f4bc6dfce20f9daecced81755bb950bfc702bda60f148d2170c378c",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610170012_cloud_catalog_controls",
+        "checksum": "ee460b6466adbae8755b64840af36de3eb4d52756947ce6e6153fb2a791e2e2e",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610170013_sale_line_sealing",
+        "checksum": "91ab80f3b4b879007808377e6a43a477495426685d0f8c364384a2e370711085",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610190014_supplier_catalog",
+        "checksum": "0950d8de6cc51930492491a91b1756c7cafb65c6ff05c4ee9310fd99cdfde1da",
+        "finished": true,
+        "rolled_back": false
+      },
+      {
+        "migration_name": "202610200015_purchase_orders",
+        "checksum": "181a783a6b63b21016e789d4201781829063397d906b19ba7018a15735b1614a",
+        "finished": true,
+        "rolled_back": false
+      }
+    ],
+    "security": {
+      "roles": [
+        {
+          "rolname": "pusula_auth",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_runtime",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_test_auth",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_test_runtime",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        }
+      ],
+      "members": [
+        {
+          "parent": "pusula_auth",
+          "member": "<owner>",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "pusula_runtime",
+          "member": "<owner>",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "pusula_test_auth",
+          "member": "<owner>",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "pusula_test_runtime",
+          "member": "<owner>",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        }
+      ],
+      "database": [
+        {
+          "grantee": "<owner>",
+          "privilege_type": "CONNECT",
+          "is_grantable": false
+        },
+        {
+          "grantee": "<owner>",
+          "privilege_type": "CREATE",
+          "is_grantable": false
+        },
+        {
+          "grantee": "<owner>",
+          "privilege_type": "TEMPORARY",
+          "is_grantable": false
+        },
+        {
+          "grantee": "PUBLIC",
+          "privilege_type": "TEMPORARY",
+          "is_grantable": false
+        },
+        {
+          "grantee": "neon_superuser",
+          "privilege_type": "CONNECT",
+          "is_grantable": false
+        },
+        {
+          "grantee": "neon_superuser",
+          "privilege_type": "CREATE",
+          "is_grantable": false
+        },
+        {
+          "grantee": "neon_superuser",
+          "privilege_type": "TEMPORARY",
+          "is_grantable": false
+        },
+        {
+          "grantee": "pusula_auth",
+          "privilege_type": "CONNECT",
+          "is_grantable": false
+        },
+        {
+          "grantee": "pusula_runtime",
+          "privilege_type": "CONNECT",
+          "is_grantable": false
+        }
+      ],
+      "tables": [
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Activity",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>",
+          "grantee": "pusula_auth",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "DELETE",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "INSERT",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "REFERENCES",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "SELECT",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRIGGER",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": false
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "UPDATE",
+          "is_grantable": false
+        }
+      ],
+      "columns": [],
+      "functions": [
+        {
+          "identity": "pusula_can(text,uuid,uuid,uuid,text)",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "pusula_can(text,uuid,uuid,uuid,text)",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "pusula_can(text,uuid,uuid,uuid,text)",
+          "owner": "<owner>",
+          "grantee": "pusula_test_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "pusula_sale_child_same_transaction()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "pusula_sale_child_same_transaction()",
+          "owner": "<owner>",
+          "grantee": "PUBLIC",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "reject_audit_event_change()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "reject_audit_event_change()",
+          "owner": "<owner>",
+          "grantee": "PUBLIC",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "reject_auth_security_event_change()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "reject_auth_security_event_change()",
+          "owner": "<owner>",
+          "grantee": "PUBLIC",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "reject_price_history_change()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "reject_price_history_change()",
+          "owner": "<owner>",
+          "grantee": "PUBLIC",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v42_reject_offer_mutation()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v42_reject_offer_mutation()",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v42_supplier_identity_guard()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v42_supplier_identity_guard()",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v43a_line_guard()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v43a_line_guard()",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v43a_order_guard()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v43a_order_guard()",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v43a_reject_po_mutation()",
+          "owner": "<owner>",
+          "grantee": "<owner>",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        },
+        {
+          "identity": "v43a_reject_po_mutation()",
+          "owner": "<owner>",
+          "grantee": "pusula_runtime",
+          "privilege_type": "EXECUTE",
+          "is_grantable": false
+        }
+      ],
+      "schema": [
+        {
+          "nspname": "public",
+          "grantee": "PUBLIC",
+          "privilege_type": "USAGE",
+          "is_grantable": false
+        },
+        {
+          "nspname": "public",
+          "grantee": "pg_database_owner",
+          "privilege_type": "CREATE",
+          "is_grantable": false
+        },
+        {
+          "nspname": "public",
+          "grantee": "pg_database_owner",
+          "privilege_type": "USAGE",
+          "is_grantable": false
+        },
+        {
+          "nspname": "public",
+          "grantee": "pusula_auth",
+          "privilege_type": "USAGE",
+          "is_grantable": false
+        },
+        {
+          "nspname": "public",
+          "grantee": "pusula_runtime",
+          "privilege_type": "USAGE",
+          "is_grantable": false
+        }
+      ],
+      "defaults": [
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "S",
+          "grantee": "neon_superuser",
+          "privilege_type": "SELECT",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "S",
+          "grantee": "neon_superuser",
+          "privilege_type": "UPDATE",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "S",
+          "grantee": "neon_superuser",
+          "privilege_type": "USAGE",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "r",
+          "grantee": "neon_superuser",
+          "privilege_type": "DELETE",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "r",
+          "grantee": "neon_superuser",
+          "privilege_type": "INSERT",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "r",
+          "grantee": "neon_superuser",
+          "privilege_type": "MAINTAIN",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "r",
+          "grantee": "neon_superuser",
+          "privilege_type": "SELECT",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "r",
+          "grantee": "neon_superuser",
+          "privilege_type": "TRUNCATE",
+          "is_grantable": true
+        },
+        {
+          "owner": "cloud_admin",
+          "ns": "public",
+          "defaclobjtype": "r",
+          "grantee": "neon_superuser",
+          "privilege_type": "UPDATE",
+          "is_grantable": true
+        }
+      ],
+      "permissions": [
+        {
+          "id": "activities.manage",
+          "label": "Faaliyet tanımla",
+          "module": "activities"
+        },
+        {
+          "id": "customers.create",
+          "label": "Ekle",
+          "module": "customers"
+        },
+        {
+          "id": "customers.edit",
+          "label": "Düzenle",
+          "module": "customers"
+        },
+        {
+          "id": "customers.export",
+          "label": "Dışa aktar",
+          "module": "customers"
+        },
+        {
+          "id": "customers.view",
+          "label": "Görüntüle",
+          "module": "customers"
+        },
+        {
+          "id": "exchange.approve",
+          "label": "Manuel kuru onayla",
+          "module": "exchange"
+        },
+        {
+          "id": "exchange.manual",
+          "label": "Manuel kur gir",
+          "module": "exchange"
+        },
+        {
+          "id": "exchange.view",
+          "label": "Görüntüle",
+          "module": "exchange"
+        },
+        {
+          "id": "expenses.create",
+          "label": "create",
+          "module": "expenses"
+        },
+        {
+          "id": "expenses.edit",
+          "label": "edit",
+          "module": "expenses"
+        },
+        {
+          "id": "expenses.view",
+          "label": "view",
+          "module": "expenses"
+        },
+        {
+          "id": "finance.accounts",
+          "label": "Cari görüntüle",
+          "module": "finance"
+        },
+        {
+          "id": "finance.approve",
+          "label": "İşlem onayla",
+          "module": "finance"
+        },
+        {
+          "id": "finance.bank",
+          "label": "Banka görüntüle",
+          "module": "finance"
+        },
+        {
+          "id": "finance.cash",
+          "label": "Kasa görüntüle",
+          "module": "finance"
+        },
+        {
+          "id": "finance.collect",
+          "label": "Tahsilat oluştur",
+          "module": "finance"
+        },
+        {
+          "id": "finance.pay",
+          "label": "Ödeme oluştur",
+          "module": "finance"
+        },
+        {
+          "id": "finance.payables",
+          "label": "Borç görüntüle",
+          "module": "finance"
+        },
+        {
+          "id": "imports.confirm",
+          "label": "confirm",
+          "module": "imports"
+        },
+        {
+          "id": "imports.create",
+          "label": "create",
+          "module": "imports"
+        },
+        {
+          "id": "imports.view",
+          "label": "view",
+          "module": "imports"
+        },
+        {
+          "id": "materials.costEdit",
+          "label": "USD alış maliyetini değiştir",
+          "module": "materials"
+        },
+        {
+          "id": "materials.costView",
+          "label": "USD alış maliyetini gör",
+          "module": "materials"
+        },
+        {
+          "id": "materials.create",
+          "label": "Ekle",
+          "module": "materials"
+        },
+        {
+          "id": "materials.edit",
+          "label": "edit",
+          "module": "materials"
+        },
+        {
+          "id": "materials.history",
+          "label": "Fiyat geçmişi",
+          "module": "materials"
+        },
+        {
+          "id": "materials.variants",
+          "label": "Varyant yönet",
+          "module": "materials"
+        },
+        {
+          "id": "materials.view",
+          "label": "Görüntüle",
+          "module": "materials"
+        },
+        {
+          "id": "production.approve",
+          "label": "Onayla",
+          "module": "production"
+        },
+        {
+          "id": "production.create",
+          "label": "İş emri oluştur",
+          "module": "production"
+        },
+        {
+          "id": "production.update",
+          "label": "Durum değiştir",
+          "module": "production"
+        },
+        {
+          "id": "production.view",
+          "label": "Görüntüle",
+          "module": "production"
+        },
+        {
+          "id": "products.create",
+          "label": "create",
+          "module": "products"
+        },
+        {
+          "id": "products.edit",
+          "label": "edit",
+          "module": "products"
+        },
+        {
+          "id": "products.view",
+          "label": "view",
+          "module": "products"
+        },
+        {
+          "id": "purchases.approve",
+          "label": "Satın alma siparişini onayla",
+          "module": "purchases"
+        },
+        {
+          "id": "purchases.cancel",
+          "label": "Satın alma siparişini iptal et",
+          "module": "purchases"
+        },
+        {
+          "id": "purchases.costView",
+          "label": "Satın alma maliyetini gör",
+          "module": "purchases"
+        },
+        {
+          "id": "purchases.create",
+          "label": "Satın alma siparişi oluştur",
+          "module": "purchases"
+        },
+        {
+          "id": "purchases.edit",
+          "label": "Satın alma taslağını düzenle",
+          "module": "purchases"
+        },
+        {
+          "id": "purchases.view",
+          "label": "Satın alma siparişi görüntüle",
+          "module": "purchases"
+        },
+        {
+          "id": "quotes.approve",
+          "label": "approve",
+          "module": "quotes"
+        },
+        {
+          "id": "quotes.create",
+          "label": "create",
+          "module": "quotes"
+        },
+        {
+          "id": "quotes.view",
+          "label": "view",
+          "module": "quotes"
+        },
+        {
+          "id": "reports.export",
+          "label": "Dışa aktar",
+          "module": "reports"
+        },
+        {
+          "id": "reports.finance",
+          "label": "Finansal rapor",
+          "module": "reports"
+        },
+        {
+          "id": "reports.view",
+          "label": "Görüntüle",
+          "module": "reports"
+        },
+        {
+          "id": "sales.approve",
+          "label": "Onayla",
+          "module": "sales"
+        },
+        {
+          "id": "sales.cancel",
+          "label": "İptal et",
+          "module": "sales"
+        },
+        {
+          "id": "sales.create",
+          "label": "Oluştur",
+          "module": "sales"
+        },
+        {
+          "id": "sales.discount",
+          "label": "İndirim yap",
+          "module": "sales"
+        },
+        {
+          "id": "sales.edit",
+          "label": "Düzenle",
+          "module": "sales"
+        },
+        {
+          "id": "sales.view",
+          "label": "Görüntüle",
+          "module": "sales"
+        },
+        {
+          "id": "stock.adjust",
+          "label": "Düzeltme",
+          "module": "stock"
+        },
+        {
+          "id": "stock.issue",
+          "label": "Çıkış",
+          "module": "stock"
+        },
+        {
+          "id": "stock.receive",
+          "label": "Giriş",
+          "module": "stock"
+        },
+        {
+          "id": "stock.view",
+          "label": "Görüntüle",
+          "module": "stock"
+        },
+        {
+          "id": "supplierMaterials.manage",
+          "label": "Tedarikçi malzeme eşleştirmesi",
+          "module": "supplierMaterials"
+        },
+        {
+          "id": "supplierOffers.costView",
+          "label": "Tedarikçi fiyatını gör",
+          "module": "supplierOffers"
+        },
+        {
+          "id": "supplierOffers.create",
+          "label": "Teklif sürümü oluştur",
+          "module": "supplierOffers"
+        },
+        {
+          "id": "supplierOffers.history",
+          "label": "Teklif geçmişi",
+          "module": "supplierOffers"
+        },
+        {
+          "id": "supplierOffers.view",
+          "label": "Teklif görüntüle",
+          "module": "supplierOffers"
+        },
+        {
+          "id": "suppliers.create",
+          "label": "Tedarikçi oluştur",
+          "module": "suppliers"
+        },
+        {
+          "id": "suppliers.edit",
+          "label": "Tedarikçi düzenle/pasifleştir",
+          "module": "suppliers"
+        },
+        {
+          "id": "suppliers.view",
+          "label": "Tedarikçi görüntüle",
+          "module": "suppliers"
+        },
+        {
+          "id": "users.audit",
+          "label": "Denetim kayıtları",
+          "module": "users"
+        },
+        {
+          "id": "users.deactivate",
+          "label": "Pasifleştir",
+          "module": "users"
+        },
+        {
+          "id": "users.invite",
+          "label": "Davet et",
+          "module": "users"
+        },
+        {
+          "id": "users.permissions",
+          "label": "Özel izin yönet",
+          "module": "users"
+        },
+        {
+          "id": "users.roles",
+          "label": "Rol ata",
+          "module": "users"
+        },
+        {
+          "id": "users.sessions",
+          "label": "Oturum sonlandır",
+          "module": "users"
+        },
+        {
+          "id": "users.view",
+          "label": "Kullanıcı görüntüle",
+          "module": "users"
+        }
+      ],
+      "rolePermissions": [
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "customers.create"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "customers.edit"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "customers.view"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "exchange.view"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "finance.accounts"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "finance.bank"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "finance.cash"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "finance.collect"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "finance.pay"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "finance.payables"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "materials.costView"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "materials.view"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "reports.finance"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "reports.view"
+        },
+        {
+          "roleId": "ACCOUNTANT",
+          "permissionId": "sales.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "activities.manage"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "customers.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "customers.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "customers.export"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "customers.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "exchange.approve"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "exchange.manual"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "exchange.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "expenses.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "expenses.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "expenses.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.accounts"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.approve"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.bank"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.cash"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.collect"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.pay"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "finance.payables"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "imports.confirm"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "imports.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "imports.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.costEdit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.costView"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.history"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.variants"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "materials.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "production.approve"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "production.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "production.update"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "production.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "products.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "products.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "products.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "purchases.approve"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "purchases.cancel"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "purchases.costView"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "purchases.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "purchases.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "purchases.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "quotes.approve"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "quotes.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "quotes.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "reports.export"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "reports.finance"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "reports.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "sales.approve"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "sales.cancel"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "sales.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "sales.discount"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "sales.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "sales.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "stock.adjust"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "stock.issue"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "stock.receive"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "stock.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "supplierMaterials.manage"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "supplierOffers.costView"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "supplierOffers.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "supplierOffers.history"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "supplierOffers.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "suppliers.create"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "suppliers.edit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "suppliers.view"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.audit"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.deactivate"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.invite"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.permissions"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.roles"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.sessions"
+        },
+        {
+          "roleId": "MASTER",
+          "permissionId": "users.view"
+        },
+        {
+          "roleId": "PRODUCTION",
+          "permissionId": "materials.view"
+        },
+        {
+          "roleId": "PRODUCTION",
+          "permissionId": "production.update"
+        },
+        {
+          "roleId": "PRODUCTION",
+          "permissionId": "production.view"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "materials.costView"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "materials.create"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "materials.variants"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "materials.view"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "stock.issue"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "stock.receive"
+        },
+        {
+          "roleId": "PURCHASING",
+          "permissionId": "stock.view"
+        },
+        {
+          "roleId": "REPORTER",
+          "permissionId": "reports.view"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "customers.create"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "customers.edit"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "customers.view"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "exchange.view"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "materials.view"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "sales.create"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "sales.edit"
+        },
+        {
+          "roleId": "SALES",
+          "permissionId": "sales.view"
+        }
+      ]
+    },
+    "cluster": {
+      "roles": [
+        {
+          "rolname": "cloud_admin",
+          "rolcanlogin": true,
+          "rolsuper": true,
+          "rolbypassrls": true,
+          "rolcreatedb": true,
+          "rolcreaterole": true,
+          "rolreplication": true,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "neon_service",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": true,
+          "rolcreatedb": true,
+          "rolcreaterole": true,
+          "rolreplication": true,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "neon_superuser",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": true,
+          "rolcreatedb": true,
+          "rolcreaterole": true,
+          "rolreplication": true,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "<owner>",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": true,
+          "rolcreatedb": true,
+          "rolcreaterole": true,
+          "rolreplication": true,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_checkpoint",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_create_subscription",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_database_owner",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_execute_server_program",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_maintain",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_monitor",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_read_all_data",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_read_all_settings",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_read_all_stats",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_read_server_files",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_signal_autovacuum_worker",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_signal_backend",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_stat_scan_tables",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_use_reserved_connections",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_write_all_data",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pg_write_server_files",
+          "rolcanlogin": false,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_auth",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_runtime",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_test_auth",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        },
+        {
+          "rolname": "pusula_test_runtime",
+          "rolcanlogin": true,
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "rolcreatedb": false,
+          "rolcreaterole": false,
+          "rolreplication": false,
+          "rolinherit": true,
+          "rolconfig": null
+        }
+      ],
+      "memberships": [
+        {
+          "parent": "neon_service",
+          "member": "<owner>",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "neon_superuser",
+          "member": "<owner>",
+          "grantor": "cloud_admin",
+          "admin_option": false,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_create_subscription",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_maintain",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": false
+        },
+        {
+          "parent": "pg_monitor",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_read_all_data",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_read_all_settings",
+          "member": "pg_monitor",
+          "grantor": "cloud_admin",
+          "admin_option": false,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_read_all_stats",
+          "member": "pg_monitor",
+          "grantor": "cloud_admin",
+          "admin_option": false,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_signal_autovacuum_worker",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": false
+        },
+        {
+          "parent": "pg_signal_backend",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_stat_scan_tables",
+          "member": "pg_monitor",
+          "grantor": "cloud_admin",
+          "admin_option": false,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pg_write_all_data",
+          "member": "neon_superuser",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": true,
+          "set_option": true
+        },
+        {
+          "parent": "pusula_auth",
+          "member": "<owner>",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "pusula_runtime",
+          "member": "<owner>",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "pusula_test_auth",
+          "member": "<owner>",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        },
+        {
+          "parent": "pusula_test_runtime",
+          "member": "<owner>",
+          "grantor": "cloud_admin",
+          "admin_option": true,
+          "inherit_option": false,
+          "set_option": false
+        }
+      ],
+      "tableOwners": [
+        {
+          "relname": "Activity",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuditEvent",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthAccount",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthBootstrap",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthInvitation",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthMailDelivery",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthRateLimit",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthSecurityEvent",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthSession",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthTwoFactor",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthUser",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "AuthVerification",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudExpenseType",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudImportBatch",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudImportRecord",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudPaymentPlan",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudProduct",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudQuote",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudSale",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "CloudSaleLine",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Customer",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "LegalEntity",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Material",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "MaterialPriceHistory",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "MaterialVariant",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Membership",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Permission",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "PermissionScope",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "PurchaseOrder",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "PurchaseOrderLine",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Role",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "RoleAssignment",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "RolePermission",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Supplier",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "SupplierMaterial",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "SupplierOfferVersion",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "Tenant",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "TenantExchangeRate",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "UserPermissionOverride",
+          "owner": "<owner>"
+        },
+        {
+          "relname": "_prisma_migrations",
+          "owner": "<owner>"
+        }
+      ],
+      "functions": [
+        {
+          "identity": "pusula_can(text,uuid,uuid,uuid,text)",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": ["search_path=public, pg_temp"]
+        },
+        {
+          "identity": "pusula_sale_child_same_transaction()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": null
+        },
+        {
+          "identity": "reject_audit_event_change()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": null
+        },
+        {
+          "identity": "reject_auth_security_event_change()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": null
+        },
+        {
+          "identity": "reject_price_history_change()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": null
+        },
+        {
+          "identity": "v42_reject_offer_mutation()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": ["search_path=pg_catalog, public"]
+        },
+        {
+          "identity": "v42_supplier_identity_guard()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": ["search_path=pg_catalog, public"]
+        },
+        {
+          "identity": "v43a_line_guard()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": ["search_path=pg_catalog, public"]
+        },
+        {
+          "identity": "v43a_order_guard()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": ["search_path=pg_catalog, public"]
+        },
+        {
+          "identity": "v43a_reject_po_mutation()",
+          "owner": "<owner>",
+          "prosecdef": false,
+          "proconfig": ["search_path=pg_catalog, public"]
+        }
+      ],
+      "schemas": [
+        {
+          "nspname": "information_schema"
+        },
+        {
+          "nspname": "public"
+        }
+      ],
+      "extensions": [
+        {
+          "extname": "plpgsql"
+        }
+      ],
+      "unsafe": [
+        {
+          "unsafe": false
+        }
+      ]
+    },
+    "grantors": null
+  },
+  "postSchema": {
+    "tables": "9e91d98a786de1d9bcb7415224b4facf88c0c4c7ca6091ab03d0eb426c5f4ccd",
+    "columns": "d278ceadd49988e4910a57fe1f7abf883e551d591c6de67d58c478ac3ff3e97c",
+    "constraints": "337b2cdf056188340d7ce55f6089e1e64087cc1d08c090f67b343b05db70eb26",
+    "indexes": "d794f0746612930328dde340a32f1a3fb343a973c8dfd741dd5aa78234f8ada7",
+    "policies": "f49566264466445b44465c1db2a783fe84c81a30de1951dec1e8aa2d9e560db7",
+    "triggers": "2612b11034f380b45b0bc043adce20b25a2276f79dd9f182efded509b4b7fa95",
+    "functions": "985bc3b9cf0cb7fdd3930786d8fbad6c60d6e2732d057e19cf3536f981c9b227",
+    "types": "d891fe9cc3ffd8303e957a2c4ca3173f607ffa7223e3374caa023d34cb30ba9c"
+  },
+  "permissions": [
+    {
+      "id": "receipts.view",
+      "label": "Mal kabul görüntüle",
+      "module": "receipts"
+    },
+    {
+      "id": "receipts.create",
+      "label": "Mal kabul taslağı oluştur",
+      "module": "receipts"
+    },
+    {
+      "id": "receipts.edit",
+      "label": "Mal kabul taslağı düzenle",
+      "module": "receipts"
+    },
+    {
+      "id": "receipts.post",
+      "label": "Mal kabul kesinleştir",
+      "module": "receipts"
+    },
+    {
+      "id": "receipts.cancel",
+      "label": "Mal kabul taslağı iptal",
+      "module": "receipts"
+    },
+    {
+      "id": "receipts.reverse",
+      "label": "Mal kabul ters kayıt",
+      "module": "receipts"
+    },
+    {
+      "id": "receipts.costView",
+      "label": "Lot edinim maliyetini gör",
+      "module": "receipts"
+    },
+    {
+      "id": "stock.locationsManage",
+      "label": "Depo tanımla",
+      "module": "stock"
+    },
+    {
+      "id": "stock.movementsView",
+      "label": "Stok hareketi görüntüle",
+      "module": "stock"
+    }
+  ]
+}

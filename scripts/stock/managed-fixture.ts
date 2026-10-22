@@ -1,4 +1,10 @@
 import { reviewedRollback008 } from "../db/migration-checksum";
+import {
+  fixtureSnapshot,
+  verifyManagedContractFixture,
+  proveManagedOwnerAclBoundary,
+  verifyManagedFunctionAcl,
+} from "./managed-contract-fixture";
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
@@ -89,6 +95,7 @@ export async function verifyManagedFixture(
       "utf8",
     );
     const before = hash(await catalog(actor));
+    const beforeSecurity = hash(await fixtureSnapshot(actor));
     async function rollbackFailure(text: string, code: string, name: string) {
       await assert.rejects(
         () => actor.query(text),
@@ -96,6 +103,7 @@ export async function verifyManagedFixture(
       );
       await actor.query("ROLLBACK");
       assert.equal(hash(await catalog(actor)), before);
+      assert.equal(hash(await fixtureSnapshot(actor)), beforeSecurity);
       assert.equal(
         (
           await actor.query(
@@ -118,6 +126,14 @@ export async function verifyManagedFixture(
       ),
       "42501",
       "new-owner-needs-schema-create-42501-atomic-rollback",
+    );
+    await rollbackFailure(
+      sql.replace(
+        "GRANT EXECUTE ON FUNCTION v43b_command(text,jsonb) TO pusula_runtime;",
+        "GRANT EXECUTE ON FUNCTION v43b_command(text,jsonb) TO pusula_runtime; SELECT 1/0;",
+      ),
+      "22012",
+      "mid-acl-failure-with-executor-active-rolls-back-full-security-and-role",
     );
     await rollbackFailure(
       sql.replace(/COMMIT;\s*$/, "SELECT 1/0; COMMIT;"),
@@ -144,7 +160,23 @@ export async function verifyManagedFixture(
       pass("real-pg-preflight-git-lf-vs-historical-checksums");
     }
     pass("resolved-008-retained-success-count-15-preflight");
-    await actor.query(sql);
+    const contractPre = await fixtureSnapshot(actor);
+    await proveManagedOwnerAclBoundary(admin, actor, env, dir);
+    const candidateNotices: string[] = [];
+    const notice = (n: { code?: string }) => {
+      if (n.code) candidateNotices.push(n.code);
+    };
+    actor.on("notice", notice);
+    try {
+      await actor.query(sql);
+    } finally {
+      actor.removeListener("notice", notice);
+    }
+    assert.ok(!candidateNotices.some((c) => c === "01007" || c === "01006"));
+    await writeFile(
+      join(dir, "migration-notice-codes.json"),
+      JSON.stringify(candidateNotices),
+    );
     await actor.query(
       `INSERT INTO public._prisma_migrations(id,checksum,migration_name,finished_at,applied_steps_count) VALUES($1,$2,$3,now(),1)`,
       [randomUUID(), stockChecksum, stockMigration],
@@ -218,6 +250,8 @@ export async function verifyManagedFixture(
         row,
       );
     pass("committed-nonsuper-016-postflight-47-33-16-history-preserved");
+    await verifyManagedFunctionAcl(admin, actor, env, dir);
+    await verifyManagedContractFixture(admin, actor, contractPre, env, dir);
     const final = (
       await actor.query(
         `SELECT EXISTS(SELECT 1 FROM pg_auth_members WHERE roleid='pusula_stock_executor'::regrole OR member='pusula_stock_executor'::regrole) members,has_schema_privilege('pusula_stock_executor','public','CREATE') create_schema,pg_has_role(current_user,'pusula_stock_executor','SET') actor_set,pg_has_role(current_user,'pusula_stock_executor','USAGE') actor_inherits`,

@@ -1,3 +1,43 @@
+# PUSULA V4.3b.12 — ACL_FIX_PASS
+
+22.10.2026 · Non-superuser PG18.6 üzerinde dört SECURITY DEFINER fonksiyonun ACL kusuru giderildi. Sahiplik sonrası REVOKE/GRANT artık SET LOCAL ROLE executor altında; her blok RESET ROLE ile kapanır. Complete trigger'ları actor hâlâ fonksiyon sahibi iken kurulur. Yeni SQL test-only ACL düzeltmesi olmadan PUBLIC0/runtime-direct3/auth0 postflight'ını geçer. Bağımsız minimal deney INHERIT FALSE/SET TRUE ayrımını ve eski01006/01007 etkisiz ACL komutlarını doğruladı; tamamen rollback oldu.
+
+016 yeni SHA `27b2c82d9a2915ca1c32d516e578662f2b778b4d088cf9cf08f39ecfd886a567`; eski7368c775…b272. Checksum referansları güncel. Yerel managed post ACL3ab72328…f4a38; pre ve normal fixture pinleri ile sekiz schema hash'i aynı. İlk15SQL, tarihsel checksum uyumluluğu, altı fonksiyon gövdesi, b10/b11raporları ve env korundu. Sözleşme gevşetilmedi; cloud postFingerprint=null/post=null/applyEnabled=false ve STOCK_MANAGED_APPLY_DISABLED korunur.
+
+Yeni testler: managed15 + contract13 + bağımsızACL2 + GitLFartifact9; normal Prisma runner20, DB11/Auth62/Cloud11/Supplier16/Purchase28/Stock36 PASS. Orta executor-aktif ve geç aşama hata enjeksiyonlarında tam schema/security/history/rol rollback PASS; creator/üyelik/schemaCREATE kalıntısı yok. Vitest417/417, TypeScript/ESLint/production build native exit0. Üç yeni cluster kapandı; test-only pozitif düzeltme yok.
+
+Bu sprint11dosya, önceki korunan7dosyayla birleşik GitHub kapsamı18dosya. Gerçek Neon/API/SQL/provider/recovery/R2/restore/snapshot, gerçek Auth/MFA/session içeriği, env değişikliği veya commit/push/merge yok. HEAD/yerel upstream d65ea89d915805dbf6b6e5afd111beb727cf7ef5. ROLE_DELTA_UNRESOLVED, provider/post/grantor kanıtı ve bağımsız backup engelleri açık. GitHub teslimi ve gerçek migration ayrı yetkili görevlerdir.
+
+[ACL düzeltmesi ve kesin dosya listesi](research/PUSULA_V04_V43B12_ACL_FIX.md) · [Yeni doğrulama kanıtları](docs/validation/V04_V43B12_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.11 — FIX_REQUIRED
+
+22.10.2026 · Managed offline audit CLI, tarihsel Neon pre sözleşmesi, deklaratif post delta ve grantor dahil SELECT collector hazırlandı. Apply daima STOCK_MANAGED_APPLY_DISABLED; mevcut applyEnabled=false/post=null ve SQL016 SHA7368c775…b272 değişmedi. Yeni ölçüm veya otomatik pin enrollment yok.
+
+Kritik yeni yerel PG18.6 kanıtı: non-superuser aday COMMIT sonrası dört executor-owned SECURITY DEFINER fonksiyonunda PUBLIC EXECUTE kalıyor; üç doğrudan runtime grant'i oluşmuyor. INHERIT FALSE/SET TRUE sahiplik devrine yetiyor, sonraki actor GRANT/REVOKE işlemlerine otomatik sahip yetkisi vermiyor. Yeni doğrulayıcı adayı reddediyor. Eski yerel PASS bu ACL invariant'ını kapsamıyordu; MANAGED_RUNNER_LOCAL_READY verilmedi. Sabit SHA sessiz değiştirilmedi; ayrı SQL/sahiplik sırası düzeltmesi gerekiyor.
+
+Nihai yeni testler: Vitest417/417, TypeScript/ESLint/build native exit0. Managed14 + yeni contract14 + GitLF artifact9; normal Prisma runner20; DB11/Auth62/Cloud11/Supplier16/Purchase28/Stock36 PASS. Pozitif delta testi yalnız fixture içinde açık test-only ACL düzeltmesiyle yürütüldü; sonunda özgün aday durumu geri doğrulandı. Test PASS adayın güvenli olduğunu söylemez. Nihai cluster'lar kapandı; başarısız ilk denemeler raporda korunur.
+
+Gerçek Neon/API/SQL, recovery/production/test bulut DB, R2/restore, env değişikliği veya commit/push/merge yok. token_roles ROLE_DELTA_UNRESOLVED ve bağımsız backup engeli açık. Bu sprint9dosya; önceki2V4.3b.10raporu korunur. HEAD/yerel upstream d65ea89d915805dbf6b6e5afd111beb727cf7ef5.
+
+[Runner sözleşmesi ve kritik bulgu](research/PUSULA_V04_V43B11_MANAGED_RUNNER.md) · [Yeni test kanıtları](docs/validation/V04_V43B11_VERIFICATION.md).
+
+---
+
+# PUSULA V4.3b.10 — CLOUD_PREFLIGHT_PARTIAL
+
+22.10.2026 13:49:51 Türkiye saati: development CA/hostname TLS ve startup READ ONLY + RR READ ONLY denetimi PASS. PG18.6,40tablo/26FORCERLS/15başarılı migration; 016pending; ilk15checksum, bilinen rollback008,8schemahash,rol/ACL fingerprint ve PO-2026-9893 eşleşti. Executor/creator yok. Yeni managed pre ölçümü tarihsel59252aa9…7c009 ile aynı; pin dosyaları değişmedi, post=null/applyEnabled=false.
+
+Provider sistem CA GET401; token/oturum yenilenmedi. Güncel proje/org/branch/endpoint/recovery/snapshot/operasyon/Free plan ve kapasite teyitsiz. SQL hedefi önceki başarılı provider kanıtı ve sabit development allowlist'iyle doğrulandı; güncel provider mapping yerine geçmez. Managed rol çözümünün katalog ön koşulları mevcut; Neon'a özgü CREATE/SET/GRANT/REVOKE/DROP başarısı NEEDS_EVIDENCE. A önkoşullar sınırlı, B uygulama kabulü yok, C recovery tarihsel veri/şema sınırıyla, D kapalı runner geliştirmesi mümkün. ROLE_DELTA_UNRESOLVED ve bağımsız backup/restore engeli açık.
+
+Yalnız → rapor belgesi; eski geçmiş korunur. Migration/kaynak/pin/env değişikliği, DDL/DML/GRANT, provider mutation, production/test/recovery SQL, R2/restore veya commit/push/merge yok. HEAD/yerel upstream d65ea89d915805dbf6b6e5afd111beb727cf7ef5; uzak ref sorgusu proxy hatasıyla teyitsiz. Test/build yeniden koşulmadı.
+
+[Preflight ve uygulanabilir sonraki adımlar](research/PUSULA_V04_V43B10_NEON_PREFLIGHT.md) — [Gerçek doğrulama kayıtları](docs/validation/V04_V43B10_VERIFICATION.md).
+
+---
+
 # PUSULA V4.3b.9a — DELIVERY_PASS
 
 Yetkili feature dalında tam30dosya, commit `9d5fb2d12799b4dcc42547ab054036f28e8d55d7` ile teslim edildi. Normal push exit0; push sonrası HEAD/upstream/gerçek uzak ref aynı SHA, ahead/behind0/0 ve çalışma ağacı temiz doğrulandı. Bu gözlem yalnız rapor ve LAST_REPORT takip dokümantasyon commit'ine kaydedilir; nihai takip SHA'sı son mesajda bildirilir.
