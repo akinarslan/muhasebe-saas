@@ -1,4 +1,4 @@
-# PUSULA V4.3b.12 — GitHub teslim raporu
+# PUSULA V4.3b.12 — DELIVERY_PASS
 
 22.10.2026. V4.3b.10–12 kod ve raporları yalnız `feat/pusula-v030-neon-cloud` dalına normal commit/push kapsamındadır. Kullanıcı bu teslim için açık yetki verdi. Bu yetki gerçek Neon migration uygulama onayı değildir.
 
@@ -68,4 +68,17 @@ Gerçek Neon development/test/production SQL, migration apply, gerçek rol/ACL/G
 
 ## Git teslim kaydı
 
-Commit öncesi doğrulamalar yukarıdadır. Normal feature commit/push ve gerçek uzak ref sonuçları başarılı işlemden sonra bu rapora takip dokümantasyon commit'iyle kaydedilir. Bu ilk rapor revizyonu henüz push gerçekleştiğini iddia etmez. Takip commit'inin kendi SHA'sı dosya içine yazılamaz; nihai SHA/uzak-ref/ahead-behind/temiz-ağaç sonucu son mesajda bildirilir. Benzersiz dosya kapsamı yine19kalır.
+| Kontrol | Gerçek sonuç |
+| --- | --- |
+| Kod/rapor commit mesajı | `fix(v0.4): secure V4.3b receipt function ACL and managed validation` |
+| Kod/rapor commit SHA | `bf30aa92002f172d3f3d897bfcb29abf51282f3e` |
+| Commit kapsamı | Tam19dosya; yukarıdaki listeyle birebir |
+| Working/staged hassas bilgi taraması | PASS; gerçek secret bulunmadı; tek URL yalnız synthetic test şablonu |
+| Staged diff check / kapsam / SHA | PASS; `git diff --cached --check` temiz;016 Git blob SHA27b2c82d…886a567 |
+| Normal push | `git push origin HEAD:refs/heads/feat/pusula-v030-neon-cloud`; native exit0; d65ea89→bf30aa9 |
+| Push sonrası HEAD/yerel upstream | İkisi de `bf30aa92002f172d3f3d897bfcb29abf51282f3e` |
+| Gerçek uzak ref | `git ls-remote` aynı tam SHA'yı doğruladı |
+| Ahead/behind | 0/0 |
+| Çalışma ağacı | `git status --porcelain=v1` boş |
+
+Bu tablo ilk başarılı kod/rapor push'undan sonraki gerçek gözlemdir. Yalnız bu teslim raporuna takip dokümantasyon commit'iyle kaydedilir; benzersiz teslim kapsamı19dosya olarak kalır. Takip adımı SQL/kod/pin veya test edilmiş içeriği değiştirmez. Takip commit'inin kendi SHA'sı dosya içine yazılamaz; nihai SHA/gerçek-uzak-ref/ahead-behind/temiz-ağaç sonucu son mesajda bildirilir. Normal push dışında Git tarihini değiştiren işlem yapılmadı.
