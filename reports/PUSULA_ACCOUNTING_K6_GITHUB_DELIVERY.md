@@ -2,7 +2,7 @@
 
 23 Ekim 2026 · ZY Reklam iç kullanım hedefi: 29 Ekim 2026.
 
-Durum: **VALIDATION_PASS / PUSH_PENDING**. Bu ön kayıt push sonucu ölçülmeden DELIVERY_PASS iddiasında bulunmaz.
+Durum: **DELIVERY_PASS** —62 dosyalık muhasebe paketi yetkili feature dalına normal push ile teslim edildi. Aşağıdaki sonuçlar gerçek ölçümdür; canlı dağıtım kabulü değildir.
 
 ## Yetki ve kapsam
 
@@ -43,7 +43,17 @@ Repo `core.autocrlf=true`. İlk index denetimi beş mevcut migration tarihsel LF
 
 ## Push sonucu
 
-Henüz ölçülmedi. Commit tam SHA, gerçek uzak ref, ahead/behind, porcelain ve push native exit code başarılı push sonrasında bu belgeye kaydedilecektir. Rapor güncellemesinin kendi SHA'sı dosyanın içine self-reference olarak yazılamaz; son rapor commit SHA'sı ve son remote doğrulaması nihai yanıtta ayrıca verilir.
+| Ölçüm | Gerçek sonuç |
+| --- | --- |
+| Kaynak teslim commit'i | `3a32ab18680bf5a1f2129dae9910f971918663f4` |
+| Commit mesajı | `feat(accounting): deliver K1-K6 internal MVP local acceptance` |
+| Normal push | `git push origin HEAD:refs/heads/feat/pusula-v030-neon-cloud` |
+| Push native exit code | `0` |
+| Push sonrası gerçek uzak ref | `3a32ab18680bf5a1f2129dae9910f971918663f4 refs/heads/feat/pusula-v030-neon-cloud` |
+| Ahead/behind | `0 / 0` |
+| `git status --porcelain=v1` | Boş; çalışma ağacı temiz |
+
+Bu gözlem kaynak teslim commit'inin push'undan hemen sonra alındı. Sonrasında yalnız bu raporun sonucu kaydeden bölümü normal bir dokümantasyon commit'iyle teslim edilir; ilk61 dosya değiştirilmez, toplam benzersiz dosya kapsamı62 kalır. Raporun kendi commit SHA'sı dosyanın içine self-reference olarak yazılamaz; son rapor commit SHA'sı ve son gerçek remote/ahead-behind/porcelain/native-exit doğrulaması nihai yanıtta ayrıca verilir. Önceki push başarı kanıtı rapor takip commit'inin henüz ölçülmemiş push'uyla karıştırılmaz.
 
 ## Açık kalan canlı engeller
 
