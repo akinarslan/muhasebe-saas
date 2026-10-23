@@ -163,6 +163,7 @@ export const quoteCreate = scopeSchema
 export const saleCreate = scopeSchema
   .extend({
     customerId: z.uuid(),
+    sourceRef: z.string().trim().min(1).max(200).optional(),
     idempotencyKey: z.uuid(),
     date,
     dueDate: date,

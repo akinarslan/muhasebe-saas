@@ -18,7 +18,7 @@ async function tableDigests(db: Client) {
   }
   return result;
 }
-const catalogSqls = {
+export const catalogSqls = {
   schemas: `SELECT n.nspname,pg_get_userbyid(n.nspowner) AS owner,CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END AS grantee,a.privilege_type,a.is_grantable FROM pg_namespace n CROSS JOIN LATERAL aclexplode(coalesce(n.nspacl,acldefault('n',n.nspowner))) a WHERE n.nspname='public' ORDER BY 1,2,3,4`,
   columnAcl: `SELECT c.relname,x.attname,CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END AS grantee,a.privilege_type,a.is_grantable FROM pg_attribute x JOIN pg_class c ON c.oid=x.attrelid CROSS JOIN LATERAL aclexplode(x.attacl) a WHERE c.relnamespace='public'::regnamespace AND x.attnum>0 AND NOT x.attisdropped ORDER BY 1,2,3,4`,
   tables: `SELECT c.relname,c.relrowsecurity,c.relforcerowsecurity,pg_get_userbyid(c.relowner) AS owner FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' ORDER BY 1`,

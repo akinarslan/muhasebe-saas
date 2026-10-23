@@ -9,6 +9,7 @@ import {
   contextFor,
   scoped,
   authorize,
+  requireStepUp,
   AccessError,
   type Context,
 } from "@/server/authorization/context";
@@ -20,6 +21,9 @@ import type {
   CostUnit,
 } from "@/lib/pricing-types";
 import * as C from "@/lib/cloud/contracts";
+import { saleSource } from "@/lib/cloud/sale-source";
+import { requireLocalAccounting } from "./accounting/accounts";
+import { postSale } from "./accounting/sales";
 import {
   type Tx,
   type Scope,
@@ -400,6 +404,12 @@ export async function documentRequest(
       scope.legalEntityId,
     );
   if (method !== "POST" || id) throw new AccessError(404, "NOT_FOUND");
+  if (kind === "sales") {
+    requireLocalAccounting();
+    authorize(c, "finance.accounts", resource(c, scope));
+    authorize(c, "finance.approve", resource(c, scope));
+    await requireStepUp(headers, source);
+  }
   const data =
       kind === "sales" ? C.saleCreate.parse(input) : C.quoteCreate.parse(input),
     digest = hash(data);
@@ -442,6 +452,8 @@ export async function documentRequest(
   return scoped(
     c,
     async (tx) => {
+      if (kind === "sales")
+        await tx.$queryRaw`SELECT set_config('app.activity_id',${scope.activityId ?? ""},true)`;
       await validateScope(tx, c, scope);
       await lock(
         tx,
@@ -534,6 +546,7 @@ export async function documentRequest(
             },
           },
         });
+        await postSale(tx, created.id, saleSource(data));
       } else {
         let groupId: string = randomUUID(),
           revision = 1;

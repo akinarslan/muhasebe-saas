@@ -711,7 +711,18 @@ async function main() {
             `SELECT count(*)::int AS n FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'`,
           )
         ).rows[0].n;
-        assert.equal(actual, process.env.PUSULA_STOCK_FIXTURE === "1" ? 47 : 40);
+        assert.equal(
+          actual,
+          process.env.PUSULA_EXPENSE_FIXTURE === "1"
+            ? 56
+            : process.env.PUSULA_TREASURY_FIXTURE === "1"
+              ? 55
+              : process.env.PUSULA_ACCOUNTING_FIXTURE === "1"
+                ? 50
+                : process.env.PUSULA_STOCK_FIXTURE === "1"
+                  ? 47
+                  : 40,
+        );
       },
     );
     console.log(

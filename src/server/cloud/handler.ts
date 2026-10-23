@@ -1,4 +1,5 @@
 import "server-only";
+import { accountingRequest } from "./business/accounting/accounts";
 import { inventoryRequest } from "./business/inventory";
 import { catalogRequest } from "./business/catalog";
 import { supplierRequest } from "./business/suppliers";
@@ -57,24 +58,25 @@ export async function cloudRequest(
     }
     const h = request.headers;
     if (parts[0] === "workspace") {
-      const handler = ["goods-receipts", "receipt-orders", "stock"].includes(
-        parts[1],
-      )
-        ? inventoryRequest
-        : [
-              "suppliers",
-              "supplier-materials",
-              "supplier-offers",
-              "supplier-comparison",
-            ].includes(parts[1])
-          ? supplierRequest
-          : parts[1] === "purchase-orders"
-            ? purchaseRequest
-            : parts[1] === "imports"
-              ? importRequest
-              : ["quotes", "sales"].includes(parts[1])
-                ? documentRequest
-                : catalogRequest;
+      const handler =
+        parts[1] === "finance"
+          ? accountingRequest
+          : ["goods-receipts", "receipt-orders", "stock"].includes(parts[1])
+            ? inventoryRequest
+            : [
+                  "suppliers",
+                  "supplier-materials",
+                  "supplier-offers",
+                  "supplier-comparison",
+                ].includes(parts[1])
+              ? supplierRequest
+              : parts[1] === "purchase-orders"
+                ? purchaseRequest
+                : parts[1] === "imports"
+                  ? importRequest
+                  : ["quotes", "sales"].includes(parts[1])
+                    ? documentRequest
+                    : catalogRequest;
       return json(
         await handler(
           h,

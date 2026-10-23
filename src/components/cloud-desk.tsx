@@ -22,6 +22,8 @@ import { CustomerDrawer } from "./customer-drawer";
 import { SupplierDesk } from "./supplier-desk";
 import { InventoryDesk } from "./inventory-desk";
 import { PurchaseDesk } from "./purchase-desk";
+import { FinanceDesk } from "./finance-desk";
+import { submitTrackedSale, saleOutcome, salePendingKey } from "@/lib/cloud/tracked-sale";
 import { CostCalculator } from "./cost-calculator";
 import { Button } from "./ui/button";
 import { NumericInput } from "./ui/numeric-input";
@@ -179,10 +181,12 @@ const modules = [
   { id: "expenses", name: "Giderler", icon: Coins },
   { id: "quotes", name: "Teklifler", icon: FileText },
   { id: "sales", name: "Satışlar", icon: Receipt },
+  { id: "finance", name: "Cari ve Finans", icon: Coins },
   { id: "imports", name: "Veri aktarımı", icon: Upload },
 ];
 export function CloudDesk() {
   const rateGeneration = useRef(0);
+  const [salePending, setSalePending] = useState("");
   const [supplierDirty, setSupplierDirty] = useState(false);
   const [purchaseDirty, setPurchaseDirty] = useState(false);
   const [inventoryDirty,setInventoryDirty]=useState(false);
@@ -275,6 +279,11 @@ export function CloudDesk() {
     ready = loadedScope === scopeKey,
     can = (action: string) => ready && data.actions.includes(action),
     query = `company=${company}${activity ? `&activity=${activity}` : ""}`;
+  useEffect(() => {
+    let live = true;
+    Promise.resolve().then(() => { if (live) setSalePending(sessionStorage.getItem(salePendingKey({ legalEntityId: company, activityId: activity || null })) || ""); });
+    return () => { live = false; };
+  }, [company, activity]);
   useEffect(() => {
     let active = true;
     api("context")
@@ -704,24 +713,16 @@ export function CloudDesk() {
         lines,
       };
       const today = new Date().toISOString().slice(0, 10);
-      await api(
-        `workspace/${tab}`,
-        "POST",
-        tab === "quotes"
-          ? {
-              ...base,
-              title: title || "Yeni teklif",
-              ...(previousId ? { previousId } : {}),
-            }
-          : {
-              ...base,
-              date: today,
-              dueDate,
-              currency: "TRY",
-              notes: title,
-              plans,
-            },
-      );
+      if (tab === "quotes") {
+        await api("workspace/quotes", "POST", { ...base, title: title || "Yeni teklif", ...(previousId ? { previousId } : {}) });
+      } else {
+        try {
+          await submitTrackedSale(scope, { ...base, date: today, dueDate, currency: "TRY", notes: title, plans }, setSalePending);
+        } catch (e) {
+          if (sessionStorage.getItem(salePendingKey(scope))) setJob(false);
+          throw e;
+        }
+      }
       resetJob();
       reload();
       setNotice("Sunucuda yeniden hesaplandı ve Neon'a kaydedildi.");
@@ -1067,11 +1068,16 @@ export function CloudDesk() {
                   </Button>
                 )}
               </div>
-              {!can(`${tab}.view`) && (
+              {!(tab === "finance" ? can("finance.accounts") : can(`${tab}.view`)) && (
                 <div className="cloud-empty">
                   Bu modülü görüntüleme yetkiniz yok.
                 </div>
               )}
+              {tab === "finance" && can("finance.accounts") && <FinanceDesk key={`${company}:${activity}`} company={company} activity={activity} actions={data.actions} customers={data.customers} />}
+              {tab === "sales" && salePending && <div role="status"><p>Bekleyen satış referansı: {salePending}. Yeni satış göndermeden sonucu kontrol edin.</p>
+                <Button disabled={busy} onClick={() => void run(async () => { const result = await saleOutcome(scope, salePending); if (result.state === "SUCCEEDED" || result.state === "CANCELLED") { sessionStorage.removeItem(salePendingKey(scope)); setSalePending(""); resetJob(); reload(); setNotice(result.state === "SUCCEEDED" ? "Satış kaydedilmiş; ikinci kayıt gönderilmedi." : "Satış taslağı kapatılmış."); } else setNotice("Satış kesinleşmemiş. Yeniden sorgulayın veya güvenle kapatın."); })}>Satış sonucunu sorgula</Button>
+                <Button disabled={busy} onClick={() => void run(async () => { await saleOutcome(scope, salePending, true); sessionStorage.removeItem(salePendingKey(scope)); setSalePending(""); resetJob(); setNotice("Kesinleşmemiş satış güvenle kapatıldı. Yeni taslak açabilirsiniz."); })}>Kesinleşmemiş satışı kapat</Button>
+              </div>}
               {tab === "suppliers" && can("suppliers.view") && (
                 <SupplierDesk key={`${company}:${activity}`} company={company} activity={activity} actions={data.actions} materials={data.materials} onDirtyChange={setSupplierDirty} />
               )}

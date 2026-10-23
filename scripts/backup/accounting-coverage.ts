@@ -1,0 +1,26 @@
+import { expectedTables } from "./postgres";
+
+export const accountingTables = [
+  ...expectedTables,
+  "Supplier",
+  "SupplierMaterial",
+  "SupplierOfferVersion",
+  "PurchaseOrder",
+  "PurchaseOrderLine",
+  "StockLocation",
+  "GoodsReceipt",
+  "GoodsReceiptLine",
+  "StockLot",
+  "StockPostingBatch",
+  "StockMovement",
+  "StockBalance",
+  "FinanceAccount",
+  "FinanceJournal",
+  "FinancePosting",
+  "FinanceIntent",
+  "FinanceAccountAccess",
+  "FinanceOperation",
+  "FinanceAllocation",
+  "FinanceFundMovement",
+  "FinanceExpense",
+].sort();

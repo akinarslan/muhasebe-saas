@@ -382,12 +382,15 @@ export function validateRole(r: {
     "BACKUP_ROLE_REJECTED",
   );
 }
-export function validateToc(toc: string) {
+export function validateToc(
+  toc: string,
+  tables: readonly string[] = expectedTables,
+) {
   const names = [...toc.matchAll(/^\d+; \d+ \d+ TABLE DATA public (\S+) /gm)]
     .map((m) => m[1].replace(/^"|"$/g, ""))
     .sort();
   requireCheck(
-    canonical(names) === canonical(expectedTables),
+    canonical(names) === canonical(tables),
     "DUMP_TABLE_DATA_INCOMPLETE",
   );
   for (const kind of ["POLICY", "TRIGGER", "FK CONSTRAINT", "INDEX"])

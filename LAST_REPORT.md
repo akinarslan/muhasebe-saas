@@ -1,3 +1,83 @@
+# PUSULA — K5 entegre işletme kabulü ve buluta hazırlık
+
+**23 Ekim 2026 · K5_LOCAL_PASS · CLOUD_READY_FOR_APPROVAL: BLOCKED · GO_LIVE_PASS verilmedi (BLOCKED).** K1–K4 tek sistem olarak gerçek izole PostgreSQL18.6 fixture'da kabul edildi. Yeni işletme özelliği yok; yalnız gerçek offline→online kabulünde bulunan eski hata mesajı temizleme hatası düzeltildi.
+
+10m² vinil net4.000 + KDV800 = brüt4.800; iki ayrı gerçek MFA'lı personel,2.000/2.800 tahsilat,500 peşin gider,1.200 vadeli bakım/300 kısmi ödeme ve ödeme ters kaydı doğrulandı. Gün sonu müşteri0, tedarikçi900 ve kasa artışı4.000; bütün journal/posting/allocation toplamlarıyla mutabık. Fiziksel stok tüketimi yazılmadı. Eşzamanlı fazla tahsilat engeli, mükerrer istek, süresi dolan MFA ve finanssız personel negatifleri geçti.
+
+Tarayıcıda commit sonrası HTTP yanıtı kesildi; reload + sonuç sorgusuyla tek tahsilat korundu. Offline→online kurtarma ve sekme kapatıp yeniden açınca DB kayıtlarının korunması Desktop Chrome + mobil Chromium/iPhone13 profilinde2/2 PASS. Fiziksel telefon veya gerçek Neon kesintisi kabulü değildir.
+
+Değişmemiş K1–K4 SQL'lerinden çevrimdışı, `pusula_runtime` rolüne uygun tek017 SQL adayı + hash manifest'i üretildi ve yerelde byte-identical uygulandı. Canonical dizine terfi/Prisma017 registration yok; migration geçmişi16 ve ilk16 checksum aynı. Review marker olmadan rollback, FORCE RLS, runtime DML yasağı ve bütün K1–K4 regresyonları geçti. Cloud finance kapısı kaldırılmadı.
+
+Mevcut backup motoruyla56 tablo export → AES-GCM/HMAC → ayrı private yerel kopya → decrypt → yeni boş yerel DB restore; tüm veri hash'leri, katalog/default ACL ve finans dengeleri eşleşti. İki eski CHECK'in PG parser eşdeğerliği ve gerçek CHECK(true) zayıflatma negatif testi geçti. Aynı cluster'daki roller önceden vardır; kopya aynı bilgisayardadır. Gerçek offsite, global rol/DB ACL kurtarma ve gerçek kaynak restore kabulü değildir; uzak35/21 kaynak kapıları korunur.
+
+Nihai fixture `v42-fe3c040b-4649-48c3-88a4-8b22fb1fa385`:235 API/SQL kontrolü + backup/restore + browser PASS, serverStopped=true. Vitest462, TypeScript, ESLint, production build ve checksum artifact9 PASS. `.env.local`, K1–K4 rapor/test/local SQL ve kullanıcı değişiklikleri korundu. Gerçek Neon/R2/restore/recovery/snapshot/production veya Git commit/push/merge yoktur.
+
+Managed016 `applyEnabled=false / postFingerprint=null`, provider rol/ACL yaşam döngüsü,017 canonical/schema terfisi, bağımsız offsite/anahtar/gerçek restore ve işletme kabulü eksikleri nedeniyle bulut/live kararları BLOCKED. Ayrı operatör onayları ve teknik sıra canlıya geçiş belgesindedir.
+
+[K5 raporu](research/PUSULA_ACCOUNTING_K5_REPORT.md) · [Doğrulama](docs/validation/PUSULA_ACCOUNTING_K5_VERIFICATION.md) · [Canlıya geçiş kapıları](docs/operations/PUSULA_INTERNAL_MVP_GO_LIVE.md)
+
+---
+
+# PUSULA — K4 işletme giderleri ve günlük finans paneli
+
+**23 Ekim 2026 · K4_LOCAL_PASS · Bulut ve gerçek verili pilot BLOCKED.** Ayrı gerçek gider belgesi/kategorileri, net/KDV ayrımı, isteğe bağlı tedarikçi ve belge referansı eklendi. Peşin gider fon çıkışıyla atomic; vadeli gider tedarikçi borcuyla atomic. K3 ödeme/allocation motoruyla 5.000 → 3.000 → 0 borç kapanır; ödeme ikinci gider oluşturmaz.
+
+`/app` → Cari ve Finans içinde gider formu/listesi, tarih filtreleri, günlük/aylık gider ve gerçek PostgreSQL finans özeti bulunur. Net/KDV/brüt satış, tahsilat/ödeme, kasa/banka/POS, alacak/borç/vade, nakit hareketi ve tahmini iş kârı ayrıdır. Açılışlar gelir sayılmaz; ters kayıtlar kendi dönemine yansır. KDV ve tüketilmiş gider sınıflandırması açık; stok alımı ve maliyet tarifeleri otomatik giderleştirilmez.
+
+K1–K3 izolasyon, FORCE RLS, explicit DENY, MFA, immutable ledger, idempotency/intent, negatif fon bakiyesi ve settlement korumaları sürer. Gider DENY'ında outcome/close kesinleşmiş kaydı gizleyip kapatamaz; maliyet DENY'ı kâr üzerinden aşılamaz. Runtime finans DML kapalıdır. Cari açılış yalnız party hesaplarına izin verir; fon açılışı K3 yolunda kalır.
+
+Nihai PG18.6 fixture `v42-c553c928-daa1-479f-82d1-f0124806b9ab`: PASS, serverStopped=true. K4 12 + K1/K2/K3 ve mevcut regresyonlar toplam 227 API/SQL kontrolü; desktop/mobile 2/2 PASS. Vitest 460, TypeScript, ESLint, build ve checksum artifact 9 PASS. Yerel şema 56 tablo/42 FORCE RLS; migration geçmişi 16. İlk 16 SQL/checksum, K1–K3 hazırlık SQL/raporları ve kullanıcı değişiklikleri korundu.
+
+K4 SQL yalnız yerel hazırlık ardılıdır. `ACCOUNTING_CLOUD_REVIEW_REQUIRED`, managed 016/post kabulü, `applyEnabled=false`, backup/restore ve recovery engelleri sürer. Gerçek Neon/R2/restore/snapshot/production ve Git commit/push/merge yapılmadı.
+
+[K4 raporu](research/PUSULA_ACCOUNTING_K4_REPORT.md) · [Gerçek doğrulama](docs/validation/PUSULA_ACCOUNTING_K4_VERIFICATION.md)
+
+---
+
+# PUSULA — K3 tahsilat, ödeme, kasa, banka ve POS
+
+**22 Ekim 2026 · K3_LOCAL_PASS · Bulut ve gerçek verili pilot BLOCKED.** Mevcut deftere kaynak belge tahsisli kısmi/tam nakit/EFT/kart tahsilatı, onaylı tedarikçi borcu/ödeme, ayrı TRY kasa/banka/POS bakiyeleri, açılış ve komisyonlu settlement eklendi. Eşzamanlı fazla tahsilat ve tarih sıralı eksi bakiye reddi; yetkili ters hareket, immutable kayıt ve atomic rollback korundu. PO onayı borç sayılmaz.
+
+/app içinde Cari ve Finans: gerçek DB cari ekstre/kalan, satıştan tahsilat, tedarikçi ödemesi, hesap bakiyesi/hareketi ve settlement. Satış referansı sunucu intent'inden otomatik üretilir; belirsiz sonuç kör POST yerine referans sorgusu/güvenli kapatmayla çözülür. Normal personelde gerçek MFA, atanmış hesap, action/OWN ve explicit DENY negatifleri geçti.
+
+Nihai PG18.6 fixture v42-177760ab-f691-467c-a700-cde81ec00234 PASS ve serverStopped=true: K3 16, K1 20, K2 15, DB11/Auth62/Cloud11/Supplier16/Purchase28/Stock36; gerçek masaüstü+mobil UI 2/2 PASS. Vitest444, TypeScript, ESLint, build, Git LF artifact9 PASS. Ölçülen yerel şema55 tablo/41 FORCE RLS; migration geçmişi16.
+
+[Rapor ve K3'ün18 dosyalık listesi](research/PUSULA_ACCOUNTING_K3_REPORT.md) · [Gerçek test kanıtı ve başarısız denemeler](docs/validation/PUSULA_ACCOUNTING_K3_VERIFICATION.md). İlk15/016, K1/K2 rapor/SQL/testleri ve üç kullanıcı plan dosyası korundu. Gerçek cloud016/finans deployment, managed post pin, bağımsız backup/restore ve ROLE_DELTA_UNRESOLVED engelleri sürer. Neon/R2/restore/snapshot, .env.local değişikliği veya Git stage/commit/push yoktur. Aşağıdaki tüm önceki içerik aynen korunmuştur.
+
+---
+
+# PUSULA — K2 satış → cari alacak
+
+**22 Ekim 2026 · K2_LOCAL_PASS · Bulut ve gerçek verili pilot BLOCKED.** Mevcut CloudSale/satır transaction'ına TRY cari journal/posting bağlandı: brüt müşteri borcu, ayrı net satış ve KDV karşı kayıtları. Request replay ve iş kaynağı tekilliği korunur; finans hatasında satış/satır/hesap/audit birlikte rollback olur. Eski/onaylı tarihsel satışlar otomatik aktarılmaz. Satış bağlantısı ve cari bakiyesi `finance/sales/{saleId}` API'sinden yetkili erişime açıldı; gerçek bulut kapısı kapalıdır.
+
+Nihai izole PostgreSQL18.6 fixture: K2 15, K1 20, DB11/Auth62/Cloud11/Supplier16/Purchase28/Stock36 PASS; sunucu kapatıldı. Vitest430, TypeScript, ESLint, build ve Git LF artifact9 PASS. 10m² örneği: net4000 + KDV800 = brüt4800TRY alacak. Kaynak satış/maliyet/kur snapshot'ları korundu; satışa bağlı ters kayıt üç satırı tersler ve sales.cancel DENY'ı uygular. Tahsilat/ödeme/kasa/banka/POS K3'e bırakıldı.
+
+[Rapor ve K2'nin 15 dosyalık kesin listesi](research/PUSULA_ACCOUNTING_K2_REPORT.md) · [Gerçek doğrulama](docs/validation/PUSULA_ACCOUNTING_K2_VERIFICATION.md). İlk15/016, K1 raporları/SQL/testleri ve üç kullanıcı plan dosyası korundu. Cloud016/gelecek017, managed post pin ve bağımsız backup/restore kabulü BLOCKED; ROLE_DELTA_UNRESOLVED sürer. Neon/R2/restore, `.env.local` değişikliği veya Git stage/commit/push yoktur. Aşağıdaki K1 ve önceki raporlar aynen korunmuştur.
+
+---
+
+# PUSULA — K1 cari hesap ve finans defteri
+
+**22 Ekim 2026 · K1_LOCAL_PASS · Bulut ve gerçek verili pilot BLOCKED.** Customer/Supplier bağlantılı TRY açılışı, dengeli ve değişmez journal/posting, tarih/vade/ekstre, idempotency ve yetkili ters kayıt altyapısı yalnız izole PostgreSQL18.6 üzerinde hazırlandı. Runtime DML reddi, FORCE RLS ve MASTER dahil explicit DENY korundu. Finans UI ve satış/tahsilat entegrasyonu bu pakette değildir.
+
+428 Vitest, TypeScript, ESLint, build, Git LF artifact9; nihai K1 fixture20 ve ayrı mevcut modül DB/Auth/Cloud/Supplier/Purchase/Stock regresyonları geçti. Fixture sunucuları kapatıldı. İlk 15 ve 016 SQL değişmedi; yerel hazırlık `scripts/accounting/local-schema.sql` canonical migration zincirinin dışında, yalnız 016 sonrasında test edilir; ikinci migration geçmişi yoktur. Gerçek 016/gelecek017 ve backup/restore kabulü BLOCKED; managed post pin null, apply kapalı, recovery ROLE_DELTA_UNRESOLVED sürer.
+
+[Rapor](research/PUSULA_ACCOUNTING_K1_REPORT.md) · [Gerçek test kanıtı](docs/validation/PUSULA_ACCOUNTING_K1_VERIFICATION.md). Neon/R2/restore, `.env.local` değişikliği, Git stage/commit/push yapılmadı. Aşağıdaki önceki rapor ve kullanıcı planı korunmuştur.
+
+---
+
+# PUSULA — 7 günlük acil ön muhasebe MVP / MVP_PLAN_READY
+
+22.10.2026 · Hedef 29.10.2026; yalnız GAP, bağımlılık, ilk kodlama paketi ve kabul dokümantasyonu hazırlandı. Mevcut müşteri/satış/maliyet ve RBAC/MFA yeniden kullanılacak. Gerçek cari ledger/açılış, tahsilat/ödeme/allocation, kasa-banka-POS, gider belgesi ve günlük finans raporları eksik. Ödeme planı tahsilat, gider tarifesi gerçekleşmiş gider değildir; demo bakiye gerçek muhasebe kabulü sayılmaz.
+
+Kritik yol: pending016 ile güvenli finans migration hattı kararı → ledger/açılış → satış AR/tedarikçi AP → kısmi tahsilat/ödeme → gider/rapor → izin/mutabakat → bağımsız şifreli backup ve gerçek restore → ayrı onaylı pilot. Backup D1'de paralel başlar. TRY finans kesiti önerildi; USD maliyet/kur snapshot'ları korunur, para birimleri doğrulanmamış kurla birleştirilmez. 10m² vinil örneği:152cm rulo/2cm kenar payı/100×200cm×5 → tahmini10,20m/15,504m²; net4000+KDV800=4800TRY, tahsilat2000→AR2800, ayrı nakit gider500→cash1500. Bu belge aritmetiğidir; yeni API/PG/E2E başarı iddiası değildir, stok düşmez.
+
+Dört dosya hazır: [7 günlük plan ve GAP](docs/planning/PUSULA_7_DAY_ACCOUNTING_MVP.md), [planlanan kabul senaryoları](docs/validation/PUSULA_ACCOUNTING_MVP_ACCEPTANCE.md), ROADMAP güncel öncelik bölümü ve bu özet. Kod/migration/env değişikliği, gerçek Neon/DB/R2/restore veya Git commit/push yok. Başlangıç HEAD fc6d41bb4380baa1839064f9f7bfd4bfe317d6b9; ağaç temizdi. Önceki planlama talimatı iptal edildi; onun dört dosyası oluşturulmadı.
+
+V4.3b.12 ACL_FIX_PASS ve GitHub teslimi korunur;016 gerçek Neon'a uygulanmadı, SHA27b2c82d…886a567 ve cloud apply kapısı değişmedi. ROLE_DELTA_UNRESOLVED ve bağımsız R2 backup/restore engeli açık. Kabul edilmiş gerçek-kaynak alternatif yedek yok; şifreli bağımsız kopya ve gerçek restore olmadan GO_LIVE_PASS verilmez. 29 Ekim yetişme taahhüdü değil; migration/backup/POS/finans mutabakatı eksikse gerçek veri pilotu BLOCKED kalır.
+
+---
+
 # PUSULA V4.3b.12 — ACL_FIX_PASS
 
 22.10.2026 · Non-superuser PG18.6 üzerinde dört SECURITY DEFINER fonksiyonun ACL kusuru giderildi. Sahiplik sonrası REVOKE/GRANT artık SET LOCAL ROLE executor altında; her blok RESET ROLE ile kapanır. Complete trigger'ları actor hâlâ fonksiyon sahibi iken kurulur. Yeni SQL test-only ACL düzeltmesi olmadan PUBLIC0/runtime-direct3/auth0 postflight'ını geçer. Bağımsız minimal deney INHERIT FALSE/SET TRUE ayrımını ve eski01006/01007 etkisiz ACL komutlarını doğruladı; tamamen rollback oldu.

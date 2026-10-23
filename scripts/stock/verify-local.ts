@@ -444,6 +444,12 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       PUSULA_DB_TARGET: "test",
       PUSULA_STOCK_FIXTURE: "1",
       TEST_DIRECT_DATABASE_URL: url("fixture_admin", adminPassword),
+      PUSULA_ACCOUNTING_FIXTURE: "1",
+      PUSULA_TREASURY_FIXTURE: "1",
+      PUSULA_EXPENSE_FIXTURE:
+        process.argv.includes("--k4") || process.argv.includes("--k5")
+          ? "1"
+          : "0",
       TEST_DATABASE_URL: url("pusula_test_runtime", runtimePassword),
       TEST_AUTH_DATABASE_URL: url("pusula_test_auth", authPassword),
       AUTH_TEST_SECRET: secret,
@@ -456,30 +462,100 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       R2_ACCESS_KEY_ID: "",
       R2_SECRET_ACCESS_KEY: "",
     };
-    const scripts = process.argv.includes("--browser-only")
-      ? []
-      : process.argv.includes("--supplier-only")
-        ? [
-            "scripts/auth/verify-c2.ts",
-            "scripts/suppliers/verify.ts",
-            "scripts/purchases/verify.ts",
-            "scripts/stock/verify.ts",
-          ]
-        : [
-            "scripts/db/verify.ts",
-            ...["c1", "c2", "c3", "c4", "c5", "c6", "c61"].map(
-              (s) => `scripts/auth/verify-${s}.ts`,
-            ),
-            "scripts/auth/verify-d.ts",
-            "scripts/suppliers/verify.ts",
-            "scripts/purchases/verify.ts",
-            "scripts/stock/verify.ts",
-          ];
-    report.testMode = process.argv.includes("--browser-only")
-      ? "browser-only"
-      : process.argv.includes("--supplier-only")
-        ? "supplier-only"
-        : "full";
+    if (process.argv.includes("--k5")) {
+      const { financeMigrationCandidate } =
+        await import("../accounting/prepare-migration");
+      const candidate = await financeMigrationCandidate();
+      requireCheck(
+        candidate.sql ===
+          (await readFile(
+            "scripts/accounting/migration-candidate/017-finance.sql",
+            "utf8",
+          )),
+        "FINANCE_CANDIDATE_ARTIFACT_DRIFT",
+      );
+      let rejected = false;
+      try {
+        await admin.query(candidate.sql);
+      } catch {
+        rejected = true;
+        await admin.query("ROLLBACK");
+      }
+      requireCheck(
+        rejected &&
+          (await admin.query(`SELECT to_regclass('public."FinanceAccount"') t`))
+            .rows[0].t === null,
+        "FINANCE_CANDIDATE_REVIEW_BYPASS",
+      );
+      await admin.query("GRANT pusula_runtime TO pusula_test_runtime");
+      await admin.query(
+        "SELECT set_config('pusula.finance_review','APPROVED_017_CANDIDATE',false)",
+      );
+      await admin.query(candidate.sql);
+      await admin.query("RESET pusula.finance_review");
+      report.financeCandidate = candidate.manifest;
+      pass(
+        "finance-017-candidate-unmodified-reviewed-local-apply-after016-no-history-write",
+      );
+    } else {
+      await admin.query(
+        await readFile("scripts/accounting/local-schema.sql", "utf8"),
+      );
+      pass("accounting-local-preparation-after-016-no-history-write");
+      if (!process.argv.includes("--accounting-profile")) {
+        await admin.query(
+          await readFile("scripts/accounting/k2-local-schema.sql", "utf8"),
+        );
+        pass("accounting-k2-local-preparation-no-history-write");
+        await admin.query(
+          await readFile("scripts/accounting/k3-local-schema.sql", "utf8"),
+        );
+        pass("accounting-k3-local-preparation-no-history-write");
+        if (process.argv.includes("--k4")) {
+          await admin.query(
+            await readFile("scripts/accounting/k4-local-schema.sql", "utf8"),
+          );
+          pass("accounting-k4-local-preparation-no-history-write");
+        }
+      }
+    }
+    const scripts = process.argv.includes("--accounting-profile")
+      ? ["scripts/auth/verify-c2.ts", "scripts/accounting/verify.ts"]
+      : process.argv.includes("--browser-only")
+        ? []
+        : process.argv.includes("--supplier-only")
+          ? [
+              "scripts/auth/verify-c2.ts",
+              "scripts/suppliers/verify.ts",
+              "scripts/purchases/verify.ts",
+              "scripts/stock/verify.ts",
+            ]
+          : [
+              "scripts/db/verify.ts",
+              ...["c1", "c2", "c3", "c4", "c5", "c6", "c61"].map(
+                (s) => `scripts/auth/verify-${s}.ts`,
+              ),
+              "scripts/accounting/verify.ts",
+              "scripts/auth/verify-d.ts",
+              "scripts/accounting/verify-k2.ts",
+              "scripts/suppliers/verify.ts",
+              "scripts/purchases/verify.ts",
+              "scripts/stock/verify.ts",
+              "scripts/accounting/verify-k3.ts",
+              ...(process.argv.includes("--k4") || process.argv.includes("--k5")
+                ? ["scripts/accounting/verify-k4.ts"]
+                : []),
+              ...(process.argv.includes("--k5")
+                ? ["scripts/accounting/verify-k5.ts"]
+                : []),
+            ];
+    report.testMode = process.argv.includes("--accounting-profile")
+      ? "accounting-profile"
+      : process.argv.includes("--browser-only")
+        ? "browser-only"
+        : process.argv.includes("--supplier-only")
+          ? "supplier-only"
+          : "full";
     const runJob = (
       args: string[],
       name: string,
@@ -546,9 +622,28 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       results.push({ name: script + ` (${passed} checks)`, status: "PASS" });
       console.log(JSON.stringify({ script, checks: passed, status: "PASS" }));
     }
+    if (process.argv.includes("--k5")) {
+      await runJob(
+        [
+          "--conditions=react-server",
+          "--import",
+          "tsx",
+          "scripts/backup/accounting-fixture.ts",
+        ],
+        "k5-backup",
+        env,
+        240000,
+      );
+      pass(
+        "k5-accounting-56-table-encrypted-copy-new-empty-local-restore-reconciliation",
+      );
+    }
     if (
       process.argv.includes("--with-browser") ||
-      process.argv.includes("--purchase-browser")
+      process.argv.includes("--purchase-browser") ||
+      process.argv.includes("--k4-browser") ||
+      process.argv.includes("--k5-browser") ||
+      process.argv.includes("--k3-browser")
     ) {
       const output = await runJob(
         [
@@ -568,14 +663,20 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
           "test",
           "--config",
           "playwright.auth.config.ts",
-          ...(process.argv.includes("--purchase-browser")
-            ? [
-                "v43a.spec.ts",
-                "v43b.spec.ts",
-                "--output",
-                join(dir, "browser-results"),
-              ]
-            : []),
+          ...(process.argv.includes("--k5-browser")
+            ? ["k5.spec.ts", "--output", join(dir, "browser-results")]
+            : process.argv.includes("--k4-browser")
+              ? ["k4.spec.ts", "--output", join(dir, "browser-results")]
+              : process.argv.includes("--k3-browser")
+                ? ["k3.spec.ts", "--output", join(dir, "browser-results")]
+                : process.argv.includes("--purchase-browser")
+                  ? [
+                      "v43a.spec.ts",
+                      "v43b.spec.ts",
+                      "--output",
+                      join(dir, "browser-results"),
+                    ]
+                  : []),
         ],
         "playwright",
         { ...env, NODE_ENV: "development" },
@@ -583,11 +684,22 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       );
       await writeFile(join(dir, "playwright.log"), browser, { mode: 0o600 });
       pass(
-        process.argv.includes("--purchase-browser")
-          ? "desktop-mobile-purchase-browser"
-          : "desktop-mobile-auth-cloud-d7-suppliers-browser",
+        process.argv.includes("--k5-browser")
+          ? "desktop-mobile-k5-integrated-disconnection-reopen-browser"
+          : process.argv.includes("--k4-browser")
+            ? "desktop-mobile-k4-expense-browser"
+            : process.argv.includes("--k3-browser")
+              ? "desktop-mobile-k3-finance-browser"
+              : process.argv.includes("--purchase-browser")
+                ? "desktop-mobile-purchase-browser"
+                : "desktop-mobile-auth-cloud-d7-suppliers-browser",
       );
-      if (!process.argv.includes("--purchase-browser")) {
+      if (
+        !process.argv.includes("--purchase-browser") &&
+        !process.argv.includes("--k4-browser") &&
+        !process.argv.includes("--k5-browser") &&
+        !process.argv.includes("--k3-browser")
+      ) {
         await runJob(
           [
             "node_modules/@playwright/test/cli.js",
