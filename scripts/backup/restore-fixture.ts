@@ -3,12 +3,16 @@ import { randomUUID, createHash } from "node:crypto";
 import { resolve, relative, isAbsolute } from "node:path";
 import { expectedTables, runTool } from "./postgres";
 import { canonical, requireCheck } from "./core";
+import { roundTripRestoreChecks } from "./restore-checks";
 
 const sha = (value: unknown) =>
   createHash("sha256").update(canonical(value)).digest("hex");
-async function tableDigests(db: Client) {
+async function tableDigests(
+  db: Client,
+  tables: readonly string[] = expectedTables,
+) {
   const result: Record<string, { rows: number; sha256: string }> = {};
-  for (const table of expectedTables) {
+  for (const table of tables) {
     const rows = (
       await db.query(`SELECT to_jsonb(t)::text AS row FROM public."${table}" t`)
     ).rows
@@ -26,8 +30,10 @@ export const catalogSqls = {
   triggers: `SELECT c.relname,t.tgname,t.tgenabled,pg_get_triggerdef(t.oid) AS definition FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE NOT t.tgisinternal AND c.relnamespace='public'::regnamespace ORDER BY 1,2`,
   policies: `SELECT schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check FROM pg_policies WHERE schemaname='public' ORDER BY 2,3`,
   functions: `SELECT p.oid::regprocedure::text AS identity,pg_get_functiondef(p.oid) AS definition FROM pg_proc p WHERE p.pronamespace='public'::regnamespace ORDER BY 1`,
+  functionOwners: `SELECT p.oid::regprocedure::text AS identity,pg_get_userbyid(p.proowner) owner,p.prosecdef,p.proconfig FROM pg_proc p WHERE p.pronamespace='public'::regnamespace ORDER BY 1`,
+  defaultGrants: `SELECT pg_get_userbyid(d.defaclrole) owner,d.defaclnamespace::regnamespace::text schema,d.defaclobjtype,pg_get_userbyid(a.grantor) grantor,CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END grantee,a.privilege_type,a.is_grantable FROM pg_default_acl d CROSS JOIN LATERAL aclexplode(d.defaclacl) a ORDER BY 1,2,3,4,5,6`,
   tableAcl: `SELECT c.relname,pg_get_userbyid(a.grantor) AS grantor,CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END AS grantee,a.privilege_type,a.is_grantable FROM pg_class c CROSS JOIN LATERAL aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' ORDER BY 1,2,3,4`,
-  functionAcl: `SELECT p.oid::regprocedure::text AS identity,CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END AS grantee,a.privilege_type,a.is_grantable FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.pronamespace='public'::regnamespace ORDER BY 1,2,3`,
+  functionAcl: `SELECT p.oid::regprocedure::text AS identity,pg_get_userbyid(a.grantor) grantor,CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END AS grantee,a.privilege_type,a.is_grantable FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.pronamespace='public'::regnamespace ORDER BY 1,2,3`,
   indexes: `SELECT indexname,indexdef FROM pg_indexes WHERE schemaname='public' ORDER BY indexname`,
 };
 export async function restoreFixture(input: {
@@ -41,6 +47,7 @@ export async function restoreFixture(input: {
   readerPassword: string;
   backupPassword: string;
   pass: (name: string) => void;
+  tables?: readonly string[];
 }) {
   const { source, connect, pass } = input;
   requireCheck(
@@ -70,7 +77,7 @@ export async function restoreFixture(input: {
       .rowCount === 0,
     "RESTORE_TARGET_ALREADY_EXISTS",
   );
-  const before = await tableDigests(source);
+  const before = await tableDigests(source, input.tables);
   const catalog: Record<string, unknown> = {};
   for (const [key, sql] of Object.entries(catalogSqls))
     catalog[key] = (await source.query(sql)).rows;
@@ -126,13 +133,26 @@ export async function restoreFixture(input: {
       120000,
     );
     pass("real-pg-restore-into-new-empty-local-database");
-    const after = await tableDigests(target);
+    const after = await tableDigests(target, input.tables);
     requireCheck(
       canonical(before) === canonical(after),
       "RESTORED_ROW_OR_CONTENT_MISMATCH",
     );
-    pass("restore-all-35-table-counts-and-content-hashes-match");
+    pass(
+      `restore-all-${Object.keys(after).length}-table-counts-and-content-hashes-match`,
+    );
     const metaCounts: Record<string, number> = {};
+    if (input.tables) {
+      const checks = await roundTripRestoreChecks(
+        target,
+        catalog.constraints as Parameters<typeof roundTripRestoreChecks>[1],
+        input.tables,
+      );
+      catalog.constraints = checks.normalized;
+      pass(
+        `restore-checks-parser-roundtrip-${checks.changed.length}-deparse-differences`,
+      );
+    }
     for (const [key, sql] of Object.entries(catalogSqls)) {
       const rows = (await target.query(sql)).rows;
       requireCheck(
@@ -254,8 +274,57 @@ export async function restoreFixture(input: {
       }
     }
     pass("restore-real-fk-append-only-auth-audit-and-sale-sealing-enforced");
+    if (input.tables?.includes("FinanceExpense")) {
+      for (const table of [
+        "FinanceJournal",
+        "FinancePosting",
+        "FinanceIntent",
+        "FinanceAccountAccess",
+        "FinanceOperation",
+        "FinanceAllocation",
+        "FinanceFundMovement",
+        "FinanceExpense",
+        "FinanceAccount",
+      ])
+        requireCheck(
+          after[table].rows > 0,
+          "RESTORE_FINANCE_SYNTHETIC_DATA_MISSING",
+        );
+      const reconciliation = (
+        await target.query(`SELECT
+        (SELECT count(*)::int FROM (SELECT "journalId" FROM "FinancePosting" GROUP BY "journalId" HAVING sum(debit-credit)<>0) q) unbalanced,
+        (SELECT count(*)::int FROM "FinanceAccount" a WHERE a.kind IN ('CASH','BANK','POS') AND coalesce((SELECT sum(p.debit-p.credit) FROM "FinancePosting" p WHERE p."accountId"=a.id),0)<>coalesce((SELECT sum(m.amount) FROM "FinanceFundMovement" m WHERE m."accountId"=a.id),0)) fund_mismatches,
+        (SELECT count(*)::int FROM "FinanceExpense" x JOIN "FinanceOperation" o ON o.id=x."operationId" WHERE o."journalId"<>x."journalId" OR o.amount<>x.net+x.vat) expense_mismatches`)
+      ).rows[0];
+      requireCheck(
+        Object.values(reconciliation).every((n) => n === 0),
+        "RESTORE_FINANCE_RECONCILIATION_FAILED",
+      );
+      for (const sql of [
+        'UPDATE "FinanceJournal" SET reason=reason',
+        'UPDATE "FinanceAllocation" SET amount=amount',
+        'UPDATE "FinanceFundMovement" SET amount=amount',
+        'DELETE FROM "FinanceExpense"',
+      ]) {
+        await target.query("BEGIN");
+        try {
+          let code: string | undefined;
+          try {
+            await target.query(sql);
+          } catch (e) {
+            code = (e as { code?: string }).code;
+          }
+          requireCheck(code === "P0001", "RESTORE_FINANCE_IMMUTABILITY_FAILED");
+        } finally {
+          await target.query("ROLLBACK");
+        }
+      }
+      pass(
+        "restore-nonempty-nine-finance-tables-balanced-funds-expenses-and-append-only",
+      );
+    }
     requireCheck(
-      canonical(before) === canonical(await tableDigests(target)),
+      canonical(before) === canonical(await tableDigests(target, input.tables)),
       "RESTORE_VALIDATION_MUTATED_DATA",
     );
     return {

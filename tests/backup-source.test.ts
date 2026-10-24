@@ -86,6 +86,7 @@ beforeEach(async () => {
   const migrations = await Promise.all(
     dirs
       .filter((d) => d.isDirectory())
+      .filter((d) => d.name <= "202610170013_sale_line_sealing")
       .map(async (d) => ({
         migration_name: d.name,
         checksum: createHash("sha256")

@@ -166,9 +166,32 @@ export async function verifyManagedFixture(
     const notice = (n: { code?: string }) => {
       if (n.code) candidateNotices.push(n.code);
     };
-    actor.on("notice", notice);
+    if (!process.argv.includes("--managed-execution-rehearsal"))
+      actor.on("notice", notice);
     try {
-      await actor.query(sql);
+      if (process.argv.includes("--managed-execution-rehearsal")) {
+        const { verifyManagedExecutionFixture } =
+          await import("./managed-execution-fixture");
+        await verifyManagedExecutionFixture(
+          admin,
+          actor,
+          env,
+          dir,
+          contractPre,
+          async () => {
+            const wire = new Client({
+              host: "127.0.0.1",
+              port: Number(u.port),
+              database: u.pathname.slice(1),
+              user: "fixture_managed_owner",
+              password,
+              connectionTimeoutMillis: 5000,
+            });
+            await wire.connect();
+            return wire;
+          },
+        );
+      } else await actor.query(sql);
     } finally {
       actor.removeListener("notice", notice);
     }
@@ -177,10 +200,11 @@ export async function verifyManagedFixture(
       join(dir, "migration-notice-codes.json"),
       JSON.stringify(candidateNotices),
     );
-    await actor.query(
-      `INSERT INTO public._prisma_migrations(id,checksum,migration_name,finished_at,applied_steps_count) VALUES($1,$2,$3,now(),1)`,
-      [randomUUID(), stockChecksum, stockMigration],
-    );
+    if (!process.argv.includes("--managed-execution-rehearsal"))
+      await actor.query(
+        `INSERT INTO public._prisma_migrations(id,checksum,migration_name,finished_at,applied_steps_count) VALUES($1,$2,$3,now(),1)`,
+        [randomUUID(), stockChecksum, stockMigration],
+      );
     const measuredSchema = Object.fromEntries(
       Object.entries(await catalog(actor)).map(([k, v]) => [k, hash(v)]),
     );

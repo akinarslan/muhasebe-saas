@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client"
+  previewFeatures = ["partialIndexes"]
   output   = "../src/generated/prisma"
 }
 
@@ -31,6 +32,9 @@ model LegalEntity {
   materials  Material[]
 
   @@unique([tenantId, id])
+  // Reverse sides of canonical017 composite SQL relations.
+  FinanceAccount       FinanceAccount[]
+  FinanceIntent        FinanceIntent[]
 }
 
 model Activity {
@@ -41,6 +45,9 @@ model Activity {
   entity        LegalEntity @relation(fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: Restrict)
 
   @@unique([tenantId, legalEntityId, id])
+  // Reverse sides of canonical017 composite SQL relations.
+  FinanceAccount       FinanceAccount[]
+  FinanceIntent        FinanceIntent[]
 }
 
 model Customer {
@@ -71,6 +78,8 @@ model Customer {
   @@unique([tenantId, legalEntityId, id])
   @@unique([tenantId, legalEntityId, sourceId])
   @@index([tenantId, legalEntityId, name])
+  // Reverse sides of canonical017 composite SQL relations.
+  FinanceAccount FinanceAccount[]
 }
 
 model Material {
@@ -148,6 +157,8 @@ model AuthUser {
   twoFactor AuthTwoFactor?
   sessions AuthSession[]
   accounts AuthAccount[]
+  // Reverse sides of canonical017 composite SQL relations.
+  FinanceAccountAccess FinanceAccountAccess[]
 }
 model AuthSession {
   id String @id
@@ -437,6 +448,8 @@ model CloudSale {
  @@unique([tenantId,legalEntityId,id])
  @@unique([tenantId,legalEntityId,idempotencyKey])
  @@index([tenantId,legalEntityId,date])
+  // Reverse sides of canonical017 composite SQL relations.
+  FinanceJournal FinanceJournal[]
 }
 model CloudSaleLine {
  id String @id @default(uuid()) @db.Uuid
@@ -537,6 +550,9 @@ model Supplier {
   @@unique([tenantId, legalEntityId, id], map: "supplier_scope_key")
   @@unique([tenantId, legalEntityId, idempotencyKey], map: "supplier_request_key")
   @@index([tenantId, legalEntityId, name])
+  // Reverse sides of canonical017 composite SQL relations.
+  FinanceAccount  FinanceAccount[]
+  FinanceExpense  FinanceExpense[]
 }
 
 model SupplierMaterial {
@@ -773,4 +789,217 @@ model StockBalance {
  version Int @default(1)
  @@unique([tenantId,legalEntityId,id])
  @@index([tenantId,legalEntityId,createdAt], map: "StockBalance_scope_date")
+}
+
+
+// Canonical017: RLS, deferred/immutable triggers, CHECK and NULLS NOT DISTINCT
+// semantics remain SQL-owned. Partial indexes are represented with partialIndexes.
+model FinanceAccount {
+  id                                                                                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId                                                                               String                 @db.Uuid
+  legalEntityId                                                                          String                 @db.Uuid
+  activityId                                                                             String?                @db.Uuid
+  createdById                                                                            String
+  kind                                                                                   String
+  customerId                                                                             String?                @db.Uuid
+  supplierId                                                                             String?                @db.Uuid
+  currency                                                                               String                 @default("TRY")
+  label                                                                                  String                 @default("") @db.VarChar(100)
+  Activity                                                                               Activity?              @relation(fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  Customer                                                                               Customer?              @relation(fields: [tenantId, legalEntityId, customerId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  LegalEntity                                                                            LegalEntity            @relation(fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: NoAction, onUpdate: NoAction)
+  Supplier                                                                               Supplier?              @relation(fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceAccountAccess                                                                   FinanceAccountAccess[]
+  FinanceFundMovement                                                                    FinanceFundMovement[]
+  FinanceJournal                                                                         FinanceJournal[]
+  FinanceOperation_FinanceOperation_tenantId_legalEntityId_accountIdToFinanceAccount     FinanceOperation[]     @relation("FinanceOperation_tenantId_legalEntityId_accountIdToFinanceAccount")
+  FinanceOperation_FinanceOperation_tenantId_legalEntityId_fundAccountIdToFinanceAccount FinanceOperation[]     @relation("FinanceOperation_tenantId_legalEntityId_fundAccountIdToFinanceAccount")
+  FinancePosting                                                                         FinancePosting[]
+
+  @@unique([tenantId, legalEntityId, activityId, kind, customerId, supplierId])
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model FinanceAccountAccess {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String         @db.Uuid
+  legalEntityId  String         @db.Uuid
+  activityId     String?        @db.Uuid
+  createdById    String
+  accountId      String         @db.Uuid
+  userId         String
+  FinanceAccount FinanceAccount @relation(fields: [tenantId, legalEntityId, accountId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  AuthUser       AuthUser       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([accountId, userId])
+}
+
+model FinanceAllocation {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String           @db.Uuid
+  legalEntityId    String           @db.Uuid
+  activityId       String?          @db.Uuid
+  createdById      String
+  operationId      String           @unique @db.Uuid
+  sourceJournalId  String           @db.Uuid
+  amount           Decimal          @db.Decimal(18, 2)
+  FinanceOperation FinanceOperation @relation(fields: [tenantId, legalEntityId, operationId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceJournal   FinanceJournal   @relation(fields: [tenantId, legalEntityId, sourceJournalId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([sourceJournalId], map: "finance_allocation_source")
+}
+
+model FinanceExpense {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String           @db.Uuid
+  legalEntityId    String           @db.Uuid
+  activityId       String?          @db.Uuid
+  createdById      String
+  operationId      String           @unique @db.Uuid
+  journalId        String           @unique @db.Uuid
+  supplierId       String?          @db.Uuid
+  category         String
+  description      String           @db.VarChar(500)
+  documentRef      String           @db.VarChar(200)
+  bookedOn         DateTime         @db.Date
+  dueOn            DateTime?        @db.Date
+  net              Decimal          @db.Decimal(18, 2)
+  vat              Decimal          @db.Decimal(18, 2)
+  payment          String
+  createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+  FinanceJournal   FinanceJournal   @relation(fields: [tenantId, legalEntityId, journalId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceOperation FinanceOperation @relation(fields: [tenantId, legalEntityId, operationId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  Supplier         Supplier?        @relation(fields: [tenantId, legalEntityId, supplierId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([tenantId, legalEntityId, supplierId, documentRef])
+  @@index([tenantId, legalEntityId, activityId, bookedOn], map: "k4_expense_date")
+}
+
+model FinanceFundMovement {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String           @db.Uuid
+  legalEntityId    String           @db.Uuid
+  activityId       String?          @db.Uuid
+  createdById      String
+  operationId      String           @db.Uuid
+  accountId        String           @db.Uuid
+  amount           Decimal          @db.Decimal(18, 2)
+  FinanceAccount   FinanceAccount   @relation(fields: [tenantId, legalEntityId, accountId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceOperation FinanceOperation @relation(fields: [tenantId, legalEntityId, operationId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([operationId, accountId])
+  @@index([accountId], map: "finance_fund_history")
+}
+
+model FinanceIntent {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String            @db.Uuid
+  legalEntityId    String            @db.Uuid
+  activityId       String?           @db.Uuid
+  createdById      String
+  closed           Boolean           @default(false)
+  kind             String
+  clientKey        String            @db.Uuid
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+  Activity         Activity?         @relation(fields: [tenantId, legalEntityId, activityId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  LegalEntity      LegalEntity       @relation(fields: [tenantId, legalEntityId], references: [tenantId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceOperation FinanceOperation[]
+
+  @@unique([tenantId, legalEntityId, createdById, clientKey])
+  @@unique([tenantId, legalEntityId, id])
+}
+
+model FinanceJournal {
+  id                                                                                       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId                                                                                 String              @db.Uuid
+  legalEntityId                                                                            String              @db.Uuid
+  activityId                                                                               String?             @db.Uuid
+  createdById                                                                              String
+  accountId                                                                                String              @db.Uuid
+  sourceKey                                                                                String
+  requestKey                                                                               String              @db.Uuid
+  payloadHash                                                                              String
+  reversesId                                                                               String?             @unique @db.Uuid
+  bookedOn                                                                                 DateTime            @db.Date
+  dueOn                                                                                    DateTime?           @db.Date
+  reason                                                                                   String              @db.VarChar(500)
+  createdAt                                                                                DateTime            @default(now()) @db.Timestamptz(6)
+  saleId                                                                                   String?             @unique @db.Uuid
+  saleSourceKey                                                                            String?
+  netTry                                                                                   Decimal?            @db.Decimal(18, 2)
+  vatTry                                                                                   Decimal?            @db.Decimal(18, 2)
+  grossTry                                                                                 Decimal?            @db.Decimal(18, 2)
+  postingCount                                                                             Int?
+  FinanceAllocation                                                                        FinanceAllocation[]
+  FinanceExpense                                                                           FinanceExpense[]
+  FinanceJournal                                                                           FinanceJournal?     @relation("FinanceJournalToFinanceJournal", fields: [reversesId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_FinanceJournal                                                                     FinanceJournal?     @relation("FinanceJournalToFinanceJournal")
+  FinanceAccount                                                                           FinanceAccount      @relation(fields: [tenantId, legalEntityId, accountId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  CloudSale                                                                                CloudSale?          @relation(fields: [tenantId, legalEntityId, saleId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceOperation_FinanceOperation_tenantId_legalEntityId_journalIdToFinanceJournal       FinanceOperation[]   @relation("FinanceOperation_tenantId_legalEntityId_journalIdToFinanceJournal")
+  FinanceOperation_FinanceOperation_tenantId_legalEntityId_sourceJournalIdToFinanceJournal FinanceOperation[]  @relation("FinanceOperation_tenantId_legalEntityId_sourceJournalIdToFinanceJournal")
+  FinancePosting                                                                           FinancePosting[]
+
+  @@unique([tenantId, legalEntityId, id])
+  @@unique([tenantId, legalEntityId, requestKey])
+  @@unique([tenantId, legalEntityId, sourceKey])
+  @@unique([tenantId, legalEntityId, saleSourceKey], map: "finance_sale_business_source", where: raw("(\"saleId\" IS NOT NULL)"))
+}
+
+model FinanceOperation {
+  id                                                                                     String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId                                                                               String                @db.Uuid
+  legalEntityId                                                                          String                @db.Uuid
+  activityId                                                                             String?               @db.Uuid
+  createdById                                                                            String
+  kind                                                                                   String
+  intentId                                                                               String?               @unique @db.Uuid
+  requestKey                                                                             String                @db.Uuid
+  payloadHash                                                                            String
+  economicKey                                                                            String
+  journalId                                                                              String                @unique @db.Uuid
+  accountId                                                                              String                @db.Uuid
+  fundAccountId                                                                          String?               @db.Uuid
+  sourceJournalId                                                                        String?               @db.Uuid
+  amount                                                                                 Decimal               @db.Decimal(18, 2)
+  fee                                                                                    Decimal               @db.Decimal(18, 2)
+  externalRef                                                                            String                @db.VarChar(200)
+  method                                                                                 String?
+  terminalApproved                                                                       Boolean
+  bookedOn                                                                               DateTime              @db.Date
+  dueOn                                                                                  DateTime?             @db.Date
+  reason                                                                                 String                @db.VarChar(500)
+  reversesId                                                                             String?               @unique @db.Uuid
+  createdAt                                                                              DateTime              @default(now()) @db.Timestamptz(6)
+  FinanceAllocation                                                                      FinanceAllocation[]
+  FinanceExpense                                                                         FinanceExpense[]
+  FinanceFundMovement                                                                    FinanceFundMovement[]
+  FinanceOperation                                                                       FinanceOperation?     @relation("FinanceOperationToFinanceOperation", fields: [reversesId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_FinanceOperation                                                                 FinanceOperation?     @relation("FinanceOperationToFinanceOperation")
+  FinanceAccount_FinanceOperation_tenantId_legalEntityId_accountIdToFinanceAccount       FinanceAccount        @relation("FinanceOperation_tenantId_legalEntityId_accountIdToFinanceAccount", fields: [tenantId, legalEntityId, accountId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceAccount_FinanceOperation_tenantId_legalEntityId_fundAccountIdToFinanceAccount   FinanceAccount?       @relation("FinanceOperation_tenantId_legalEntityId_fundAccountIdToFinanceAccount", fields: [tenantId, legalEntityId, fundAccountId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceIntent                                                                          FinanceIntent?        @relation(fields: [tenantId, legalEntityId, intentId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceJournal_FinanceOperation_tenantId_legalEntityId_journalIdToFinanceJournal       FinanceJournal        @relation("FinanceOperation_tenantId_legalEntityId_journalIdToFinanceJournal", fields: [tenantId, legalEntityId, journalId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceJournal_FinanceOperation_tenantId_legalEntityId_sourceJournalIdToFinanceJournal FinanceJournal?       @relation("FinanceOperation_tenantId_legalEntityId_sourceJournalIdToFinanceJournal", fields: [tenantId, legalEntityId, sourceJournalId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([tenantId, legalEntityId, economicKey])
+  @@unique([tenantId, legalEntityId, id])
+  @@unique([tenantId, legalEntityId, requestKey])
+}
+
+model FinancePosting {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String         @db.Uuid
+  legalEntityId  String         @db.Uuid
+  activityId     String?        @db.Uuid
+  createdById    String
+  journalId      String         @db.Uuid
+  accountId      String         @db.Uuid
+  debit          Decimal        @db.Decimal(18, 2)
+  credit         Decimal        @db.Decimal(18, 2)
+  FinanceAccount FinanceAccount @relation(fields: [tenantId, legalEntityId, accountId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+  FinanceJournal FinanceJournal @relation(fields: [tenantId, legalEntityId, journalId], references: [tenantId, legalEntityId, id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([journalId, accountId])
+  @@index([accountId, journalId], map: "finance_statement")
 }

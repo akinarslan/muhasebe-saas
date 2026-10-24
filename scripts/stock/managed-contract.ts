@@ -445,13 +445,29 @@ export function managedFailureState(
 export async function collectManagedSnapshot(
   db: Client,
 ): Promise<ManagedSnapshot> {
+  return collectSnapshot(db, true);
+}
+
+// SELECT-only pre-COMMIT inspection inside the rehearsal's own write transaction.
+// This does not change the public read-only collector's requirements.
+export async function collectManagedPostSnapshot(
+  db: Client,
+): Promise<ManagedSnapshot> {
+  return collectSnapshot(db, false);
+}
+
+async function collectSnapshot(
+  db: Client,
+  readonly: boolean,
+): Promise<ManagedSnapshot> {
   const meta = (
     await db.query(
       "SELECT current_user actor,session_user session_actor,current_database() db,current_setting('server_version_num')::int version,current_setting('transaction_read_only') readonly,current_setting('transaction_isolation') isolation",
     )
   ).rows[0];
   check(
-    meta.readonly === "on" && meta.isolation === "repeatable read",
+    meta.readonly === (readonly ? "on" : "off") &&
+      meta.isolation === "repeatable read",
     "STOCK_MANAGED_READONLY_REQUIRED",
   );
   const c = await catalog(db);

@@ -4,7 +4,7 @@ import {
 } from "../db/migration-checksum";
 // Phase 016 is deliberately separate from the unchanged cloud migration runner.
 // No env loading on import; this sprint exposes only verified loopback fixtures.
-import { readFile } from "node:fs/promises";
+import { readFile, mkdir, copyFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Client } from "pg";
@@ -125,7 +125,14 @@ export async function localIdentity(db: Client, env: NodeJS.ProcessEnv) {
 }
 
 export async function stockFiles() {
-  const files = await migrationFiles();
+  const all = await migrationFiles();
+  check(
+    all.every(
+      (f) => f.name <= stockMigration || f.name === "202610230017_finance",
+    ),
+    "STOCK_UNKNOWN_SUCCESSOR",
+  );
+  const files = all.filter((f) => f.name <= stockMigration);
   const old = JSON.parse(
     await readFile("scripts/db/migration-baseline.json", "utf8"),
   );
@@ -342,7 +349,33 @@ export async function runStock(
     // Only programmatic local-fixture tests can inject contention after preflight.
     if (options.fixtureBeforeApply) await options.fixtureBeforeApply();
     try {
-      await runPrisma(db, { ...env, PUSULA_DB_TARGET: "test" });
+      // Stage only this accepted phase, never all pending canonical migrations.
+      const phase = resolve(
+        ".data/fixtures",
+        `v42-${env.PUSULA_LOCAL_FIXTURE}`,
+        "migrations",
+      );
+      const manifest = await stockFiles();
+      for (const f of manifest.files) {
+        await mkdir(resolve(phase, f.name), { recursive: true });
+        await copyFile(
+          `prisma/migrations/${f.name}/migration.sql`,
+          resolve(phase, f.name, "migration.sql"),
+        );
+      }
+      await copyFile(
+        "prisma/migrations/migration_lock.toml",
+        resolve(phase, "migration_lock.toml"),
+      );
+      check(
+        hash(await migrationFiles(phase)) === hash(manifest.files),
+        "STOCK_PHASE_ARTIFACT_DRIFT",
+      );
+      await runPrisma(db, {
+        ...env,
+        PUSULA_DB_TARGET: "test",
+        PUSULA_MIGRATION_FIXTURE_DIR: phase,
+      });
     } catch {
       throw new MigrationSafetyError("STOCK_APPLY_STOPPED_REVIEW_REQUIRED");
     }

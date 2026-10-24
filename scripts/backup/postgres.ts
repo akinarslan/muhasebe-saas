@@ -7,6 +7,22 @@ import { developmentTarget } from "../../src/server/db/target";
 import { BackupError, canonical, requireCheck } from "./core";
 import { createHash } from "node:crypto";
 import {
+  sourceProfile,
+  profileMigrations,
+  validateProfileHistory,
+  profileHistoryIdentity,
+  sourceFunctions,
+  profileFunctionSql,
+  validateProfileFunctions,
+  profileFunctionAclSql,
+  validateFunctionAcl,
+  profileExecutorSql,
+  validateExecutors,
+  backupAclSql,
+  validateBackupAcl,
+  type SourceRelease,
+} from "./source-profile";
+import {
   securitySql,
   functionSql,
   validateSourceSecurity,
@@ -219,10 +235,22 @@ export async function checkLibpqConnection(u: URL) {
   );
   requireCheck(output.trim() === "on", "LIBPQ_READONLY_CONNECTION_FAILED");
 }
-export async function inspectSource(u: URL, policy: SecurityPolicy = STRICT) {
+export async function inspectSource(
+  u: URL,
+  policy: SecurityPolicy = STRICT,
+  release?: SourceRelease,
+) {
   requireKnownPolicy(policy);
   sourceTarget(u.toString(), u.hostname === "127.0.0.1");
   requireCheck(process.env.NODE_ENV !== "production", "PRODUCTION_FORBIDDEN");
+  requireCheck(
+    !release || u.hostname === "127.0.0.1",
+    "BACKUP_RELEASE_REMOTE_NOT_APPROVED",
+  );
+  const profile = release
+    ? sourceProfile(release)
+    : { tables: expectedTables, forced: expectedForcedTables };
+  const files = release ? await profileMigrations(release) : undefined;
   requireCheck(
     policy !== MANAGED || u.hostname === "127.0.0.1",
     "MANAGED_REMOTE_OBJECT_AUDIT_REQUIRED",
@@ -242,13 +270,71 @@ export async function inspectSource(u: URL, policy: SecurityPolicy = STRICT) {
       FROM pg_roles r WHERE r.rolname=current_user`)
     ).rows[0];
     validateRole(role);
+    if (files)
+      validateBackupAcl(
+        (await db.query(backupAclSql)).rows,
+        profile.tables,
+        "fixture_admin",
+        "pusula_backup_fixture",
+      );
     await db.query("SET LOCAL search_path = pg_catalog, public");
-    validateSourceSecurity((await db.query(securitySql)).rows[0], policy);
+    validateSourceSecurity(
+      (
+        await db.query(
+          files
+            ? securitySql.replace(
+                "'PermissionEffect'",
+                "'PermissionEffect','SupplierUnit'",
+              )
+            : securitySql,
+        )
+      ).rows[0],
+      policy,
+    );
+    if (files) {
+      validateExecutors((await db.query(profileExecutorSql)).rows, release!);
+      const enums = (
+        await db.query(
+          "SELECT t.typname,e.enumlabel,e.enumsortorder FROM pg_type t JOIN pg_enum e ON e.enumtypid=t.oid WHERE t.typnamespace='public'::regnamespace ORDER BY 1,3",
+        )
+      ).rows;
+      const expected = files
+        .flatMap((f) =>
+          [
+            ...f.sql.matchAll(/CREATE TYPE "(\w+)" AS ENUM \(([^;]+)\);/g),
+          ].flatMap((m) =>
+            [...m[2].matchAll(/'([^']+)'/g)].map((v, i) => ({
+              typname: m[1],
+              enumlabel: v[1],
+              enumsortorder: i + 1,
+            })),
+          ),
+        )
+        .sort(
+          (a, b) =>
+            a.typname.localeCompare(b.typname) ||
+            a.enumsortorder - b.enumsortorder,
+        );
+      requireCheck(
+        canonical(enums) === canonical(expected),
+        "BACKUP_ENUM_INVENTORY_REJECTED",
+      );
+    }
     const databaseAccess = (await db.query(databaseAccessSql)).rows;
     validateDatabaseAccess(databaseAccess, policy);
     if (policy === MANAGED)
       await auditManagedFixtureDatabases(u, databaseAccess);
-    validateFunctions((await db.query(functionSql)).rows);
+    if (files) {
+      validateProfileFunctions(
+        (await db.query(profileFunctionSql)).rows,
+        sourceFunctions(files, "fixture_admin"),
+      );
+      validateFunctionAcl(
+        (await db.query(profileFunctionAclSql)).rows,
+        sourceFunctions(files, "fixture_admin"),
+        release!,
+      );
+    } else validateFunctions((await db.query(functionSql)).rows);
     const elevated = (
       await db.query(`SELECT
       has_database_privilege(current_database(),'CREATE') AS database_create,
@@ -282,7 +368,7 @@ export async function inspectSource(u: URL, policy: SecurityPolicy = STRICT) {
       "SOURCE_PRIVILEGES_REJECTED",
     );
     requireCheck(
-      canonical(rows.map((r) => r.name).sort()) === canonical(expectedTables),
+      canonical(rows.map((r) => r.name).sort()) === canonical(profile.tables),
       "SCHEMA_COVERAGE_REJECTED",
     );
     requireCheck(
@@ -291,11 +377,11 @@ export async function inspectSource(u: URL, policy: SecurityPolicy = STRICT) {
           .filter((r) => r.force && r.rls)
           .map((r) => r.name)
           .sort(),
-      ) === canonical(expectedForcedTables),
+      ) === canonical(profile.forced),
       "RLS_COVERAGE_REJECTED",
     );
     const counts: Record<string, string> = {};
-    for (const t of expectedTables)
+    for (const t of profile.tables)
       counts[t] = (
         await db.query(`SELECT count(*)::text AS n FROM public."${t}"`)
       ).rows[0].n;
@@ -304,38 +390,44 @@ export async function inspectSource(u: URL, policy: SecurityPolicy = STRICT) {
         "SELECT migration_name,checksum,finished_at,rolled_back_at FROM public._prisma_migrations ORDER BY migration_name",
       )
     ).rows;
-    requireCheck(
-      migrations.length > 0 &&
-        migrations.every((m) => m.finished_at && !m.rolled_back_at),
-      "MIGRATIONS_INCOMPLETE",
-    );
-    const localMigrations = await readdir("prisma/migrations", {
-      withFileTypes: true,
-    });
-    const expectedMigrations = await Promise.all(
-      localMigrations
-        .filter((d) => d.isDirectory())
-        .map(async (d) => [
-          d.name,
-          createHash("sha256")
-            .update(
-              await readFile(
-                join("prisma/migrations", d.name, "migration.sql"),
-              ),
-            )
-            .digest("hex"),
-        ]),
-    );
-    requireCheck(
-      canonical(
-        migrations.map((m) => [m.migration_name, m.checksum]).sort(),
-      ) === canonical(expectedMigrations.sort()),
-      "MIGRATION_CHECKSUM_MISMATCH",
-    );
+    if (files) validateProfileHistory(migrations, files);
+    else {
+      requireCheck(
+        migrations.length > 0 &&
+          migrations.every((m) => m.finished_at && !m.rolled_back_at),
+        "MIGRATIONS_INCOMPLETE",
+      );
+      const localMigrations = await readdir("prisma/migrations", {
+        withFileTypes: true,
+      });
+      const expectedMigrations = await Promise.all(
+        localMigrations
+          .filter((d) => d.isDirectory())
+          .filter((d) => d.name <= "202610170013_sale_line_sealing")
+          .map(async (d) => [
+            d.name,
+            createHash("sha256")
+              .update(
+                await readFile(
+                  join("prisma/migrations", d.name, "migration.sql"),
+                ),
+              )
+              .digest("hex"),
+          ]),
+      );
+      requireCheck(
+        canonical(
+          migrations.map((m) => [m.migration_name, m.checksum]).sort(),
+        ) === canonical(expectedMigrations.sort()),
+        "MIGRATION_CHECKSUM_MISMATCH",
+      );
+    }
     const sha = (value: unknown) =>
       createHash("sha256").update(canonical(value)).digest("hex");
     const schemaVersion = sha(
-      migrations.map((m) => [m.migration_name, m.checksum]),
+      files
+        ? profileHistoryIdentity(migrations)
+        : migrations.map((m) => [m.migration_name, m.checksum]),
     );
     const coverageSha256 = sha({ tables: rows, counts });
     const snapshot = (await db.query("SELECT pg_export_snapshot() AS snapshot"))
@@ -403,4 +495,33 @@ export function validateToc(
       toc.includes(` TRIGGER public ${table} ${trigger} `),
       "DUMP_SEALING_TRIGGER_MISSING",
     );
+  // Table data alone cannot prove a finance archive preserves append-only and
+  // deferred atomicity enforcement. Keep the legacy source allowlist closed.
+  const financeTriggers = [
+    ["FinanceAccount", "finance_immutable"],
+    ["FinanceJournal", "finance_immutable"],
+    ["FinancePosting", "finance_immutable"],
+    ["FinanceJournal", "finance_journal_balance"],
+    ["FinancePosting", "finance_posting_balance"],
+    ["CloudSale", "finance_sale_atomic"],
+    ["FinanceOperation", "k3_immutable"],
+    ["FinanceAllocation", "k3_immutable"],
+    ["FinanceFundMovement", "k3_immutable"],
+    ["FinanceIntent", "k3_intent_no_delete"],
+    ["FinanceOperation", "k3_atomic"],
+    ["FinanceExpense", "k4_immutable"],
+    ["FinanceExpense", "k4_atomic"],
+  ];
+  if (tables.includes("FinanceJournal"))
+    for (const [table, trigger] of financeTriggers)
+      requireCheck(
+        toc
+          .split(/\r?\n/)
+          .some(
+            (line) =>
+              /^\d+; \d+ \d+ TRIGGER public /.test(line) &&
+              line.includes(` TRIGGER public ${table} ${trigger} `),
+          ),
+        "DUMP_FINANCE_TRIGGER_MISSING",
+      );
 }

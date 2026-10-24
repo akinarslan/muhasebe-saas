@@ -1,2 +1,10 @@
 # Migration checksums must not change when Windows checks out committed SQL.
 prisma/migrations/**/migration.sql text eol=lf
+# Canonical017 and its review copy must have the same LF SHA-256 after checkout.
+scripts/accounting/migration-candidate/017-finance.sql text eol=lf
+# Immutable K1-K4 raw hash inputs and the historical K5 candidate are byte artifacts.
+scripts/accounting/local-schema.sql -text
+scripts/accounting/k2-local-schema.sql -text
+scripts/accounting/k3-local-schema.sql -text
+scripts/accounting/k4-local-schema.sql -text
+scripts/accounting/migration-candidate/history/* -text

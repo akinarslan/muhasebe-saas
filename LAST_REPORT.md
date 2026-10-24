@@ -1,3 +1,41 @@
+# PUSULA — M016 provider reauth / PROVIDER_REAUTH_PASS
+
+**23 Ekim 2026 · 14:51 Türkiye · PROVIDER_REAUTH_PASS.** Kullanıcının erişilebilir kıldığı mevcut NEON_API_KEY ile yalnız üç Neon API GET yapıldı; proje, development branch ve endpoint HTTP200 ile sabit kimliklere bire bir eşleşti. Proje `pusula-development`, branch `br-rough-darkness-ba6ow9zo`, host `ep-blue-breeze-bavbjb7l.c-8.eu-central-1.aws.neon.tech`. Plan `free_v3`; mevcut endpoint0,25–0,25 CU, retention6 saat, branch logical limit1 GiB ve logical size55.148.544 byte. Proje varsayılan üst sınırı2 CU, mevcut endpoint kapasitesi sayılmadı. Anahtar kaydedilmedi; SQL veya provider değişikliği yok.
+
+[Güncel provider raporu](research/PUSULA_M016_PROVIDER_REAUTH.md). İlk ortam erişimi BLOCKED kaydı aşağıda tarihsel olarak korunur; mevcut API-key yolu için erişim ve kimlik kapısı kapanmıştır. 494 grantor incelemesi önceki zaman damgasıyla korunur; yeniden ölçülmedi. M016_BLOCKED sürer: provider ACL/rol lifecycle, bağımsız gerçek kaynak backup/key/offsite/restore, ROLE_DELTA_UNRESOLVED ve ayrı016 uygulama onayı açık. Cloud guard'lar ve001–017 SQL değişmedi; M016_READY_FOR_APPROVAL veya GO_LIVE_PASS verilmedi.
+
+---
+
+
+# PUSULA — M016 provider reauth / BLOCKED
+
+**23 Ekim 2026 · ENVIRONMENT_HANDOFF_REQUIRED.** Kullanıcı kendi PowerShell oturumunda NEON_API_KEY ile doğru proje GET başarısını bildirdi. Codex komut sürecinde ve User/Machine ortamında bu değişken bulunmadı; bu görevde Neon API GET=0, SQL=0. Branch/endpoint/plan/kapasite bağımsız olarak yeniden doğrulanamadı; yeni HTTP401 veya geçersiz anahtar iddiası yoktur. OAuth fallback kullanılmadı, credential değeri kaydedilmedi.
+
+[Provider reauth raporu](research/PUSULA_M016_PROVIDER_REAUTH.md). Önceki 494 grantor incelemesi tarihsel haliyle korundu; yeniden ölçülmedi. M016_BLOCKED, backup/restore ve ROLE_DELTA_UNRESOLVED engelleri sürer. M017/M016/P0 kaynakları ve 001–017 SQL korundu. Gerçek migration apply/onay, rol/ACL değişikliği, R2/restore/snapshot veya Git teslimi yok. Bu özetin altındaki rapor geçmişi aynen korunur.
+
+---
+
+
+# PUSULA — M016 cloud hazırlığı / M016_BLOCKED
+
+**23 Ekim 2026 · M016_BLOCKED; gerçek apply onayı yok.** Yeni provider GET yine HTTP401. Sabit development host'unda TLS doğrulamalı READ ONLY PG18.6 snapshot'ı:40 tablo/26 FORCE RLS,001–015 başarılı15, resolved008 korunmuş,016 pending; eski şema/rol/ACL kategorileri eşit.494 grantor pre kaydı toplandı, bağımsız review bekliyor; otomatik enrollment yok.
+
+016 source-derived cloud review paketi ve yalnız UUID/loopback fixture'da çalışan transaction çekirdeği hazırlandı. Üç yeni PG18.6 cluster'da normal/COMMIT_OUTCOME_UNKNOWN/post-COMMIT drift, rollback/yetki/ACL warning ve PUBLIC/creator kalıntısı senaryoları geçti; retry/resolve/restore yok.469 Vitest, TypeScript, ESLint ve Git artifact10 kontrolü PASS. Gerçek provider rol lifecycle, bağımsız gerçek kaynak backup/offsite/key/restore, ROLE_DELTA_UNRESOLVED ve operasyon/apply onayı açık; cloud gate false/null kalır.
+
+[Readiness](research/PUSULA_M016_CLOUD_READINESS.md) · [Gerçek preflight ve yerel doğrulama](docs/validation/PUSULA_M016_CLOUD_PREFLIGHT.md).001–017 SQL ve M017'nin23 dosyalık çalışması (bu dosyanın eski içeriği dahil) korundu. Neon'da yalnız salt okunur metadata; gerçek apply/DDL/DML/GRANT, R2/dump/restore/snapshot, recovery/production/test DB/env düzenleme veya Git stage/commit/push yok.
+
+---
+
+# PUSULA — Finans017 / M017_LOCAL_PASS
+
+**23 Ekim 2026 · M017_LOCAL_PASS · Neon/GO_LIVE: BLOCKED.** Canonical `202610230017_finance`, geçici creator/SET/schema CREATE ve doğru owner altında ACL kapatma ile PostgreSQL18.6 non-superuser üzerinde gerçek Prisma deploy kabulünden geçti.17 başarılı migration,56 tablo/42 FORCE RLS; resolved008 ve ilk16 SQL korundu. Yeni017 SHA256 `9024e8fda804f7cddf74ae7fc2fd03a670604fd2a90995704738f80b1fb3587c`; önceki K5 adayı ayrı tarihsel artifact'ta korunur.
+
+Dokuz finans Prisma modeli/ilişkisi ve partial index temsil edildi; gerçek model diff'i Finance DDL önermiyor. Tam katalog, owner/definer/search_path, gerçek ACL/grantor, global üyelik ve geçici yetki temizliği; gerçek Prisma hata/rollback, tekrar deploy, runtime36 DML/TRUNCATE ret ve belirsiz COMMIT sınıflandırması kabul edildi.235 API/SQL regresyonu, Vitest463, TypeScript, ESLint, build ve Git artifact10 kontrolü geçti. Restore/tarayıcı bu görevde yeniden çalıştırılmadı.
+
+[Hazırlık raporu](research/PUSULA_ACCOUNTING_017_READINESS.md) · [Gerçek doğrulama](docs/validation/PUSULA_ACCOUNTING_017_VERIFICATION.md).016 gerçek Neon kabulü, provider017 rol/ACL/pre/post, bağımsız şifreli backup/restore, ROLE_DELTA_UNRESOLVED ve işletme kabulü açık. Cloud guard'lar korunur; gerçek Neon/R2/restore/env düzenleme veya Git stage/commit/push/merge yoktur.
+
+---
+
 # PUSULA — K5 entegre işletme kabulü ve buluta hazırlık
 
 **23 Ekim 2026 · K5_LOCAL_PASS · CLOUD_READY_FOR_APPROVAL: BLOCKED · GO_LIVE_PASS verilmedi (BLOCKED).** K1–K4 tek sistem olarak gerçek izole PostgreSQL18.6 fixture'da kabul edildi. Yeni işletme özelliği yok; yalnız gerçek offline→online kabulünde bulunan eski hata mesajı temizleme hatası düzeltildi.
@@ -740,3 +778,11 @@ Normal/focus/dolu müşteri araması masaüstü ve mobilde PNG olarak alınıp i
 Demo Playwright: **22/22**, desktop/mobil, **1.7 dakika**; müşteri/satış taslakları, numeric giriş, maliyet, snapshot, responsive, klavye ve reduced-motion korundu. Son toplam browser sonucu 26/26'dır (22 demo + 4 auth/cloud/D7).
 
 D7 uygulama/test/görsel teslimi **`549d4bd`**, GitHub `feat/pusula-v030-neon-cloud` dalına başarıyla push edildi. Push sonrası yerel/uzak farkı **0/0**, çalışma ağacı temizdi. 27 staged dosyanın yapılandırılmış yerel sırlara karşı taraması PASS verdi. Bu gerçekleşmiş push kaydı ayrı dokümantasyon commit'iyle aynı dala gönderilir; main değiştirilmedi.
+
+---
+
+# PUSULA — Neon cross-DB / CROSS_DB_BLOCKED
+
+23 Ekim 2026: Kullanıcı onaylı neondb, postgres, template1 katalogları bağımsız TLS1.3, REPEATABLE READ READ ONLY oturumlarında incelendi. Son tur 16:25:38–16:25:43 Türkiye; kısa timeout, ROLLBACK ve close 3/3 başarılı. İlk tur statement_timeout=0 kabul edilmedi; kanıt korunup açık startup 10s ile doğrulandı. postgres üzerinde PUBLIC SELECT iki provider view ve PUBLIC EXECUTE + schema USAGE dört rutin bulundu; mevcut managed sözleşmesi BLOCKED. İçerik/rutin çalıştırılmadı; çalışma zamanı etkileri UNKNOWN. Backup rolü yok; LOGIN/BYPASSRLS/export kabulü verilmedi. Provider/owner erişim çözümü, ayrı NOLOGIN ve gerçek backup/offsite/restore onayları bekliyor. Guard'lar ve ROLE_DELTA_UNRESOLVED korunur; eski494 grantor yeniden ölçülmedi.
+
+[Denetim](research/PUSULA_NEON_CROSS_DB_AUDIT.md) · [Doğrulama](docs/validation/PUSULA_NEON_CROSS_DB_VERIFICATION.md). Yalnız üç onaylı DB'de sistem katalogları okundu. Rol/ACL/iş verisi/migration/dump/R2/restore/production/recovery/test/env/Git değişikliği yok; önceki rapor geçmişi korunur.

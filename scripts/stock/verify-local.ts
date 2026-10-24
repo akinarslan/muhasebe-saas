@@ -124,7 +124,7 @@ async function main() {
     await readFile("scripts/db/migration-baseline.json", "utf8"),
   );
   const names = (await readdir("prisma/migrations", { withFileTypes: true }))
-    .filter((x) => x.isDirectory())
+    .filter((x) => x.isDirectory() && x.name <= "202610210016_goods_receipts")
     .map((x) => x.name)
     .sort();
   requireCheck(
@@ -271,7 +271,7 @@ async function main() {
     const migrations = (
       await readdir("prisma/migrations", { withFileTypes: true })
     )
-      .filter((d) => d.isDirectory())
+      .filter((d) => d.isDirectory() && d.name <= "202610210016_goods_receipts")
       .sort((a, b) => a.name.localeCompare(b.name));
     for (const m of migrations) {
       // Mirrors production order: the app boot seeds Roles before migrations
@@ -445,6 +445,9 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       PUSULA_STOCK_FIXTURE: "1",
       TEST_DIRECT_DATABASE_URL: url("fixture_admin", adminPassword),
       PUSULA_ACCOUNTING_FIXTURE: "1",
+      PUSULA_FINANCE_017_FIXTURE: process.argv.includes("--finance017")
+        ? "1"
+        : "0",
       PUSULA_TREASURY_FIXTURE: "1",
       PUSULA_EXPENSE_FIXTURE:
         process.argv.includes("--k4") || process.argv.includes("--k5")
@@ -462,7 +465,12 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       R2_ACCESS_KEY_ID: "",
       R2_SECRET_ACCESS_KEY: "",
     };
-    if (process.argv.includes("--k5")) {
+    if (process.argv.includes("--finance017")) {
+      const { verifyFinanceMigration } =
+        await import("../accounting/migration-fixture");
+      report.finance017 = await verifyFinanceMigration(admin, env, dir);
+      pass("canonical017-real-prisma-nonsuperuser-postflight-history17");
+    } else if (process.argv.includes("--k5")) {
       const { financeMigrationCandidate } =
         await import("../accounting/prepare-migration");
       const candidate = await financeMigrationCandidate();
@@ -622,7 +630,10 @@ GRANT SELECT,INSERT,UPDATE ON "Supplier","SupplierMaterial" TO pusula_test_runti
       results.push({ name: script + ` (${passed} checks)`, status: "PASS" });
       console.log(JSON.stringify({ script, checks: passed, status: "PASS" }));
     }
-    if (process.argv.includes("--k5")) {
+    if (
+      process.argv.includes("--k5") &&
+      !process.argv.includes("--finance017")
+    ) {
       await runJob(
         [
           "--conditions=react-server",

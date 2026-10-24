@@ -33,6 +33,11 @@ if (!test || caPath) {
   url.searchParams.set("sslcert", resolve(caPath!));
   url.searchParams.set("sslaccept", "strict");
 }
+// Canonical017 must never be swept into the legacy cloud/016 deploy path.
+check(
+  !!process.env.PUSULA_MIGRATION_FIXTURE_DIR,
+  "EXPLICIT_PHASE_RUNNER_REQUIRED",
+);
 let migrationPath = "prisma/migrations";
 if (process.env.PUSULA_MIGRATION_FIXTURE_DIR) {
   check(test, "FIXTURE_MIGRATIONS_FORBIDDEN");

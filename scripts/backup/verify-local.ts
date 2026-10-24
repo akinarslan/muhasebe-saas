@@ -37,6 +37,10 @@ import { STRICT, MANAGED } from "./policy";
 import { BackupKey, KeyRing } from "./keys";
 import { decryptToPrivateFile } from "./decrypt";
 import { restoreFixture } from "./restore-fixture";
+import { sourceProfile, type SourceRelease } from "./source-profile";
+import { reviewedRollback008 } from "../db/migration-checksum";
+import { profilePrivilegeFixture } from "./profile-fixture";
+import { seedBackupFinance } from "./finance-data-fixture";
 
 const serverBin = resolve(".data/tools/postgresql18-fixture-server/bin");
 const clientBin = resolve(".data/tools/postgresql18-client");
@@ -331,8 +335,13 @@ async function identity(data: string) {
   return { pid, created: processInfo.CreationDate };
 }
 async function main() {
+  const selected = process.argv
+    .find((a) => a.startsWith("--source-profile="))
+    ?.split("=")[1] as SourceRelease | undefined;
+  const profile = selected ? sourceProfile(selected) : undefined;
   const managed = process.argv.includes("--managed-neon-fixture");
   const restoring = process.argv.includes("--restore-fixture");
+  requireCheck(!selected || restoring, "BACKUP_PROFILE_RESTORE_REQUIRED");
   requireCheck(!managed || !restoring, "FIXTURE_MODE_CONFLICT");
   const securityPolicy = managed ? MANAGED : STRICT;
   requireCheck(
@@ -524,6 +533,7 @@ async function main() {
       await readdir("prisma/migrations", { withFileTypes: true })
     )
       .filter((d) => d.isDirectory())
+      .filter((d) => d.name <= "202610170013_sale_line_sealing")
       .sort((a, b) => a.name.localeCompare(b.name));
     for (const entry of migrations) {
       const sql = await readFile(
@@ -543,6 +553,39 @@ async function main() {
       }
     }
     await seed(admin, restoring);
+    if (profile) {
+      await admin.query(
+        `INSERT INTO "Role"(id,name) VALUES('MASTER','Synthetic backup fixture master') ON CONFLICT(id) DO NOTHING`,
+      );
+      const successors = (
+        await readdir("prisma/migrations", { withFileTypes: true })
+      )
+        .filter((d) => d.isDirectory())
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(13, profile.migrationCount);
+      for (const entry of successors) {
+        const sql = await readFile(
+          join("prisma/migrations", entry.name, "migration.sql"),
+        );
+        if (entry.name === "202610230017_finance")
+          await admin.query(
+            "SELECT set_config('pusula.finance_review','APPROVED_017_CANDIDATE',false)",
+          );
+        await admin.query(sql.toString("utf8"));
+        await admin.query(
+          "INSERT INTO _prisma_migrations(id,checksum,finished_at,migration_name,applied_steps_count) VALUES($1,$2,now(),$3,1)",
+          [randomUUID(), sha(sql), entry.name],
+        );
+        migrations.push(entry);
+      }
+      await admin.query("RESET pusula.finance_review");
+      if (selected === "post017") await seedBackupFinance(admin);
+      await admin.query(
+        "INSERT INTO _prisma_migrations(id,checksum,migration_name,rolled_back_at) VALUES($1,$2,'202610160008_company_metadata',now())",
+        [randomUUID(), reviewedRollback008],
+      );
+      report.sourceProfile = selected;
+    }
     if (restoring)
       await admin.query(
         'GRANT USAGE ON SCHEMA public TO pusula_runtime; GRANT SELECT ON "Tenant","LegalEntity","Activity","Customer","Material","MaterialVariant","MaterialPriceHistory" TO pusula_runtime',
@@ -571,7 +614,7 @@ async function main() {
     }
     pass("isolated-scram-cluster-13-migrations-and-synthetic-records");
     const counts: Record<string, number> = {};
-    for (const table of expectedTables)
+    for (const table of profile?.tables ?? expectedTables)
       counts[table] = Number(
         (await admin.query(`SELECT count(*) FROM "${table}"`)).rows[0].count,
       );
@@ -597,6 +640,7 @@ async function main() {
       `postgresql://pusula_fixture_backup:${backupPassword}@127.0.0.1:${port}/pusula_backup_fixture?sslmode=disable`,
       true,
     );
+    if (selected) await profilePrivilegeFixture(admin, u, selected, pass);
     if (managed) {
       const blocked = async (name: string, code: string) => {
         let opened: Awaited<ReturnType<typeof inspectSource>> | undefined;
@@ -856,9 +900,11 @@ async function main() {
       }
       pass("strict-default-still-blocks-public-temp");
     }
-    snapshot = await inspectSource(u, securityPolicy);
+    snapshot = await inspectSource(u, securityPolicy, selected);
     report.databaseAccess = snapshot.databaseAccess;
-    pass("real-backup-role-35-tables-21-forced-rls-and-snapshot");
+    pass(
+      `real-backup-role-${snapshot.tables}-tables-profile-${selected ?? "legacy"}-and-snapshot`,
+    );
     const dump = join(dir, "fixture.dump"),
       env = { ...pgEnvironment(u), NODE_ENV: "test" as const };
     await runTool(
@@ -877,7 +923,7 @@ async function main() {
       ["--list", dump],
       safeEnv,
     );
-    validateToc(toc);
+    validateToc(toc, profile?.tables);
     const catalogGroups = [
       {
         name: "foreignKeys",
@@ -936,7 +982,9 @@ async function main() {
       canonical(copied) === canonical(counts),
       "ARCHIVE_ROW_COUNTS_MISMATCH",
     );
-    pass("all-35-table-copy-row-counts-match-source");
+    pass(
+      `all-${Object.keys(counts).length}-table-copy-row-counts-match-source`,
+    );
     const ctx = newContext({
       sourceEnvironment: "fixture",
       databaseVersion: snapshot.version,
@@ -1151,6 +1199,7 @@ async function main() {
           readerPassword,
           backupPassword,
           pass,
+          tables: profile?.tables,
         });
       } finally {
         ring.dispose();
@@ -1159,6 +1208,7 @@ async function main() {
   } catch (e) {
     failure = e instanceof BackupError ? e.code : "LOCAL_FIXTURE_FAILED";
     report.failureCode = failure;
+    report.functionDrift = (e as { functionDrift?: unknown }).functionDrift;
     report.databaseErrorCode = /^[A-Z0-9]{5}$/.test(
       (e as { code?: string }).code ?? "",
     )

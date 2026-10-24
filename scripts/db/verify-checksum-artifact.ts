@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { stockFiles, validateStockHistory } from "../stock/migrate";
 import { migrationFiles, validateHistory } from "./migration-safety";
 import { reviewedRollback008 } from "./migration-checksum";
@@ -11,7 +12,9 @@ import { pathToFileURL } from "node:url";
 
 export async function verifyChecksumArtifact() {
   const original = process.cwd();
-  const files = await migrationFiles();
+  const files = (await migrationFiles()).filter(
+    (f) => f.name <= "202610210016_goods_receipts",
+  );
   await stockFiles();
   const root = resolve(".data/v43b9a", `git-artifact-${randomUUID()}`);
   await mkdir(root, { recursive: true });
@@ -39,6 +42,55 @@ export async function verifyChecksumArtifact() {
     console.log(JSON.stringify({ checksumCheck: name, status: "PASS" }));
   };
   try {
+    const financePath = "prisma/migrations/202610230017_finance/migration.sql";
+    const finance = await readFile(financePath).catch((error) => {
+      if (error.code === "ENOENT") return undefined;
+      throw error;
+    });
+    if (finance) {
+      const sha = (bytes: Buffer) =>
+        createHash("sha256").update(bytes).digest("hex");
+      const manifest = JSON.parse(
+        await readFile(
+          "scripts/accounting/migration-candidate/manifest.json",
+          "utf8",
+        ),
+      );
+      assert.equal(sha(finance), manifest.sha256);
+      assert.equal(finance.includes(13), false);
+      const candidatePath =
+        "scripts/accounting/migration-candidate/017-finance.sql";
+      assert.deepEqual(await readFile(candidatePath), finance);
+      for (const path of [financePath, candidatePath])
+        assert.equal(
+          execFileSync("git", ["hash-object", "--", path], {
+            windowsHide: true,
+          })
+            .toString()
+            .trim(),
+          execFileSync("git", ["hash-object", "--no-filters", "--", path], {
+            windowsHide: true,
+          })
+            .toString()
+            .trim(),
+        );
+      assert.equal(
+        sha(
+          await readFile(
+            "scripts/accounting/migration-candidate/history/017-finance-k5.sql",
+          ),
+        ),
+        manifest.previousCandidateSha256,
+      );
+      for (const source of manifest.sources)
+        assert.equal(
+          sha(await readFile(`scripts/accounting/${source.file}`)),
+          source.sha256,
+        );
+      pass(
+        "finance017-git-lf-canonical-candidate-source-manifest-and-historical-artifact",
+      );
+    }
     process.chdir(root);
     const manifest = await stockFiles();
     pass("working-tree-and-git-lf-artifact");

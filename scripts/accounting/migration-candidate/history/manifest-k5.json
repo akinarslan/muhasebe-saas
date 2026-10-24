@@ -1,0 +1,27 @@
+{
+  "candidate": "202610230017_finance",
+  "schemaTables": 56,
+  "forcedRls": 42,
+  "canonicalHistoryChanged": false,
+  "cloudApplyEnabled": false,
+  "providerEvidence": "BLOCKED",
+  "sources": [
+    {
+      "file": "local-schema.sql",
+      "sha256": "c4cc80ce5bfadbdec880e74f670af7b5250fc086021ff3569d893d526171b63b"
+    },
+    {
+      "file": "k2-local-schema.sql",
+      "sha256": "46b5baa9a2578dcc846106aef65298649ea746b9861c846f615934db45a483ce"
+    },
+    {
+      "file": "k3-local-schema.sql",
+      "sha256": "3af3cc48b2aadb419a671703db425f62fc5328875f4f945a25aadda60d308bcd"
+    },
+    {
+      "file": "k4-local-schema.sql",
+      "sha256": "1aff40b98951a6edb7946792547e04d6dfaa1013e051539d9ed671b4f99b651a"
+    }
+  ],
+  "sha256": "3548d3291a7c5c97919d5dee7ac20369c0c7a4de6888b4d21d17d4dcf4ad27aa"
+}

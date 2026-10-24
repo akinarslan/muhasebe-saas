@@ -2,16 +2,68 @@
 // provider mutation, Prisma child, cleanup or retry exists in this module.
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { check } from "../db/migration-safety";
+import { check, hash } from "../db/migration-safety";
 import { stockFiles } from "./migrate";
 import { managedMain, planManagedTls } from "./managed-preparation";
 import {
   auditManagedPre,
+  expectedManagedPost,
   loadManagedContract,
   validateContract,
   type ManagedContract,
   type ManagedSnapshot,
 } from "./managed-contract";
+
+// A reviewable cloud plan, not enrollment or an executable approval. Expected
+// post is derived from the READ ONLY pre + V4.3b.12 delta, never a target post.
+export async function prepareManagedExecutionReview(
+  contract: ManagedContract,
+  snapshot: ManagedSnapshot,
+) {
+  const files = (await stockFiles()).files;
+  const audit = auditManagedPre(contract, snapshot, files);
+  check(
+    snapshot.grantors !== null && snapshot.grantors.length > 0,
+    "STOCK_MANAGED_GRANTOR_EVIDENCE_REQUIRED",
+  );
+  const expected = expectedManagedPost(
+    snapshot,
+    contract.permissions,
+    contract.postSchema,
+  );
+  return {
+    status: "REVIEW_PROPOSAL_ONLY" as const,
+    applied: false,
+    applyEnabled: false,
+    cloudAccepted: false,
+    target: contract.target,
+    checksum: contract.checksum,
+    phaseMigrations: files.map((f) => f.name),
+    preFingerprint: hash(snapshot),
+    grantorPreFingerprint: hash(snapshot.grantors),
+    proposedExpectedPostFingerprint: hash(expected),
+    postFingerprint: null,
+    expectedPostBasis: "read-only-pre-plus-reviewed-016-source-delta",
+    audit,
+    requiredBeforeApproval: [
+      "current-provider-identity-and-capacity",
+      "independent-expanded-grantor-pre-review",
+      "provider-create-set-grant-revoke-drop-proof",
+      "independent-source-encrypted-offsite-backup-key-and-restore-acceptance",
+      "maintenance-writer-exclusion-and-rollback-owner",
+      "reviewed-cloud-adapter-and-atomic-history-contract",
+      "explicit-target-checksum-bound-user-016-apply-approval",
+    ],
+    failureStates: [
+      "NOT_STARTED",
+      "ROLLED_BACK_CONFIRMED",
+      "ROLLBACK_UNCONFIRMED",
+      "COMMIT_OUTCOME_UNKNOWN",
+      "POST_COMMIT_REVIEW_REQUIRED",
+    ],
+    automaticRetry: false,
+  };
+}
 
 export async function prepareManagedAudit(
   contract: ManagedContract,

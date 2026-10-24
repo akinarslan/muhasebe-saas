@@ -579,7 +579,7 @@ async function main() {
               "SELECT count(*)::int n FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL",
             )
           ).rows[0].n,
-          16,
+          process.env.PUSULA_FINANCE_017_FIXTURE === "1" ? 17 : 16,
         );
       },
     );
