@@ -798,3 +798,11 @@ Yalnız yerel backup fixture'ına NOLOGIN non-superuser creator/ADMIN yönü/SEL
 BACKUP_ROLE_READINESS=BACKUP_ROLE_DDL_APPROVAL_REQUIRED (erişim çözümü de bekliyor); REAL_BACKUP_RESTORE_READINESS=BLOCKED; M016_READINESS=M016_BLOCKED; M017_READINESS=M017_BLOCKED; GO_LIVE_READINESS=BLOCKED. R2 config pin geçerli fakat HEAD başarısız; public/token/retention ve gerçek anahtar custody kanıtsız. Önce provider A izolasyonu/B kontrollü owner ACL çözümü veya eksiksiz C kanıtı; sonra ayrı NOLOGIN, LOGIN, export/anahtar/R2/restore,016 ve017 onayları gerekir. Güvenlik kapıları ve001–017 checksum'ları korunur; `.env.local` değişmedi. Gerçek Neon DDL/DML/GRANT/export, R2 upload/restore veya production/recovery/test değişikliği yok.
 
 [Operasyon emri](docs/operations/PUSULA_29_OCT_GO_LIVE_EXECUTION.md) · [Engel çözüm kararı](research/PUSULA_LIVE_BLOCKER_RESOLUTION.md) · [Güncel doğrulama](docs/validation/PUSULA_LIVE_READINESS_VERIFICATION.md).
+
+---
+
+## 24 Ekim — GitHub teslimi ve Neon operatör bağlantısı
+
+GITHUB_DELIVERY_PASS: kabul edilmiş backup/NOLOGIN kaynakları `79eb5e5`, dar API-key preflight düzeltmesi ve doğrulama `9bf20b4` ile yalnız feature dalına normal push edildi; iki push exit0 ve bağımsız ls-remote eşleşti, kaynak teslimi sonrası ahead/behind0/0 ve ağaç temiz. Final Vitest519, TypeScript/ESLint/build/checksum PASS; exact NOLOGIN+risk-managed PG18.6 fixture66 PASS. Build'in mevcut .data over-bundling uyarısı açık.
+
+NEON_API_AUTH_PASS / NEON_DATABASE_READONLY_PASS / NEON_OPERATOR_CONNECTION_READY: Windows User API key'i bellekte, node --use-system-ca; exact project/branch/endpoint üç HTTP200; development READ ONLY40/26/001–015+resolved008/494 eşleşmesi. BACKUP_ROLE_REAL_APPLY_APPROVAL_REQUIRED; BACKUP_REMOTE_BLOCKED. Gerçek rol/ACL/LOGIN/dump/R2/restore/migration veya production/recovery/test işlemi yapılmadı. Canonical checksum'lar ve guard'lar korundu. [Teslim raporu](reports/PUSULA_GITHUB_NEON_OPERATOR_DELIVERY.md) · [Bağlantı doğrulaması](docs/validation/PUSULA_NEON_OPERATOR_CONNECTION_VERIFICATION.md).
