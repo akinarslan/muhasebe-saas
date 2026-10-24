@@ -16,7 +16,7 @@ import {
   type ManagedSnapshot,
 } from "./managed-contract";
 import { planManagedTls } from "./managed-preparation";
-import { assertProviderCredential } from "./provider-credential";
+import { loadProviderCredential } from "./provider-credential";
 
 const codeOf = (error: unknown) => {
   const e = error as { code?: string; message?: string };
@@ -84,19 +84,23 @@ export async function cloudPreflightMain(args = process.argv.slice(2)) {
     status: number;
   }[];
   try {
-    // Reuse only the already configured credential; no refresh/login/fallback.
-    const credential = JSON.parse(
-      await readFile(
-        join(process.env.USERPROFILE ?? "", ".config/neon/credentials.json"),
-        "utf8",
+    // Explicit environment API key first; otherwise existing OAuth only.
+    // No refresh, identity fallback after HTTP failure, or credential logging.
+    const credential = await loadProviderCredential(async () =>
+      JSON.parse(
+        await readFile(
+          join(process.env.USERPROFILE ?? "", ".config/neon/credentials.json"),
+          "utf8",
+        ),
       ),
     );
-    assertProviderCredential(credential);
+    provider.credentialSource = credential.type;
+    const endpointId = contract.target.host.split(".")[0];
     const get = async (path: string) => {
       const allowed = [
         `/projects/${contract.target.projectId}`,
         `/projects/${contract.target.projectId}/branches/${contract.target.branchId}`,
-        `/projects/${contract.target.projectId}/endpoints`,
+        `/projects/${contract.target.projectId}/endpoints/${endpointId}`,
       ];
       check(allowed.includes(path), "NEON_ROUTE_REJECTED");
       const r = await fetch(`https://console.neon.tech/api/v2${path}`, {
@@ -109,7 +113,7 @@ export async function cloudPreflightMain(args = process.argv.slice(2)) {
         signal: AbortSignal.timeout(20000),
       });
       trace.push({ method: "GET", path, status: r.status });
-      check(r.ok, `NEON_HTTP_${r.status}`);
+      check(r.status === 200, `NEON_HTTP_${r.status}`);
       return r.json();
     };
     const p = (await get(`/projects/${contract.target.projectId}`)).project;
@@ -123,18 +127,23 @@ export async function cloudPreflightMain(args = process.argv.slice(2)) {
       )
     ).branch;
     check(
-      b?.id === contract.target.branchId && b?.name === "development",
+      b?.id === contract.target.branchId &&
+        b?.project_id === contract.target.projectId &&
+        b?.name === "development",
       "NEON_BRANCH_IDENTITY_REJECTED",
     );
-    const endpoints = (
-      await get(`/projects/${contract.target.projectId}/endpoints`)
-    ).endpoints;
-    const endpoint = endpoints?.find(
-      (e: { host: string; branch_id: string }) =>
-        e.host === contract.target.host &&
-        e.branch_id === contract.target.branchId,
+    const endpoint = (
+      await get(`/projects/${contract.target.projectId}/endpoints/${endpointId}`)
+    ).endpoint;
+    check(
+      endpoint?.id === endpointId &&
+        endpoint?.project_id === contract.target.projectId &&
+        endpoint?.host === contract.target.host &&
+        endpoint?.branch_id === contract.target.branchId &&
+        endpoint?.type === "read_write" &&
+        endpoint?.disabled === false,
+      "NEON_ENDPOINT_IDENTITY_REJECTED",
     );
-    check(endpoint?.type === "read_write", "NEON_ENDPOINT_IDENTITY_REJECTED");
     provider.status = "CURRENT_IDENTITY_CONFIRMED";
     provider.identity = {
       projectId: p.id,
@@ -197,7 +206,7 @@ export async function cloudPreflightMain(args = process.argv.slice(2)) {
       query_timeout: 15000,
       application_name: "pusula_m016_readonly_preflight",
       options:
-        "-c default_transaction_read_only=on -c lock_timeout=3000 -c transaction_timeout=60000",
+        "-c default_transaction_read_only=on -c lock_timeout=3000 -c transaction_timeout=60000 -c idle_in_transaction_session_timeout=15000",
     });
     await db.connect();
     const stream = (
@@ -219,6 +228,7 @@ export async function cloudPreflightMain(args = process.argv.slice(2)) {
       meta.actor === contract.target.owner &&
         meta.session_actor === meta.actor &&
         meta.database === contract.target.database &&
+        /^18\.6(?:\s|$)/.test(meta.version) &&
         meta.default_readonly === "on" &&
         meta.readonly === "on" &&
         meta.isolation === "repeatable read",
