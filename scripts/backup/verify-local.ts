@@ -341,6 +341,11 @@ async function main() {
   const profile = selected ? sourceProfile(selected) : undefined;
   const managed = process.argv.includes("--managed-neon-fixture");
   const restoring = process.argv.includes("--restore-fixture");
+  const riskManaged = process.argv.includes("--risk-managed-fixture");
+  requireCheck(
+    !riskManaged || (!!selected && restoring && !managed),
+    "RISK_FIXTURE_MODE_REJECTED",
+  );
   requireCheck(!selected || restoring, "BACKUP_PROFILE_RESTORE_REQUIRED");
   requireCheck(!managed || !restoring, "FIXTURE_MODE_CONFLICT");
   const securityPolicy = managed ? MANAGED : STRICT;
@@ -358,6 +363,13 @@ async function main() {
       "e2246ba91d22345bc3d017586c09ede52d9df180b1eeb480f050445f1cad84e2",
     "SERVER_ARCHIVE_PIN_MISMATCH",
   );
+  if (riskManaged)
+    requireCheck(
+      (await digestFile(join(serverBin, "..", "lib", "pg_stat_statements.dll")))
+        .sha256 ===
+        "dc06a2ded89ae2b60a23019b4ad5107bd20e0b6e6571102f9f26e6ca13d24e1c",
+      "RISK_PG_STAT_LIBRARY_PIN_REJECTED",
+    );
   const root = resolve(".data/fixtures");
   await mkdir(root, { recursive: true, mode: 0o700 });
   requireCheck(
@@ -449,7 +461,7 @@ async function main() {
     );
     await writeFile(
       join(data, "postgresql.auto.conf"),
-      `listen_addresses = '127.0.0.1'\nport = ${port}\npassword_encryption = 'scram-sha-256'\nssl = off\nlog_statement = 'none'\nlog_min_error_statement = 'panic'\n`,
+      `listen_addresses = '127.0.0.1'\nport = ${port}\npassword_encryption = 'scram-sha-256'\nssl = off\nlog_statement = 'none'\nlog_min_error_statement = 'panic'\n${riskManaged ? "shared_preload_libraries = 'pg_stat_statements'\n" : ""}`,
       "utf8",
     );
     startAttempted = true;
@@ -641,6 +653,24 @@ async function main() {
       true,
     );
     if (selected) await profilePrivilegeFixture(admin, u, selected, pass);
+    if (riskManaged && selected) {
+      const { verifyRiskManagedFixture } =
+        await import("./risk-managed-fixture");
+      await verifyRiskManagedFixture({
+        admin,
+        source: u,
+        release: selected,
+        directory: dir,
+        dataDirectory: data,
+        connect,
+        originalPassword: backupPassword,
+        readerPassword,
+        adminPassword,
+        pgDump: clientTool("pg_dump"),
+        pgRestore: clientTool("pg_restore"),
+        pass,
+      });
+    }
     if (managed) {
       const blocked = async (name: string, code: string) => {
         let opened: Awaited<ReturnType<typeof inspectSource>> | undefined;

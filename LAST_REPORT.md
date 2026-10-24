@@ -786,3 +786,15 @@ D7 uygulama/test/görsel teslimi **`549d4bd`**, GitHub `feat/pusula-v030-neon-cl
 23 Ekim 2026: Kullanıcı onaylı neondb, postgres, template1 katalogları bağımsız TLS1.3, REPEATABLE READ READ ONLY oturumlarında incelendi. Son tur 16:25:38–16:25:43 Türkiye; kısa timeout, ROLLBACK ve close 3/3 başarılı. İlk tur statement_timeout=0 kabul edilmedi; kanıt korunup açık startup 10s ile doğrulandı. postgres üzerinde PUBLIC SELECT iki provider view ve PUBLIC EXECUTE + schema USAGE dört rutin bulundu; mevcut managed sözleşmesi BLOCKED. İçerik/rutin çalıştırılmadı; çalışma zamanı etkileri UNKNOWN. Backup rolü yok; LOGIN/BYPASSRLS/export kabulü verilmedi. Provider/owner erişim çözümü, ayrı NOLOGIN ve gerçek backup/offsite/restore onayları bekliyor. Guard'lar ve ROLE_DELTA_UNRESOLVED korunur; eski494 grantor yeniden ölçülmedi.
 
 [Denetim](research/PUSULA_NEON_CROSS_DB_AUDIT.md) · [Doğrulama](docs/validation/PUSULA_NEON_CROSS_DB_VERIFICATION.md). Yalnız üç onaylı DB'de sistem katalogları okundu. Rol/ACL/iş verisi/migration/dump/R2/restore/production/recovery/test/env/Git değişikliği yok; önceki rapor geçmişi korunur.
+
+---
+
+# PUSULA — 29 Ekim operasyon hazırlığı / canlı BLOCKED
+
+24 Ekim 2026: Başlangıç HEAD `46372244f96d4623f625377579afdeec7aa06008` korundu; Git stage/commit/push yok. Güncel provider GET3/3 HTTP200, kaynak READ ONLY40/26/15+resolved008 ve494/494 grantor eşleşmesi (accepted=false); üç DB katalog audit'i postgres PUBLIC2 view/4 rutin engelini yeniden doğruladı. BACKUP_ACCESS_DECISION=BACKUP_ACCESS_BLOCKED. Yeni allowlist/proje/motor veya gerçek rol oluşturulmadı.
+
+Yalnız yerel backup fixture'ına NOLOGIN non-superuser creator/ADMIN yönü/SELECT/temizlik, INSERT/DELETE ve stock/finance executor SET retleri eklendi. Üç backup fazı39/39/40 ve managed risk43 kontrol PASS; aynı-cluster sentetik şifreli restore gerçek bağımsız offsite değildir. Canonical017+K1–K5:235 API/SQL ve desktop/mobile Chromium2 test PASS.016 rehearsal normal/unknown/post-drift3×9 senaryo PASS; belirsiz COMMIT otomatik retry yok. Vitest497, TypeScript, ESLint ve checksum10 PASS; build yeniden çalıştırılmadı.
+
+BACKUP_ROLE_READINESS=BACKUP_ROLE_DDL_APPROVAL_REQUIRED (erişim çözümü de bekliyor); REAL_BACKUP_RESTORE_READINESS=BLOCKED; M016_READINESS=M016_BLOCKED; M017_READINESS=M017_BLOCKED; GO_LIVE_READINESS=BLOCKED. R2 config pin geçerli fakat HEAD başarısız; public/token/retention ve gerçek anahtar custody kanıtsız. Önce provider A izolasyonu/B kontrollü owner ACL çözümü veya eksiksiz C kanıtı; sonra ayrı NOLOGIN, LOGIN, export/anahtar/R2/restore,016 ve017 onayları gerekir. Güvenlik kapıları ve001–017 checksum'ları korunur; `.env.local` değişmedi. Gerçek Neon DDL/DML/GRANT/export, R2 upload/restore veya production/recovery/test değişikliği yok.
+
+[Operasyon emri](docs/operations/PUSULA_29_OCT_GO_LIVE_EXECUTION.md) · [Engel çözüm kararı](research/PUSULA_LIVE_BLOCKER_RESOLUTION.md) · [Güncel doğrulama](docs/validation/PUSULA_LIVE_READINESS_VERIFICATION.md).
