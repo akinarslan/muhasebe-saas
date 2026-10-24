@@ -1,6 +1,6 @@
 # PUSULA M017 / M016 / Backup GitHub teslimi
 
-24 Ekim 2026. **DELIVERY_BLOCKED — yerel doğrulama geçti; Git teslimi henüz tamamlanmadı.**
+24 Ekim 2026. **DELIVERY_PASS — doğrulanmış 56 dosyalık kaynak paketi feature dalına normal push ile teslim edildi.**
 
 Bu rapor yalnız kaynak Git teslimini kapsar. Gerçek Neon uygulama onayı veya GO_LIVE_PASS değildir.
 
@@ -47,8 +47,19 @@ M017_LOCAL_PASS ve BACKUP_LOCAL_READY yerel kabullerdir. M016_BLOCKED, ROLE_BLOC
 
 ## Git teslim kanıtı
 
-Commit SHA: henüz yok. Push exit code: henüz yok. Gerçek uzak ref: başlangıç SHA. Son ahead/behind ve çalışma ağacı teslim sonrası ölçülecek.
-Önce kaynak+ilk rapor commit'i, ardından gerçekleşmiş push kanıtını kaydeden yalnız rapor commit'i kullanılacak. Rapora kendi commit SHA'sı döngüsel yazılamadığı için rapordaki teslim SHA'sı kaynak paketini ifade edecek; nihai rapor commit'i ve uzak ref son yanıtta ayrıca bildirilecek.
+| Ölçüm | Gerçek sonuç (24 Ekim 2026 13:23:26 +03:00) |
+| --- | --- |
+| Kaynak teslim commit SHA | `428152485478df50432103d3dfce1f7e0b1fcc36` |
+| Commit mesajı | `feat(pusula): prepare finance migrations and backup release profiles` |
+| Commit kapsamı | Tam56 dosya; staged liste ve commit dosya listesi eşit; deletion/rename0 |
+| Push | `git push origin HEAD:refs/heads/feat/pusula-v030-neon-cloud`; native exit0 |
+| Push öncesi uzak ref | Beklenen `edc03121737051d1eb180e621ccd91acfcc92743`; beklenmeyen ilerleme yok |
+| Push sonrası gerçek uzak ref | `refs/heads/feat/pusula-v030-neon-cloud` → `428152485478df50432103d3dfce1f7e0b1fcc36`; bağımsız `ls-remote` exit0 |
+| Upstream ref | `origin/feat/pusula-v030-neon-cloud`, aynı SHA |
+| Ahead / behind | `0 / 0` |
+| Çalışma ağacı | `git status --porcelain=v1` boş; staged/unstaged/untracked değişiklik0; ignored çıktılar teslim dışında |
+
+Bu gerçekleşmiş push kanıtı yalnız bu raporu değiştiren ikinci normal dokümantasyon commit'iyle kaydedilir; kaynak paketindeki diğer55 dosya değişmez. Rapora kendi commit SHA'sı döngüsel yazılamadığından tablodaki SHA kaynak paketini ve belirtilen ölçüm anını ifade eder. Rapor commit'inin nihai SHA'sı, push exit code'u, gerçek uzak ref'i ve temiz çalışma ağacı son yanıtta ayrıca bildirilir. İki commit toplamında farklı teslim dosyası sayısı yine56'dır. Force-push/rebase/reset/main merge yapılmadı.
 
 ## Kesin dosya listesi (56)
 
