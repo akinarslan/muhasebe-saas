@@ -1,0 +1,57 @@
+# Manual close-only delivery. File presence never authorizes dispatch or credentials.
+name: pusula-close-only
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Exact approved close-only scope JSON (no credentials)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: pusula-development-close-only
+  cancel-in-progress: false
+jobs:
+  closer:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.run_attempt == 1 && github.repository == 'akinarslan/muhasebe-saas' && github.actor == 'akinarslan'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PUSULA_CLOSE_SCOPE: ${{ inputs.scope }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Bootstrap immutable pins without repository code
+        run: |
+          node --input-type=module -e '
+          import {readFileSync} from "node:fs";
+          import {createHash} from "node:crypto";
+          const s=JSON.parse(process.env.PUSULA_CLOSE_SCOPE);
+          const f=readFileSync(".github/workflows/pusula-close-only.yml");
+          if(s.userApprovedCloseOnly!==true||!(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/).test(s.operation)||s.approvedCommit!==process.env.GITHUB_SHA||
+          !/^[a-f0-9]{40}$/.test(s.approvedCommit)||
+          createHash("sha256").update(f).digest("hex")!==s.workflowSha256)process.exit(1);'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.14.1'
+          check-latest: false
+      - name: Install locked dependencies without lifecycle hooks
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check approval pins before secret access
+        run: >-
+          node --import tsx -e
+          'const {readFileSync}=require("node:fs");
+          const {validateCloserScope}=require("./scripts/backup/off-host-closer-job.ts");
+          validateCloserScope(JSON.parse(process.env.PUSULA_CLOSE_SCOPE),process.env.GITHUB_SHA,
+          readFileSync("docs/operations/off-host-closer/closer-workflow.yml.example","utf8"));'
+      - name: Arm and close only
+        env:
+          PUSULA_CLOSE_ONLY_DSN: ${{ secrets.PUSULA_CLOSE_ONLY_DSN }}
+        run: node --use-system-ca --import tsx scripts/backup/off-host-closer-job.ts --approved-close-only
+      - name: Preserve metadata receipt in run log
+        if: always()
+        run: |
+          if test -f closer-receipt.json; then cat closer-receipt.json; else echo 'CLOSER_RECEIPT_MISSING_BLOCKED'; exit 1; fi
