@@ -1,0 +1,3 @@
+# Workflow byte pins must be identical on Windows and GitHub-hosted Linux.
+.github/workflows/pusula-close-only.yml text eol=lf
+docs/operations/off-host-closer/closer-workflow.yml.example text eol=lf
